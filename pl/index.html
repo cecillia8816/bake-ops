@@ -408,6 +408,7 @@ svg{display:block}
   <div class="store-bar">
     <button type="button" class="store-bar-btn mini-btn" id="storeToggleBar"><span id="storeToggleBarLbl">门店筛选</span> <span class="arr">▾</span></button>
     <span class="store-lbl" id="lStore">门店</span>
+    <button type="button" class="mini-btn" id="lClear" style="margin:0 8px 0 2px;flex:0 0 auto">清空</button>
     <div class="store-rows"><div class="store-row" id="storeRow"></div></div>
   </div>
   <div class="sticky-summary" id="sumText"></div>
@@ -481,6 +482,7 @@ const LANG = {
   'allYear': {'zh':'全年','en':'Year'},
   'lCity': {'zh':'城市','en':'City'},
   'lStore': {'zh':'门店','en':'Store'},
+  'lClear': {'zh':'清空','en':'Clear'},
   'lLang': {'zh':'语言','en':'Lang'},
   'lStoreFilter': {'zh':'门店筛选','en':'Stores'},
   'opsCur': {'zh':'本期','en':'Period'},
@@ -792,7 +794,7 @@ function applyLangTexts(){
       mh.innerHTML = i>0 ? '<span class="tl">'+t.slice(0,i)+'</span> <span class="tl">'+t.slice(i+1)+'</span>' : t;
     } else mh.textContent = t;
   }
-    ['lYear','lMonth','lCity','lStore','lLang','lDef','lStmt','lTrend','lCatPie','lExpPie','stmtTitle','foot'].forEach(k=>{
+    ['lYear','lMonth','lCity','lStore','lClear','lLang','lDef','lStmt','lTrend','lCatPie','lExpPie','stmtTitle','foot'].forEach(k=>{
     const el=document.getElementById(k); if(el) el.textContent=L(k);
   });
 
@@ -2032,6 +2034,12 @@ function buildControls(){
   if(_stb) _stb.addEventListener('click', ()=>{
     document.querySelector('.panel.sticky').classList.toggle('store-open');
   });
+  // 清空门店勾选（09-09 卷卷：单选一家店不必逐个取消；清空后城市段归 NONE，再点「全部」=全选）
+  const _csb=document.getElementById('lClear');
+  if(_csb) _csb.addEventListener('click', ()=>{
+    state.stores.clear(); state.cityLock=null;
+    buildStorePills(); syncCitySeg(); renderAll();
+  });
   // 语言
   document.querySelectorAll('#langSeg button').forEach(b=>{
     b.addEventListener('click', ()=>{
@@ -2088,7 +2096,12 @@ function buildStorePills(){
         const v=e.target.value;
         if(e.target.checked) state.stores.add(v); else state.stores.delete(v);
         lab.classList.toggle('off', !e.target.checked);
-        // 手动勾选越出城市范围 → city 自动 NONE
+        // 门店勾选=唯一事实源：手动勾选跨出城市锁范围（或清空到 0 家）→ 解除城市锁，城市段跟随勾选集
+        //（09-09 卷卷 bug：城市锁卡死，实际数被 cityOk 拦成 0 而预算只看勾选集照常出数）
+        if(state.cityLock){
+          const outside = !state.stores.size || [...state.stores].some(x=>{ const st=stores.find(t=>t.store===x); return st && st.city!==state.cityLock; });
+          if(outside) state.cityLock=null;
+        }
         syncCitySeg(); renderAll();
       });
       cont.appendChild(lab);
