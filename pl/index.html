@@ -389,10 +389,13 @@ svg{display:block}
     <div class="ctl"><label id="lYear">年份</label><select id="yearSel"></select></div>
     <div class="ctl"><label id="lMonth">月份</label><select id="monthSel"></select></div>
     <div class="ctl"><label id="lCity">城市</label>
-      <div class="seg" id="citySeg">
-        <button data-city="ALL" class="on">全部</button>
-        <button data-city="SZ">深圳</button>
-        <button data-city="SH">上海</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="seg" id="citySeg">
+          <button data-city="ALL" class="on">全部</button>
+          <button data-city="SZ">深圳</button>
+          <button data-city="SH">上海</button>
+        </div>
+        <button type="button" class="mini-btn" id="lClear">清空</button>
       </div>
     </div>
     <div class="ctl">
@@ -408,7 +411,6 @@ svg{display:block}
   <div class="store-bar">
     <button type="button" class="store-bar-btn mini-btn" id="storeToggleBar"><span id="storeToggleBarLbl">门店筛选</span> <span class="arr">▾</span></button>
     <span class="store-lbl" id="lStore">门店</span>
-    <button type="button" class="mini-btn" id="lClear" style="margin:0 8px 0 2px;flex:0 0 auto">清空</button>
     <div class="store-rows"><div class="store-row" id="storeRow"></div></div>
   </div>
   <div class="sticky-summary" id="sumText"></div>
