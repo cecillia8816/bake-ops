@@ -194,8 +194,8 @@ tr.child.hidden{display:none}
 .bar-row.tot-row .bar-fill{opacity:.9}
 /* 小计/合计行不画条形：中间空占位，保持与门店行相同的 grid 三列（数值/比值列与门店行对齐，用户 08-20） */
 .cmp-card .bar-row.sub-line .bar-gap{display:block}
-/* 门店对比大 panel（08-20）：6 卡 3×2 grid；卡内 grid 三列布局防溢出 (用户 08-20) */
-.cmp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+/* 门店对比大 panel（用户 09-11：去交易笔数/客单价，改 4 卡 2×2）；卡内 grid 三列布局防溢出 (用户 08-20) */
+.cmp-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .cmp-card{background:#fbfcfe;border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0;overflow:hidden}
 .cmp-card h3{font-size:12px;font-weight:700;color:var(--brand-deep);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .cmp-card h3::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand);flex-shrink:0}
@@ -583,8 +583,6 @@ const LANG = {
     {'zh':'EBITDA = 毛利 − 运营费用','en':'EBITDA = GP − Operating Expenses'},
     {'zh':'预算达成率 = 当月净销售额 ÷ 当月预算（预算仅 2026 年）','en':'Budget rate = monthly Net Sales ÷ monthly budget (budget only for 2026)'},
     {'zh':'+-% = （当年累计 ÷ 当年累计预算 − 1）× 100%，符号与左邻「差额」一致','en':'+-% = (YTD ÷ YTD budget − 1) × 100%, signed consistently with the Variance column'},
-    {'zh':'客单价/交易笔数为财务独立口径（原表原样），与净销售额不直接勾稽；多店合并时客单价按交易笔数加权','en':'Avg. Check / Transactions are independent finance metrics (as reported, not derived from Net Sales); when combining stores, Avg. Check is weighted by Transactions'},
-    {'zh':'客单价小计/合计中的灰色斜体数字 = 不含西丽店','en':'Gray italic Avg. Check subtotal/total values exclude the Xili (CK) store'},
     {'zh':'门店对比各卡口径：净销售额 = 预算达成率 + 占合计；毛利/人事/EBITDA 各卡 = GP% / 占净销售额 / EBITDA%（均 ÷ 本店净销售额）','en':'Store comparison: Net Sales = budget rate + % of total; Gross Profit / Personnel / EBITDA cards = GP% / % of Net Sales / EBITDA% (each ÷ that store\'s Net Sales)'},
     {'zh':'圆环占比 = 各分类金额 ÷ 合计金额','en':'Donut share = category amount ÷ total amount'},
     {'zh':'月度趋势：净销售额/EBITDA 为折线，预算为灰虚线（仅 2026）','en':'Monthly trend: Net Sales & EBITDA as lines; Budget as gray dashed line (2026 only)'},
@@ -600,7 +598,7 @@ function nmSub(sec, s){
 }
 const NAME2 = {"Net Sales": ["净销售额", "Net Sales"], "COGS": ["销售成本", "COGS"], "Gross Profit": ["毛利", "Gross Profit"], "Operating Expenses": ["运营费用", "Operating Expenses"], "EBITDA": ["EBITDA", "EBITDA"], "Depreciation": ["折旧", "Depreciation"], "GP%": ["毛利率", "GP%"], "PBT": ["税前利润", "PBT"], "Break-even": ["保本销售", "Break-even"], "Budget": ["预算销售", "Budget"], "Avg. Check": ["客单价", "Avg. Check"], "Transactions": ["交易笔数", "Transactions"], "Bread": ["面包", "Bread"], "Cakes": ["蛋糕", "Cakes"], "Merchandising": ["代售品", "Merchandising"], "Food & Sets": ["轻餐", "Light Meals"], "Desserts": ["甜品", "Desserts"], "Coffee & Beverage": ["咖啡饮品", "Coffee & Beverage"], "Gift Box": ["礼盒", "Gift Box"], "Packaging": ["包装", "Packaging"], "Personnel Costs": ["人事费用", "Personnel Costs"], "Rent": ["租金", "Rent"], "Utilities": ["水电", "Utilities"], "Royalty": ["特许权费", "Royalty"], "Delivery": ["配送", "Delivery"], "Others": ["其他", "Others"]};
 const SUB_ORDER = {"Net Sales": ["Bread", "Cakes", "Merchandising", "Food & Sets", "Desserts", "Coffee & Beverage", "Gift Box", "Others"], "COGS": ["Bread", "Cakes", "Merchandising", "Food & Sets", "Desserts", "Coffee & Beverage", "Gift Box", "Packaging", "Others"], "Gross Profit": ["Bread", "Cakes", "Merchandising", "Food & Sets", "Desserts", "Coffee & Beverage", "Gift Box", "Packaging", "Others"], "GP%": ["Bread", "Cakes", "Merchandising", "Food & Sets", "Desserts", "Coffee & Beverage", "Gift Box", "Others"], "Operating Expenses": ["Personnel Costs", "Rent", "Utilities", "Royalty", "Delivery", "Others"]};
-const SECTION_ORDER = ["Net Sales", "COGS", "Gross Profit", "Operating Expenses", "EBITDA", "Transactions", "Avg. Check"];
+const SECTION_ORDER = ["Net Sales", "COGS", "Gross Profit", "Operating Expenses", "EBITDA"];
 const PIE_COLORS = ["#A7BEE0", "#D48D95", "#A2C3B2", "#E8C699", "#B7AAC6", "#9DBEC3", "#C6D5EA", "#D9C9BA"];
 function cityName(c){ return state.lang==='zh' ? (c==='SH'?'上海':'深圳') : (c==='SH'?'Shanghai':'Shenzhen'); }
 const STORE_EN = {"音乐厅": "Yinyueting", "书城店": "Shucheng", "西丽店": "Xili (CK)", "万科店": "Vanke"};
@@ -1036,11 +1034,8 @@ function renderStmt(){
   let rows = '';
   SECTION_ORDER.forEach(sec=>{
     const subList = SUB_ORDER[sec] || [];
-    const isAC = sec==='Avg. Check', isTC = sec==='Transactions';
     const vals = dims.map(d=>{
       const a = aggFn(d.key);
-      if(isAC) return a.ac;
-      if(isTC) return a.tc;
       if(sec==='EBITDA') return a.ebitda;
       if(sec==='Depreciation') return a.depr;
       if(sec==='PBT') return a.pbt;
@@ -1049,52 +1044,18 @@ function renderStmt(){
     });
     let secTot;
     if(totAgg){
-      if(isAC) secTot = totAgg.ac;
-      else if(isTC) secTot = totAgg.tc;
-      else if(sec==='EBITDA') secTot = totAgg.ebitda;
+      if(sec==='EBITDA') secTot = totAgg.ebitda;
       else if(sec==='Depreciation') secTot = totAgg.depr;
       else if(sec==='PBT') secTot = totAgg.pbt;
       else { let s=0; subList.forEach(x=> s+=(totAgg.byCat[sec]||{})[x]||0); secTot=s; }
     } else {
-      secTot = ytdOf(dims, aggFn, vals, isAC, isTC);
+      secTot = ytdOf(dims, aggFn, vals);
     }
     const arrow = '<span class="fold-arr" data-arr="'+sec+'">'+(subList.length?'▾':'')+'</span>';
     const hl = (sec==='Net Sales'||sec==='EBITDA') ? ' hl-sec' : '';   // 净销售额/EBITDA 整行加粗
-    // 运营指标组（TC/AC）上下边线一致（用户 08-20）：TC 上边线、AC 下边线，同 2px 雾霾蓝
-    const sep = sec==='Transactions' ? ' ops-sep' : (sec==='Avg. Check' ? ' ops-sep-end' : '');
-    // AC 合计列：含西丽 + 不含西丽双值（参照周看板，用户 08-20「损益表中AC双值」）
-    // 双值逻辑=西丽是否在本视图聚合里出现（用户 08-20）：按月视图仅西丽选中才显示；门店视图西丽一直在→始终显示
-    const xiliInScope = state.view==='store' || state.stores.has('西丽店');
-    let secTotHtml = stmtCell(sec, secTot);
-    if(isAC && secTot!=null && xiliInScope){
-      let w=0,t=0;
-      stores.forEach(s=>{
-        if(s.store==='西丽店') return;
-        if(state.view!=='store' && !state.stores.has(s.store)) return;
-        const a=aggStore(state.year,state.mseq,s.store); const tc=a.tc||0; w+=a.ac*tc; t+=tc;
-      });
-      const excl = t? w/t : null;
-      if(excl!=null && Math.abs(excl-secTot)>0.01) secTotHtml = stmtCell(sec,secTot)+'<i class="excl"> ￥'+fmt(excl,1)+'</i>';
-    }
-    // AC 行小计列（深圳/上海）也加不含西丽双值（上下分布，用户 08-20）；同 xiliInScope 逻辑
-    const cellHtml = (v, d, i)=>{
-      if(isAC && d && d.kind==='sub' && xiliInScope){
-        const c = d.key.replace('sub:','');
-        let w=0,t=0;
-        stores.forEach(s=>{
-          if(s.store==='西丽店' || s.city!==c) return;
-          if(state.view!=='store' && !state.stores.has(s.store)) return;
-          const a=aggStore(state.year,state.mseq,s.store); const tc=a.tc||0; w+=a.ac*tc; t+=tc;
-        });
-        const excl = t? w/t : null;
-        const base = stmtCell(sec,v);
-        if(excl!=null && Math.abs(excl-v)>0.01) return base+'<i class="excl"> ￥'+fmt(excl,1)+'</i>';
-        return base;
-      }
-      return stmtCell(sec,v);
-    };
-    rows += '<tr class="section'+hl+sep+'" data-sec="'+sec+'"><td>'+arrow+NM(sec)+'</td>'+
-            vals.map((v,i)=>'<td'+(dims[i]&&dims[i].kind==='sub'?' class="col-sub"':'')+'>'+cellHtml(v,dims[i],i)+'</td>').join('')+
+    const secTotHtml = stmtCell(sec, secTot);
+    rows += '<tr class="section'+hl+'" data-sec="'+sec+'"><td>'+arrow+NM(sec)+'</td>'+
+            vals.map((v,i)=>'<td'+(dims[i]&&dims[i].kind==='sub'?' class="col-sub"':'')+'>'+stmtCell(sec,v)+'</td>').join('')+
             '<td class="tot">'+secTotHtml+'</td></tr>';
 
     if(subList.length){
@@ -1203,19 +1164,12 @@ function gpSectionRows(dims, aggFn, totAgg){
   });
   return h;
 }
-// 合计列口径：AC 加权 Σ(ac×tc)/Σtc；TC/其余求和
-function ytdOf(dims, aggFn, vals, isAC, isTC){
-  if(isAC){
-    let w=0, t=0;
-    dims.forEach(d=>{ const a=aggFn(d.key); w += (a.ac||0)*a.tc; t += a.tc; });
-    return t? w/t : null;
-  }
+// 合计列口径：求和
+function ytdOf(dims, aggFn, vals){
   return vals.reduce((a,b)=>a+(b||0),0);
 }
 function stmtCell(sec, v){
   if(v==null || isNaN(v)) return '—';
-  if(sec==='Avg. Check') return '￥'+fmt(v,1);
-  if(sec==='Transactions') return fmt(v,0);
   return fmt(v,0);
 }
 
@@ -1673,12 +1627,12 @@ function bindPie(el, slices, category){
 /* ============ 图表：门店对比 ============ */
 function renderCmp(){
   const el = document.getElementById('cmpGrid');
-  // 6 卡 3×2（用户 08-20）：净销售额/交易笔数/客单价/毛利/人事费用/EBITDA
+  // 4 卡 2×2（用户 09-11：去交易笔数/客单价）：第1行 净销售额/毛利，第2行 人事费用/EBITDA
   // 每卡占比列口径不同：净销售额=预算达成率+占合计、毛利=GP%、人事费用=占净销售额%、EBITDA=EBITDA%（毛利/人事/EBITDA 均 ÷ 本店净销售额）
-  const METRICS = ['Net Sales','Transactions','Avg. Check','Gross Profit','Personnel Costs','EBITDA'];
+  const METRICS = ['Net Sales','Gross Profit','Personnel Costs','EBITDA'];
   const pr = prevPeriod(), yr = yoyPeriod();
   const totalOf = (metric)=> aggFor(state.year, state.mseq)[keyOf(metric)]||0;
-  function keyOf(metric){ return metric==='Net Sales'?'netSales' : metric==='Transactions'?'tc' : metric==='Avg. Check'?'ac' : metric==='Gross Profit'?'gp' : metric==='EBITDA'?'ebitda' : null; }
+  function keyOf(metric){ return metric==='Net Sales'?'netSales' : metric==='Gross Profit'?'gp' : metric==='EBITDA'?'ebitda' : null; }
   // 门店聚合取指标值（人事费用 = 运营费用明细 Personnel Costs）
   function metVal(a, metric){
     if(metric==='Personnel Costs') return (a.byCat['Operating Expenses']||{})['Personnel Costs']||0;
@@ -1696,7 +1650,6 @@ function renderCmp(){
     if(metric==='Gross Profit') return [{txt:(state.lang==='zh'?'GP%':'GP%'), cls:'tag-green'}];
     if(metric==='Personnel Costs') return [{txt:(state.lang==='zh'?'占净销售额':'% of Net Sales'), cls:'tag-blue'}];
     if(metric==='EBITDA') return [{txt:(state.lang==='zh'?'EBITDA%':'EBITDA%'), cls:'tag-purple'}];
-    if(metric==='Avg. Check') return [{txt:(state.lang==='zh'?'均价（灰=不含西丽）':'Avg. (gray=excl. Xili)'), cls:'tag-gray'}];
     return [];
   };
   // 每卡右侧额外列：返回 {rate:{txt,cls} 预算达成率列, pct:{txt,cls} 占比列}
@@ -1730,7 +1683,7 @@ function renderCmp(){
     return out;
   };
   // 选中门店集合（含城市顺序）
-  const selStores = stores; // 6 卡始终显示全部门店（用户 08-20：不受城市/门店控件限制，保持全部呈现）
+  const selStores = stores; // 4 卡始终显示全部门店（用户 08-20：不受城市/门店控件限制，保持全部呈现）
   const rowsBy = (metric)=>{
     const list = [];
     selStores.forEach(s=>{
@@ -1740,70 +1693,38 @@ function renderCmp(){
       list.push({key:s.store, store:s.store, label:storeNameByKey(s.store), city:s.city, v, sub:false});
     });
     list.sort((x,y)=> y.v - x.v);
-    // AC（客单价）的小计/合计 = 加权平均 Σ(店AC×店TC)÷Σ店TC（用户 08-20：算平均而不是总计）；其它指标求和
-    const isAC = metric==='Avg. Check';
+    // 城市小计/合计 = 各店求和
     const cityTot={};
-    const cityTC={};
-    list.forEach(x=>{
-      const t = aggStore(state.year, state.mseq, x.key).tc||0;
-      cityTot[x.city] = (cityTot[x.city]||0) + (isAC? x.v*t : x.v);
-      cityTC[x.city] = (cityTC[x.city]||0) + t;
-    });
+    list.forEach(x=>{ cityTot[x.city] = (cityTot[x.city]||0) + x.v; });
     const out = list.slice();
     ['SZ','SH'].forEach(c=>{
       if(cityTot[c] && list.some(x=>x.city===c)){
-        const val = isAC ? (cityTC[c]? cityTot[c]/cityTC[c] : null) : cityTot[c];
-        out.push({key:c, label:subtotalName(c), city:c, v:val, sub:true});
+        out.push({key:c, label:subtotalName(c), city:c, v:cityTot[c], sub:true});
       }
     });
     // 合计行（用户 08-20：小计条下面再加合计条）
-    const gSum = isAC ? sum(list.map(x=>x.v*(aggStore(state.year,state.mseq,x.key).tc||0))) : sum(list.map(x=>x.v));
-    const gTC = isAC ? sum(list.map(x=>aggStore(state.year,state.mseq,x.key).tc||0)) : 0;
-    const grand = isAC ? (gTC? gSum/gTC : null) : gSum;
-    out.push({key:'TOT', label:state.lang==='zh'?'合计':'Total', city:'ALL', v:grand, sub:true, tot:true});
-    // AC 小计/合计 另存「不含西丽」加权平均（参照周看板；西丽=CK 店）
-    // 门店对比始终全部门店（西丽一直在）→ 副值始终显示（用户 08-20 确认）
-    if(isAC){
-      const wac = (rows)=> { let w=0,t=0; rows.forEach(x=>{const tc=aggStore(state.year,state.mseq,x.key).tc||0; w+=x.v*tc; t+=tc;}); return t?w/t:null; };
-      out.forEach(r=>{
-        if(!r.sub) return;
-        const rows2 = list.filter(x=> (r.tot || x.city===r.key) && x.store!=='西丽店');
-        r.excl = wac(rows2);
-      });
-    }
+    out.push({key:'TOT', label:state.lang==='zh'?'合计':'Total', city:'ALL', v:sum(list.map(x=>x.v)), sub:true, tot:true});
     return out;
   };
   const total = m=> sum(rowsBy(m).filter(r=>!r.sub && r.key!=='TOT').map(r=>r.v));
   // 单卡渲染：正值向右，负值从中心向左（EBITDA 亏损红色）；Net Sales 加预算底色层叠
   // 各店条颜色：深圳绿/上海蓝；合计条深色区分（用户 08-20）
   const cardHtml = (metric)=>{
-    const isAC = metric==='Avg. Check', isTC = metric==='Transactions';
     const rows = rowsBy(metric);
     if(!rows.length) return '<div style="padding:20px;text-align:center;color:var(--sub)">'+L('noData')+'</div>';
     // 条形比例：maxAbs 仅取门店明细行（不含城市小计/合计），保证最大数字的条形紧贴右侧数值列；小计/合计条超过 100% 时截断（用户 08-20）
     const detailRows = rows.filter(r=>!r.sub && !r.tot);
     const maxAbs = Math.max(1, ...detailRows.map(r=>Math.abs(r.v)));
-    // AC 压缩指数 0.5→0.35：西丽 184.9 极端值仍压缩，但普通门店条更长、条尾到数字空隙更小（用户 08-20）
-    const maxScale = isAC ? Math.pow(maxAbs, 0.35) : maxAbs;
     const tot = total(metric);
     const withBud = metric==='Net Sales' && budgetHas(state.year);
     const hdTag = hdTagsOf(metric).map(t=>'<span class="hd-tag '+t.cls+'">'+t.txt+'</span>').join('');
     let h = '<div class="cmp-card"><h3>'+NM(metric)+hdTag+'</h3>';
     rows.forEach(r=>{
-      // 数值格式：AC 用 ￥x.x、TC 整数、其余千分位
-      // AC 小计/合计：含西丽主值 + 不含西丽灰色斜体副值（参照周看板，用户 08-20）
-      let numTxt;
-      if(isAC && r.sub && r.excl!=null && Math.abs(r.excl-r.v)>0.01){
-        numTxt = '￥'+fmt(r.v,1)+'<i class="excl"> ￥'+fmt(r.excl,1)+'</i>';
-      } else if(isAC){
-        numTxt = '￥'+fmt(r.v,1);
-      } else {
-        numTxt = fmt(r.v,0);
-      }
+      const numTxt = fmt(r.v,0);
       const ns = aggStore(state.year, state.mseq, r.key).netSales||0;
       const cols = extraCols(metric, r, ns);
       const neg = r.v<0;
-      const w = Math.min(100, Math.max(3, (isAC ? Math.pow(Math.abs(r.v), 0.35) : Math.abs(r.v))/maxScale*100));
+      const w = Math.min(100, Math.max(3, Math.abs(r.v)/maxAbs*100));
       // 预算底色（超浅同色系 + 点状边框），sales 条叠在其上
       let budLayer = '';
       if(withBud && !r.sub){
@@ -1860,17 +1781,10 @@ function renderCmp(){
   // 门店/城市小计/合计 的期间值聚合（合计=全部选中店，城市=该城市选中店）
   const aggAt = (metric, year, mseq, r)=>{
     if(r.tot){
-      // AC 合计 = aggFor 的加权 AC（Σac×tc/Σtc）；其余合计 = Σ（noFilter 始终全部门店）
-      if(metric==='Avg. Check') return aggFor(year,mseq,true).ac;
+      // 合计 = Σ（noFilter 始终全部门店）
       return metVal(aggFor(year,mseq,true), metric);
     }
     if(r.sub){
-      // AC 城市小计 = 加权平均 Σ(ac×tc)/Σtc
-      if(metric==='Avg. Check'){
-        let w=0, t=0;
-        selStores.forEach(x=>{ if(x.city===r.key){ const a=aggStore(year,mseq,x.store); const tc=a.tc||0; w+=a.ac*tc; t+=tc; } });
-        return t? w/t : null;
-      }
       let s=0; selStores.forEach(x=>{ if(x.city===r.key) s+=(metVal(aggStore(year,mseq,x.store), metric)||0); }); return s;
     }
     return metVal(aggStore(year,mseq,r.key), metric);
@@ -1880,7 +1794,7 @@ function renderCmp(){
     rows.forEach(r=>{
       const cur = r.v;
       const pv = aggAt(metric, pr.year, pr.mseq, r), yv = aggAt(metric, yr.year, yr.mseq, r);
-      const numFmt = v=> metric==='Avg. Check'? ('￥'+fmt(v,1)) : fmt(v,0);
+      const numFmt = v=> fmt(v,0);
       const del = p=> p==null? null : {val:(p>=0?'+':'')+(p*100).toFixed(1)+'%', cls:p>=0?'good':'bad'};
       // 本期（净销售额卡主值行保留指标名——下方有保本/预算需区分；其余卡标题已含指标名不重复）
       const mainLab = metric==='Net Sales'? NM(metric) : '';
