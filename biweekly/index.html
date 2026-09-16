@@ -715,12 +715,15 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
 .controls-row .ctl>select,.controls-row .ctl>.seg{margin-top:0}   /* 09-16 卷卷：改为与其他控件同一垂直中线 */
 .controls-row .ctl>label{font-weight:600;color:var(--sub);font-size:10.5px;line-height:14px;height:14px;flex-shrink:0;text-transform:uppercase;letter-spacing:.08em}
 .controls-row .ctl-stores{flex:1 1 560px;min-width:560px;align-items:center}
-/* ---- 桌面端控件区压成 2 行（标签与控件同行、门店胶囊独占次行），给下方卡片让出空间（用户 09-16）---- */
+/* ---- 桌面端控件区单行：PERIOD · CITY · STORES + 门店胶囊 全在一行（宽度不够才自动折行）（用户 09-16）---- */
 @media(min-width:861px){
-  .controls-row{grid-template-columns:auto auto 1fr;align-items:center;gap:4px 16px}
-  .controls-row .ctl{flex-direction:row;align-items:center;gap:8px}
-  .page-overview .ctl-strip .ctl-stores>label{grid-row:1;grid-column:3;align-self:center}
-  .page-overview .ctl-strip .store-rows{grid-row:2;grid-column:1 / -1;gap:10px;flex-wrap:nowrap}
+  .controls-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px}
+  .controls-row .ctl{flex-direction:row;align-items:center;gap:8px;flex:0 0 auto}
+  /* 门店整组（STORES 标签 + SZ/SH 胶囊）与 PERIOD/CITY 同排 */
+  .page-overview .ctl-strip .ctl-stores{display:flex;flex-direction:row;align-items:center;gap:10px;flex:1 1 620px;min-width:0}
+  .page-overview .ctl-strip .ctl-stores>label{grid-row:auto;grid-column:auto;align-self:center;flex:0 0 auto}
+  .page-overview .ctl-strip .store-rows{display:flex;flex-direction:row;gap:10px;flex-wrap:nowrap;align-items:center;grid-row:auto;grid-column:auto}
+  .page-overview .ctl-strip .store-row{flex-wrap:nowrap;align-items:center;gap:8px}
   .ctl-strip{padding:4px 0 4px}
 }
 .info-row{display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding-top:6px;margin-top:6px;border-top:1px dashed var(--line-strong);font-size:11px;color:var(--sub)}
