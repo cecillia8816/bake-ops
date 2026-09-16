@@ -936,7 +936,9 @@ const supSeqIdx=sup=>{ const i=SUP_SEQ.indexOf(sup); return i<0?99:i; };
 const sortSups=arr=>[...arr].sort((a,b)=>supSeqIdx(a)-supSeqIdx(b));
 function supDot(name, city){ const sup=supName(name, city); const c=supColor(sup); if(!c) return ''; return '<span class="sup-dot" title="'+escHtml(supEn(sup))+'" data-sup="'+escHtml(sup)+'" style="background:'+c+'"></span>'; }
 function supInCity(city){ const s=new Set(); (cityProducts(city)||[]).forEach(p=>{ const sup=supName(p.name, city); if(sup) s.add(sup); }); return s; }
-function supLegendHtml(set, lang){ const c=DATA.sup_colors||{}; const cn=(lang||PL)==='cn'; return sortSups([...set]).filter(s=>c[s]).map(s=>'<span class="sl"><i style="background:'+c[s]+'"></i>'+(cn?escHtml(s):escHtml(supEn(s)))+'</span>').join(''); }
+/* 09-16 卷卷：P4(小众供应商页)图例加括号品类备注；品类=该供应商近45天销售额TOP大类（product_daily 2026-08-01~09-14 实测） */
+const SUP_NOTE={'奥昆':'bakery','普利欧':'pastry','合奇':'CN pastry','金励志':'pastry','长盛发':'pastry','融品威':'CN pastry','克莉丝蔓':'pastry','魔客':'pastry','渔利':'CN pastry','玛可巴利':'pastry'};
+function supLegendHtml(set, lang, note){ const c=DATA.sup_colors||{}; const cn=(lang||PL)==='cn'; return sortSups([...set]).filter(s=>c[s]).map(s=>{const base=cn?escHtml(s):escHtml(supEn(s)); const nt=(note&&SUP_NOTE[s])?' <span style="color:var(--sub);font-size:10px">('+SUP_NOTE[s]+')</span>':''; return '<span class="sl"><i style="background:'+c[s]+'"></i>'+base+nt+'</span>';}).join(''); }
 function fillSupLegend(){
   /* 08-29：图例只显示「该处实际出现」的供应商。优先从所在 panel（品类下钻 SZ/SH 各自独立）或页面已渲染的 .sup-dot 反推（色点带 data-sup）；无色点回退到城市全量 */
   document.querySelectorAll('.sup-legend').forEach(el=>{
@@ -945,7 +947,7 @@ function fillSupLegend(){
     let set;
     if(dots.length){ set=new Set(dots.filter(Boolean)); }
     else { const pg=el.closest('.page'); const t=(pg.querySelector('.page-title')||{}).textContent||''; const panelTitle=(scope.querySelector('h2')||{}).textContent||''; const pn=panelTitle.indexOf('SH')>=0?'SH':(panelTitle.indexOf('SZ')>=0?'SZ':null); if(pn) set=supInCity(pn); else if(/- SZ/.test(t)) set=supInCity('SZ'); else if(/- SH/.test(t)) set=supInCity('SH'); else set=new Set([...supInCity('SZ'),...supInCity('SH')]); }
-    el.innerHTML=supLegendHtml(set||new Set(), pageLangOf(el));
+    el.innerHTML=supLegendHtml(set||new Set(), pageLangOf(el), el.classList.contains('sl-note'));
   });
 }
 function updateLang(){ applyLang(); }
@@ -1001,7 +1003,7 @@ function updatePageTitles(){
   document.querySelectorAll('.page-top .page-title').forEach(t=>{ const city=t.textContent.indexOf('- SZ')>=0?'SZ':'SH'; const a=storeAnn(city); const partial=a!=='ALL'&&a!=='NONE'; t.innerHTML='TOP PRODUCT BY CATEGORY - '+city+(partial?' <span class="store-ann">('+a+')</span>':''); });
 }
 function buildStoreChecks(){
-  const mk=s=>s.slice().sort((a,b)=>STORE_ORDER.indexOf(a)-STORE_ORDER.indexOf(b));
+  const mk=s=>s.slice().sort((a,b)=>STORE_ORDER.indexOf(a)-STORE_ORDER.indexOf(b)).filter(storeAliveInPeriod);
   const SZ=mk(DATA.stores10.filter(s=>DATA.store_city[s]==='SZ')), SH=mk(DATA.stores10.filter(s=>DATA.store_city[s]==='SH'));
   const pill=s=>{ const on=state.stores.has(s)&&(state.city==='ALL'||state.city==='NONE'||DATA.store_city[s]===state.city); return '<label><input type="checkbox" value="'+s+'" '+(on?'checked':'')+'>'+stEn(s)+(DATA.store_ck[s]?' 🏭':'')+'</label>'; };
   const bSZ=document.getElementById('storeChecksSZ'), bSH=document.getElementById('storeChecksSH');
@@ -1144,6 +1146,7 @@ function fillMastStats(){
 // ---- 门店明细（SZ 双行小计 + GRAND 双行）----
 const XILI='西丽店';
 const CLOSED_STORES=new Set(['音乐厅店','乐淘里店']);   /* 09-02：两家店 8 月末关店，门店明细灰色斜体呈现 */
+function storeAliveInPeriod(s){ if(!CLOSED_STORES.has(s)) return true; try{ return storeStats(state.ym,state.half,s).rev>0; }catch(e){ return true; } }   /* 09-16 卷卷：报告期零销售的关店（音乐厅/乐淘里）不呈现在门店明细与胶囊；有销售的期间（如 8 月）照常出现 */
 const CLOSED_TAG={'乐淘里店':'closed on Aug 25','音乐厅店':'closed on Aug 31'};   /* 09-02：店名旁小号字注释(关店日期)，随店映射 */
 function storeStats(ym, half, store){ const n=elapsedDays(ym,half)||1; const w=sumWindow(ym,half,n); const o=w[store]||{rev:0,tc:0}; const mom=sumWindow(prevHalf(ym,half)[0], prevHalf(ym,half)[1], n); const mo=monthBudget(ym,store), d=monthDays(ym); const yy=+ym.split('-')[0]-1, yoy=sumWindow(yy+'-'+ym.split('-')[1], half, n); const moW=mom[store]||{rev:0,tc:0}, yoW=yoy[store]||{rev:0,tc:0}; const dn=(store===XILI)?(storeSalesDays(ym,half,store,n)||1):n;   /* 09-02：西丽日均=窗口内实际有销售天数的日均 */
   const odBud=orderDayBudget(ym,half,store,n);   /* 营业日口径累计预算：普通门店=自然天，西丽按实际营业天数折算 */
@@ -1151,7 +1154,8 @@ function storeStats(ym, half, store){ const n=elapsedDays(ym,half)||1; const w=s
 function groupStats(rows){ const rev=rows.reduce((a,r)=>a+r.rev,0), tc=rows.reduce((a,r)=>a+r.tc,0), bud=rows.reduce((a,r)=>a+r.mtdBudget,0); const n=elapsedDays(state.ym,state.half)||1; const stores=rows.map(r=>r.store); const [py,ph]=prevHalf(state.ym,state.half); const prevRev=stores.reduce((a,s)=>{ const o=sumWindow(py,ph,n)[s]; return a+(o?o.rev:0); },0); const yy=+state.ym.split('-')[0]-1; const yoyRev=stores.reduce((a,s)=>{ const o=sumWindow(yy+'-'+state.ym.split('-')[1], state.half, n)[s]; return a+(o?o.rev:0); },0); return {rev,tc,daily:rev/n,dailyTC:tc/n,ac:tc?rev/tc:0,mtdSales:rev,mtdBudget:bud,attain:bud?rev/bud:null, mom:dlt(rev,prevRev), yoy:dlt(rev,yoyRev)}; }
 function storeRowHtml(r, cls, name){ const exIt='<div style="color:var(--sub);font-style:italic;font-size:11px">'; const acDual = r._dual ? '<div>'+fmt(r.ac,1)+'</div>'+exIt+fmt(r._acEx,1)+'</div>' : fmt(r.ac,1); const closed=CLOSED_STORES.has(r.store)?' closed':''; const ctag=CLOSED_STORES.has(r.store)?'<span class="closed-tag">('+CLOSED_TAG[r.store]+')</span>':''; return '<tr class="'+cls+closed+'"><td>'+name+ctag+'</td><td>'+fmt(r.daily,0)+'</td><td class="'+(r.mom==null?'flat':(r.mom>=0?'up':'down'))+'">'+(r.mom==null?'-':pct(r.mom))+'</td><td class="'+(r.yoy==null?'flat':(r.yoy>=0?'up':'down'))+'">'+(r.yoy==null?'-':pct(r.yoy))+'</td><td>'+fmt(r.dailyTC,0)+'</td><td>'+acDual+'</td><td>'+fmt(r.mtdSales,0)+'</td><td>'+fmt(r.mtdBudget,0)+'</td><td>'+(r.attain==null?'-':pct(r.attain))+'</td></tr>'; }
 function renderStores(){
-  const SZ=DATA.stores10.filter(s=>DATA.store_city[s]==='SZ'&&storeOk(s)), SH=DATA.stores10.filter(s=>DATA.store_city[s]==='SH'&&storeOk(s));
+  buildStoreChecks();   /* 09-16：胶囊随报告期重建（零销售的关店不出现；切回有销售的期间自动回来） */
+  const SZ=DATA.stores10.filter(s=>DATA.store_city[s]==='SZ'&&storeOk(s)&&storeAliveInPeriod(s)), SH=DATA.stores10.filter(s=>DATA.store_city[s]==='SH'&&storeOk(s)&&storeAliveInPeriod(s));
   const stat=s=>storeStats(state.ym,state.half,s);
   const rowsSZ=SZ.map(stat).sort((a,b)=>b.rev-a.rev);
   const rowsSH=SH.map(stat).sort((a,b)=>b.rev-a.rev);
@@ -1695,8 +1699,8 @@ window.addEventListener('resize', function(){ var t=null; return function(){ cle
     <div class="page-hd"><h2 class="page-title">PRODUCT MIX BY CITY</h2><span class="page-date"></span></div>
     <div class="page-body">
       <div class="cat-grid">
-        <div class="panel"><div class="lang-bar"><button class="lang-toggle" type="button" data-scope="product">中文</button></div><div class="sup-legend"></div><h2>Category Distribution (Sales) · SZ</h2><div id="catBarsSZ"></div></div>
-        <div class="panel"><div class="lang-bar"><button class="lang-toggle" type="button" data-scope="product">中文</button></div><div class="sup-legend"></div><h2>Category Distribution (Sales) · SH</h2><div id="catBarsSH"></div></div>
+        <div class="panel"><div class="lang-bar"><button class="lang-toggle" type="button" data-scope="product">中文</button></div><div class="sup-legend sl-note"></div><h2>Category Distribution (Sales) · SZ</h2><div id="catBarsSZ"></div></div>
+        <div class="panel"><div class="lang-bar"><button class="lang-toggle" type="button" data-scope="product">中文</button></div><div class="sup-legend sl-note"></div><h2>Category Distribution (Sales) · SH</h2><div id="catBarsSH"></div></div>
       </div>
     </div>
     <div class="page-ft"><span class="page-no">CROISSANTERIE · BI-WEEKLY</span><span class="page-date">03 / 12</span><span class="page-note">Product sales exclude vouchers &amp; gift credits.</span></div>
