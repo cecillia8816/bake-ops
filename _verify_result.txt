@@ -1,4 +1,0 @@
-﻿sb_week online: 864b40348ff3e396c1f5ef4054e0c463
-sb_sup  online: 475a813fec97c2384909a7f8b9097184
-local wk today: 864b40348ff3e396c1f5ef4054e0c463 (today) / 49cd1bb6b34586705ec83c6832a12082 (yesterday deploy)
-local sup today: 475a813fec97c2384909a7f8b9097184 (today) / 76f916bd44745055dc329af75405138c (yesterday deploy)
