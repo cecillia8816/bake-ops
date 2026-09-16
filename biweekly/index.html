@@ -715,6 +715,14 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
 .controls-row .ctl>select,.controls-row .ctl>.seg{margin-top:0}   /* 09-16 卷卷：改为与其他控件同一垂直中线 */
 .controls-row .ctl>label{font-weight:600;color:var(--sub);font-size:10.5px;line-height:14px;height:14px;flex-shrink:0;text-transform:uppercase;letter-spacing:.08em}
 .controls-row .ctl-stores{flex:1 1 560px;min-width:560px;align-items:center}
+/* ---- 桌面端控件区压成 2 行（标签与控件同行、门店胶囊独占次行），给下方卡片让出空间（用户 09-16）---- */
+@media(min-width:861px){
+  .controls-row{grid-template-columns:auto auto 1fr;align-items:center;gap:4px 16px}
+  .controls-row .ctl{flex-direction:row;align-items:center;gap:8px}
+  .page-overview .ctl-strip .ctl-stores>label{grid-row:1;grid-column:3;align-self:center}
+  .page-overview .ctl-strip .store-rows{grid-row:2;grid-column:1 / -1;gap:10px;flex-wrap:nowrap}
+  .ctl-strip{padding:4px 0 4px}
+}
 .info-row{display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding-top:6px;margin-top:6px;border-top:1px dashed var(--line-strong);font-size:11px;color:var(--sub)}
 .info-row b{color:var(--brand);font-weight:700}
 .stores label{display:inline-flex;align-items:center;justify-content:flex-start;gap:5px;width:auto;min-width:74px;background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:10px;cursor:pointer;user-select:none;color:var(--sub);white-space:nowrap;transition:all .15s ease}
@@ -973,6 +981,21 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
 @media print{   /* 09-16 卷卷：封面页在打印时高度塌陷→PDF 首页空白；强制 A4 尺寸后正常 */
   .page.cover{width:297mm!important;height:210mm!important;overflow:hidden!important}
   .page.cover .page-inner{width:100%!important;height:100%!important;aspect-ratio:auto!important;overflow:visible!important}
+}
+/* ===== 09-16 卷卷（晚）：手机端文字块一律上下单列 + 去掉文字块内的分隔线；桌面端完全不动 =====
+   放在样式表最末尾以顺序取胜；全部包在 max-width:900px 内，桌面不匹配。 */
+@media(max-width:900px){
+  /* OVERVIEW 产品信息卡：SZ / SH 由左右两块 → 上下两块（窄屏不并排） */
+  .page-overview .note-box .bl-cols{grid-template-columns:1fr!important;column-gap:0!important;row-gap:0}
+  .page-overview .note-box .bl-col{min-width:0}
+  /* 上下两块之间不画分隔线，只留间距 */
+  .page-overview .note-box .bl-col + .bl-col{margin-top:10px;padding-top:0;border-top:none!important}
+  /* 其它页面若出现两列文字容器，一并单列化（数字/表格卡不受影响） */
+  .page .note-box .bl-cols{grid-template-columns:1fr!important;column-gap:0!important}
+  .page .bullets-cols{grid-template-columns:1fr!important;column-gap:0!important}
+  /* 手机端文字块标题下的横线去掉（窄屏更清爽） */
+  .page .note-box > b{border-bottom:none;padding-bottom:0;margin-bottom:4px}
+  .page-project .progress-card h3{border-bottom:none;padding-bottom:0;margin-bottom:5px}
 }
 body.hide-top-pages .page-top{display:none}
 .page-storepl{display:none!important}
@@ -1584,7 +1607,10 @@ const FIN=(()=>{ const mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Se
 })();
 // 08-31：财务表动态行高——行高=(卡内可用高-表头)/行数，让每张表恰好填满卡片(无上下滑动条,也不留空)；随窗口/resize重算
 /* 09-16 卷卷：项目页三行卡片等高分配——富余按行均分，使每张卡内部留白一致 */
-function fitProj(){ const g=document.querySelector('.page-project .proj-grid'); if(!g) return; const cards=[...g.children]; if(cards.length<5) return;
+function fitProj(){ const g=document.querySelector('.page-project .proj-grid'); if(!g) return; const cards=[...g.children];
+  /* 09-16 晚（卷卷：project 页文字卡下方过度留白）：手机端内容驱动高度，不做等高分配；仅桌面执行 */
+  if(innerWidth<900){ cards.forEach(function(c){ c.style.height=''; }); return; }
+  if(cards.length<5) return;
   const rows=[[cards[0],cards[1]],[cards[2],cards[3]],[cards[4]]];
   cards.forEach(function(c){ c.style.height=''; });
   const content=rows.map(function(r){ return Math.max.apply(null, r.map(function(c){ let k=0; [...c.children].forEach(function(x){ k+=x.getBoundingClientRect().height; }); const cs=getComputedStyle(c); return k+parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom); })); });
