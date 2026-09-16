@@ -233,9 +233,9 @@ body.is-h1 .page-fin,body.is-h1 .page-storepl{display:flex}
 .page-overview .note-box .bl-col{min-width:0}
 .page-overview .note-box .bl-hd{font-weight:700;font-size:10px;letter-spacing:.06em;margin:4px 0 1px 0;color:var(--ink)}
 .page-overview .ctl-strip .stores{flex-wrap:nowrap}   /* 09-16 卷卷：门店胶囊一行排 */
-.page-overview .ctl-strip .stores label{min-width:0;padding:3px 7px;font-size:9.5px;gap:4px}   /* 胶囊收紧，够一行放 8 个 */
+.page-overview .ctl-strip .stores label{min-width:0;padding:2px 6px;font-size:9px;gap:4px}   /* 胶囊收紧，够一行放 8 个 */
 .page-overview .ctl-strip .store-row{flex-wrap:nowrap}
-.page-overview .ctl-strip .store-lbl{width:auto;font-size:10px}
+.page-overview .ctl-strip .store-lbl{width:auto;font-size:9px}
 .page-overview .ctl-strip{border-bottom:none}   /* 09-16 卷卷：取消控件区下方横线 */
 .controls-row .ctl>select{font-size:11px;padding:5px 9px}   /* 09-16 卷卷：下拉字体小 1 号，宽度由 fitPeriodSel 贴文字 */
 .controls-row .seg button{font-size:11px;padding:5px 9px}
@@ -707,9 +707,11 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
 .masthead .stat-v{font-family:var(--serif);font-size:22px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
 .masthead .stat-v.stat-small{font-size:14px;font-weight:600}
 .masthead .stat-v.stat-rate{font-size:16px}
-.controls-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px 18px}   /* 09-16 卷卷：第一层(标签)顶对齐，控件在各自标签下方 */
+.controls-row{display:grid;grid-template-columns:auto auto 1fr;align-items:start;gap:6px 16px}   /* 09-16 卷卷：栅格化——标签一行齐、门店胶囊独占次行 */   /* 09-16 卷卷：第一层(标签)顶对齐，控件在各自标签下方 */
 .controls-row .ctl{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex-shrink:0;flex-wrap:nowrap}   /* 09-16 卷卷：标签在上、控件在下 */
-.page-overview .ctl-strip .ctl-stores{align-items:flex-start}
+.page-overview .ctl-strip .ctl-stores{display:contents}   /* 让 STORES 标签与胶囊成为栅格子项 */
+.page-overview .ctl-strip .ctl-stores>label{grid-row:1;grid-column:3;align-self:start}
+.page-overview .ctl-strip .store-rows{grid-row:3;grid-column:1 / -1;gap:10px;flex-wrap:nowrap}   /* 胶囊占满整行→一行放全 */
 .controls-row .ctl>select,.controls-row .ctl>.seg{margin-top:0}   /* 09-16 卷卷：改为与其他控件同一垂直中线 */
 .controls-row .ctl>label{font-weight:600;color:var(--sub);font-size:10.5px;line-height:14px;height:14px;flex-shrink:0;text-transform:uppercase;letter-spacing:.08em}
 .controls-row .ctl-stores{flex:1 1 560px;min-width:560px;align-items:center}
