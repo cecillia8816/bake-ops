@@ -138,9 +138,10 @@ body.is-h1 .page-fin,body.is-h1 .page-storepl{display:flex}
   .wrap > .ctl-strip{order:1;position:sticky;top:0;z-index:900;background:rgba(242,246,250,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:8px 10px;border-radius:10px;box-shadow:0 4px 14px rgba(126,156,196,.12)}
   /* 门店折叠：10 胶囊收成一行按钮，点击展开 */
   .ctl-stores>label{display:none}
-  .controls-row .store-toggle{display:inline-flex;align-items:center;gap:4px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font-weight:600;font-size:12px;cursor:pointer;user-select:none}
+  /* 09-17 卷卷：手机端**不再折叠**门店胶囊 —— 默认直接展开 SZ / SH 两行，折叠按钮一并隐藏 */
+  .controls-row .store-toggle{display:none}
   .store-toggle .arr{color:var(--brand);font-size:11px}
-  .ctl-strip .store-rows{display:none}
+  .ctl-strip .store-rows{display:flex;flex-direction:column;gap:6px;width:100%}
   .ctl-strip.store-open .store-rows{display:flex}
   /* 滚动式布局：页脚/装饰省略，panel 自然高度不裁剪 */
   .page .page-ft{display:none}
@@ -646,6 +647,9 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
   .page .page-overview .store-row{flex-direction:row;align-items:center;gap:6px;flex-wrap:nowrap}
   .page .store-lbl{width:auto}
   .page .store-rows .stores{justify-content:flex-start}
+  /* 注：手机端门店胶囊「展开」的规则放在样式表末尾的 @media screen and (max-width:900px) 块里，
+     且必须用 `.wrap > .ctl-strip` 前缀 —— 因为手机端 JS 会把 .ctl-strip 移到 .wrap 下（整文档吸顶），
+     届时它不再是 .page-overview 的后代，带 `.page .page-overview` 前缀的选择器会全部失效。 */
   /* KPI 数值缩小（当前 22px 导致金额/order 分两行溢出） */
   /* KPI 卡压缩高度（手机端） */
   .page-overview .kpi .val{font-size:15px;margin:1px 0 0;line-height:1.1}  /* 08-17：手机 KPI 大数值 15px */
@@ -1055,19 +1059,28 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
   .page-supform .supform-table td{font-size:11px}
   .page-supform .supform-table thead th:nth-child(-n+9){font-size:10px}
   .page-topbottom .top-table thead th,.page-topbottom .top-table tbody td{font-size:10px}
-  /* ⑤ 09-17 卷卷：SABC / PREV 徽章与升降三角用的是「固定小字号」7.5px / 8px，不随正文走，
-        正文提到 10px 后差距拉大到 2.5px —— 肉眼就是"比别的字小一号"。
-        这里让它们与所在表格的正文同号（TOP20 页正文 10px、TOP5 卡片正文 11px），
-        徽章靠 min-width + padding 自然撑开；仅桌面生效，手机端原样不动。 */
-  .page-topbottom .top-table .sabc{font-size:10px;line-height:14px;min-width:18px;padding:0 3px}
-  .page-topbottom .top-table .wk-arrow{font-size:10px;line-height:1}
-  .page-top .top-grid .top-table .sabc,.page-weak .top-grid .top-table .sabc{font-size:11px;line-height:15px;min-width:18px;padding:0 3px}
-  .page-top .top-grid .top-table .wk-arrow,.page-weak .top-grid .top-table .wk-arrow{font-size:11px}
+  /* ⑤ 09-17 卷卷：SABC / PREV 徽章与升降三角原为固定 7.5px / 8px（不随正文走）；
+        曾提到与正文同号(10/11px)后卷卷反馈「太大号」→ **定档 8.5px**（桌面/手机统一）。
+        徽章靠 min-width + padding 自然撑开。 */
+  .page-topbottom .top-table .sabc{font-size:8.5px;line-height:12px;min-width:16px;padding:0 3px}
+  .page-topbottom .top-table .wk-arrow{font-size:8.5px;line-height:1}
+  .page-top .top-grid .top-table .sabc,.page-weak .top-grid .top-table .sabc{font-size:8.5px;line-height:12px;min-width:16px;padding:0 3px}
+  .page-top .top-grid .top-table .wk-arrow,.page-weak .top-grid .top-table .wk-arrow{font-size:8.5px}
 }
 @media screen and (max-width:900px){
-  /* ⑤-手机端 09-17 卷卷：徽章/三角与手机端正文(9px)对齐（原先也是固定 7.5px/8px） */
-  .page-topbottom .top-table .sabc{font-size:9px;line-height:13px;padding:0 3px}
-  .page-topbottom .top-table .wk-arrow{font-size:9px}
+  /* ⑤-手机端 09-17 卷卷：同步 8.5px 定档（原先固定 7.5px / 8px） */
+  .page-topbottom .top-table .sabc{font-size:8.5px;line-height:12px;padding:0 3px}
+  .page-topbottom .top-table .wk-arrow{font-size:8.5px}
+  /* 09-17 卷卷：手机端门店胶囊「展开」———————————————————————————
+     坑一：.controls-row 是三列 grid（Period | City | Stores），.ctl-stores 默认只占第 3 列
+     （约 154px），胶囊在这么窄的容器里只能一行一个 → 控制条被撑到 221px 高。需让它跨满整行。
+     坑二（更隐蔽）：手机端 JS 会把 .ctl-strip 移到 .wrap 下做整文档吸顶，**它不再是
+     .page-overview 的后代** —— 所以任何 `.page .page-overview .ctl-strip ...` 前缀的选择器
+     全部不匹配（写了也白写）。必须用 `.wrap > .ctl-strip`。 */
+  .wrap > .ctl-strip .ctl-stores{grid-column:1 / -1;grid-row:auto;width:100%;min-width:0}
+  .wrap > .ctl-strip .store-rows{display:flex;flex-direction:column;width:100%;min-width:0;gap:6px}
+  .wrap > .ctl-strip .store-row{flex-wrap:nowrap;width:100%;align-items:flex-start;gap:6px}
+  .wrap > .ctl-strip .store-row .stores{flex-wrap:wrap;flex:1 1 auto;min-width:0;justify-content:flex-start}
 }
 body.hide-top-pages .page-top{display:none}
 .page-storepl{display:none!important}
