@@ -57,6 +57,8 @@ body.is-h1 .page-fin,body.is-h1 .page-storepl{display:flex}
 .page-fin .fin-card:nth-child(2){flex:1 1 0.8}   /* 现金流行11行,稍矮 */
 .page-fin .fin-card>h2,.page-storepl .fin-card>h2{margin:0 0 8px;font-family:var(--serif);font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
 .page-fin .fin-card>h2::before,.page-storepl .fin-card>h2::before{content:'';width:6px;height:10px;border-radius:2px;background:var(--mist);flex:none}   /* 08-31：莫兰迪小方块标签,同 supform 卡 */
+/* 09-17 卷卷：P&L / CASH FLOW 卡标题上直接写明单位(千元)，手机端滚走页眉也能看到 */
+.page-fin .fin-card>h2 .fin-card-unit,.page-storepl .fin-card>h2 .fin-card-unit{font-family:var(--sans);font-size:9px;font-weight:600;color:var(--sub);letter-spacing:.02em;white-space:nowrap}
 .page-fin .fin-cards .note-stack,.page-storepl .fin-cards .note-stack{flex:0 0 auto;margin-top:4px}
 .page-hd .page-date.fin-unit{margin-left:auto;font-size:8px;color:var(--sub);font-weight:400;white-space:nowrap;font-family:var(--sans)}   /* 08-31：单位再缩2号(高特指度压过 .page-hd .page-date 11px) */
 .fin-tbl{flex:1 1 auto;min-height:0;overflow:hidden}
@@ -1012,8 +1014,12 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
   /* 科目列(26% + nowrap)在窄屏装不下现金流长行名 → 溢出压到月份列。窄屏放开换行、加宽科目列、字号降 0.5 */
   .page-fin .fin-card .fin-tbl th,.page-fin .fin-card .fin-tbl td,
   .page-storepl .fin-card .fin-tbl th,.page-storepl .fin-card .fin-tbl td{font-size:9px;padding:0 4px}
-  .page-fin .fin-card .fin-tbl th:first-child,.page-fin .fin-card .fin-tbl td:first-child,
-  .page-storepl .fin-card .fin-tbl th:first-child,.page-storepl .fin-card .fin-tbl td:first-child{white-space:normal;word-break:break-word;line-height:1.15;width:32%}
+  /* 09-17 卷卷②：首列(ITEM)横向滚动时不跟着走 → 冻结(sticky left)，同时再收窄 32% → 140px */
+  .page-fin .fin-card .fin-tbl th:first-child,.page-fin .fin-card .fin-tbl td.fin-l,
+  .page-storepl .fin-card .fin-tbl th:first-child,.page-storepl .fin-card .fin-tbl td.fin-l{white-space:normal;word-break:break-word;line-height:1.15;width:140px;min-width:140px;max-width:140px;position:-webkit-sticky;position:sticky;left:0;z-index:3;background:#fff;box-shadow:1px 0 0 rgba(126,156,196,.28)}
+  /* 上面的选择器特指度(0,3,1)压不过 #finPlTbl th:first-child(1,1,1) 的 22% → 用同特指度+后置覆盖，三张表首列统一 140px */
+  #finPlTbl th:first-child,#finPlTbl td.fin-l,#finCfTbl th:first-child,#finCfTbl td.fin-l,
+  #storePlTbl th:first-child,#storePlTbl td.fin-l{width:140px;min-width:140px;max-width:140px}
   .page-fin .fin-card .fin-tbl tbody tr,.page-storepl .fin-card .fin-tbl tbody tr{height:auto!important}
 }
 body.hide-top-pages .page-top{display:none}
@@ -1414,7 +1420,8 @@ function renderMini(elId, series, key, color, opts){
   const ymin=0;
   const X=i=>padL+plotW*i/(series.length-1||1);
   const Y=v=>padT+plotH-plotH*(v-ymin)/(ymax-ymin||1);
-  const step=series.length>1?Math.max(1,Math.ceil(series.length/Math.max(2,Math.floor(W/90)))):1;
+  /* 09-17 卷卷：每个月都要写上(此前窄窗口下被跳成隔月) → 按标签实际占位算步长：≥34px 才跳号 */
+  const step=series.length>1?Math.max(1,Math.ceil(34*(series.length-1)/Math.max(1,plotW))):1;
   const last=series.length-1;
   let path=''; series.forEach((d,i)=>{ path+=(i?'L':'M')+X(i).toFixed(1)+' '+Y(d[key]).toFixed(1); });
   let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block"><defs><filter id="cardShadowS" x="-30%" y="-30%" width="170%" height="170%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(58,69,83,.20)"/></filter></defs>';
@@ -1508,7 +1515,8 @@ function renderTcAc(elId, series){
   const X=i=>padL+plotW*i/(series.length-1||1);
   const Ytc=v=>padT+plotH-plotH*(v-tcmin)/(tcmax-tcmin||1);
   const Yac=v=>padT+plotH-plotH*(v-acmin)/(acmax-acmin||1);
-  const step=series.length>1?Math.max(1,Math.ceil(series.length/Math.max(2,Math.floor(W/110)))):1;
+  /* 09-17 卷卷：每个月都要写上(与月度销售图同规则) */
+  const step=series.length>1?Math.max(1,Math.ceil(34*(series.length-1)/Math.max(1,plotW))):1;
   const last=series.length-1;
   let svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block"><defs><filter id="cardShadowD" x="-30%" y="-30%" width="170%" height="170%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(58,69,83,.20)"/></filter></defs>';
   // 左 Y 轴 TC 刻度（灰，与 X 轴同色；字号 9px）
@@ -2120,11 +2128,11 @@ window.addEventListener('resize', function(){ var t=null; return function(){ cle
     <div class="page-body">
       <div class="fin-cards">
         <div class="fin-card">
-          <h2>P&amp;L</h2>
+          <h2>P&amp;L <span class="fin-card-unit">(unit: '000)</span></h2>
           <div class="fin-tbl" id="finPlTbl"></div>
         </div>
         <div class="fin-card">
-          <h2>CASH FLOW</h2>
+          <h2>CASH FLOW <span class="fin-card-unit">(unit: '000)</span></h2>
           <div class="fin-tbl" id="finCfTbl"></div>
         </div>
         <div class="note-stack"><div class="note" data-text="note_30" data-en="Company-level basis (SZ + SH combined, incl. HQ costs). Source: latest financial statements." data-cn="公司整体口径（深圳+上海合并，含总部费用）。来源：最新财务报表。">Company-level basis (SZ + SH combined, incl. HQ costs). Source: latest financial statements.</div></div>
