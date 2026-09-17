@@ -57,8 +57,7 @@ body.is-h1 .page-fin,body.is-h1 .page-storepl{display:flex}
 .page-fin .fin-card:nth-child(2){flex:1 1 0.8}   /* 现金流行11行,稍矮 */
 .page-fin .fin-card>h2,.page-storepl .fin-card>h2{margin:0 0 8px;font-family:var(--serif);font-size:13px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px}
 .page-fin .fin-card>h2::before,.page-storepl .fin-card>h2::before{content:'';width:6px;height:10px;border-radius:2px;background:var(--mist);flex:none}   /* 08-31：莫兰迪小方块标签,同 supform 卡 */
-/* 09-17 卷卷：P&L / CASH FLOW 卡标题上直接写明单位(千元)，手机端滚走页眉也能看到 */
-.page-fin .fin-card>h2 .fin-card-unit,.page-storepl .fin-card>h2 .fin-card-unit{font-family:var(--sans);font-size:9px;font-weight:600;color:var(--sub);letter-spacing:.02em;white-space:nowrap}
+/* 09-17 卷卷②：卡片标题内的单位已删（与页眉右上角 Unit: RMB '000 重复），此规则同步移除 */
 .page-fin .fin-cards .note-stack,.page-storepl .fin-cards .note-stack{flex:0 0 auto;margin-top:4px}
 .page-hd .page-date.fin-unit{margin-left:auto;font-size:8px;color:var(--sub);font-weight:400;white-space:nowrap;font-family:var(--sans)}   /* 08-31：单位再缩2号(高特指度压过 .page-hd .page-date 11px) */
 .fin-tbl{flex:1 1 auto;min-height:0;overflow:hidden}
@@ -328,11 +327,12 @@ body.is-h1 .page-fin,body.is-h1 .page-storepl{display:flex}
 
 /* ---- MONTHLY OVERVIEW：上下两个卡片，Sales 上、TC+AC 双Y轴 下 ---- */
 .page-monthly #monthlyChart{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column}
-.page-monthly .month-grid{flex:1 1 auto;min-height:0;display:grid;grid-template-rows:1fr 1fr;gap:10px}
+.page-monthly .month-grid{flex:1 1 auto;min-height:0;display:grid;grid-template-rows:1fr 1fr;gap:20px}   /* 09-17 卷卷④：上下两卡间距 10→20px（原来贴太近） */
 .page-monthly .mini.sales{min-height:0;display:flex;flex-direction:column;padding:10px 6px}
 .page-monthly .mini.dual{min-height:0;display:flex;flex-direction:column;padding:10px 6px}
 .page-monthly .mini-hd{flex:0 0 auto;margin-bottom:2px}
 .page-monthly .mini-title{font-size:11px}
+.page-monthly .mini-sub{font-size:9px;font-weight:600;color:var(--sub);letter-spacing:.02em;margin-left:2px}   /* 09-17 卷卷：卡标题单位/口径限定词（小1号、次要色） */
 .page-monthly .chart-leg{font-size:9px;gap:8px}
 .page-monthly .mini > div[id]{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .page-monthly .mini > div[id] svg{width:100%!important;height:100%!important;display:block}
@@ -558,14 +558,14 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
 .page-topbottom .top-table{width:100%;height:100%;table-layout:fixed;border-collapse:collapse}
 .page-topbottom .top-table th,.page-topbottom .top-table td{overflow:hidden}
 .page-topbottom .top-table th.no,.page-topbottom .top-table td.no{width:20px;min-width:20px;max-width:20px;text-align:center;font-variant-numeric:tabular-nums;color:var(--sub);padding:3px 1px}  /* 09-17 卷卷：序列号列收窄 */
-.page-topbottom .top-table th:nth-child(2),.page-topbottom .top-table td:nth-child(2){text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere;width:182px;min-width:182px;padding:2px 8px}
-.page-topbottom .top-table th:nth-child(3),.page-topbottom .top-table td:nth-child(3){text-align:left;white-space:nowrap;text-overflow:ellipsis;width:126px;min-width:126px;padding:2px 8px}
+.page-topbottom .top-table th:nth-child(2),.page-topbottom .top-table td:nth-child(2){text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere;width:178px;min-width:178px;padding:2px 8px}   /* 09-17 卷卷⑤：字号+1 后重分配——Product 182→178 */
+.page-topbottom .top-table th:nth-child(3),.page-topbottom .top-table td:nth-child(3){text-align:left;white-space:nowrap;text-overflow:ellipsis;width:116px;min-width:116px;padding:2px 8px}   /* Sub-category 126→116（其最长值 Fresh Shelf Pastry 仍放得下） */
 .page-topbottom .top-table th:nth-child(4),.page-topbottom .top-table td:nth-child(4){text-align:left;white-space:nowrap;text-overflow:ellipsis;width:96px;min-width:96px;padding:2px 8px}
-.page-topbottom .top-table th:nth-child(5),.page-topbottom .top-table td:nth-child(5){text-align:left;white-space:nowrap;text-overflow:ellipsis;width:80px;min-width:80px;padding:2px 6px}
+.page-topbottom .top-table th:nth-child(5),.page-topbottom .top-table td:nth-child(5){text-align:left;white-space:nowrap;text-overflow:ellipsis;width:90px;min-width:90px;padding:2px 6px}   /* Form 80→90：10px 下 Frozen Dough 不再截断 */
 .page-topbottom .top-table th:nth-child(6),.page-topbottom .top-table td:nth-child(6){text-align:center;white-space:nowrap;width:38px;min-width:38px;max-width:38px;padding:2px 4px;border-left:1px solid rgba(126,156,196,.10)}
 .page-topbottom .top-table th:nth-child(7),.page-topbottom .top-table td:nth-child(7){text-align:right;white-space:nowrap;width:36px;min-width:36px;padding:2px 4px}
 .page-topbottom .top-table th:nth-child(8),.page-topbottom .top-table td:nth-child(8){text-align:right;white-space:nowrap;width:50px;min-width:50px;padding:2px 4px}
-.page-topbottom .top-table th:nth-child(9),.page-topbottom .top-table td:nth-child(9){text-align:right;white-space:nowrap;width:44px;min-width:44px;padding:2px 4px}
+.page-topbottom .top-table th:nth-child(9),.page-topbottom .top-table td:nth-child(9){text-align:right;white-space:nowrap;width:48px;min-width:48px;padding:2px 4px}   /* 09-17 卷卷⑤：ofBak 44→48（10px 表头 OFBAK 溢出 1.6px） */
 .page-topbottom .top-table th:nth-child(10),.page-topbottom .top-table td:nth-child(10){text-align:right;white-space:nowrap;width:44px;min-width:44px;padding:2px 4px}
 .page-topbottom .top-table th:nth-child(11),.page-topbottom .top-table td:nth-child(11){text-align:center;white-space:nowrap;text-overflow:ellipsis;width:42px;min-width:42px;max-width:42px;padding:2px 2px}
 .page-topbottom .top-table th:nth-child(12),.page-topbottom .top-table td:nth-child(12){text-align:center;white-space:nowrap;text-overflow:ellipsis;width:32px;min-width:32px;max-width:32px;padding:2px 2px}
@@ -718,15 +718,16 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
 .controls-row .ctl>label{font-weight:600;color:var(--sub);font-size:10.5px;line-height:14px;height:14px;flex-shrink:0;text-transform:uppercase;letter-spacing:.08em}
 .controls-row .ctl-stores{flex:1 1 560px;min-width:560px;align-items:center}
 /* ---- 桌面端控件区：固定 2 行，不因宽度压成一行（用户 09-17）----
-   第1行 = PERIOD · CITY；第2行 = STORES 标签 + 门店胶囊横跨整行、两端铺开对齐 */
+   第1行 = PERIOD · CITY；第2行 = STORES 标签 + 门店胶囊整行连续排（SZ 组→SH 组，左对齐） */
 @media(min-width:861px){
   .controls-row{display:grid;grid-template-columns:auto auto 1fr;grid-template-rows:auto auto;align-items:center;gap:8px 16px}
   .controls-row .ctl{flex-direction:row;align-items:center;gap:8px;flex:0 0 auto;min-width:0}
   /* 门店整组独占第 2 行、横跨整行 */
   .page-overview .ctl-strip .ctl-stores{display:flex;flex-direction:row;align-items:center;gap:12px;grid-row:2;grid-column:1 / -1;width:100%;min-width:0}
   .page-overview .ctl-strip .ctl-stores>label{grid-row:auto;grid-column:auto;align-self:center;flex:0 0 auto}
-  /* 胶囊组吃满剩余宽度：SZ 组贴左、SH 组(含全选)贴右 → 与控件区左右边线两端对齐，不再左挤右空 */
-  .page-overview .ctl-strip .store-rows{display:flex;flex-direction:row;flex:1 1 auto;gap:12px;flex-wrap:nowrap;align-items:center;justify-content:space-between;grid-row:auto;grid-column:auto;min-width:0}
+  /* 09-17 卷卷②：SH 组不再被 space-between 推到最右（实测与 SZ 组隔了 257px 空洞）→ 全部左对齐连续排，
+     SZ 组与 SH 组之间只留 20px 组间距，视觉上是一条完整的门店清单 */
+  .page-overview .ctl-strip .store-rows{display:flex;flex-direction:row;flex:1 1 auto;gap:20px;flex-wrap:nowrap;align-items:center;justify-content:flex-start;grid-row:auto;grid-column:auto;min-width:0}
   .page-overview .ctl-strip .store-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
   .ctl-strip{padding:4px 0 4px}
 }
@@ -1021,6 +1022,32 @@ tr.grand td{background:var(--brand-soft);font-weight:800;border-top:2px solid va
   #finPlTbl th:first-child,#finPlTbl td.fin-l,#finCfTbl th:first-child,#finCfTbl td.fin-l,
   #storePlTbl th:first-child,#storePlTbl td.fin-l{width:140px;min-width:140px;max-width:140px}
   .page-fin .fin-card .fin-tbl tbody tr,.page-storepl .fin-card .fin-tbl tbody tr{height:auto!important}
+}
+
+/* ===== 09-17 卷卷：供应商页 / TOP20 页的「中文」按钮提到页面标题同一水平线（页眉行右侧）=====
+   原来按钮是卡片内首个子元素，白占 18px 高 + 10px 下边距 + 卡片 gap → 把卡片和表头整体压低 28~40px，
+   与其它页「标题 → 卡片」的 10px 间距不一致。桌面端改为绝对定位到页眉行；手机端规则完全不受影响
+   （按钮仍在卡片内右上角，即 08-26 卷卷定的手机端样式）。
+   定位基准 = 最近的定位祖先 .page-body（position:relative）；top:-31px 使按钮中线对齐标题中线：
+   标题行高 24px → 中线在 .page-body 顶边上方 22px → 18px 高按钮 top = -22-9 = -31px。 */
+@media screen and (min-width:901px){
+  /* ① 解除两层 overflow 裁剪：.page-body 的 auto 会切掉负 top；.panel 的 hidden 更狠——
+        实测它会把"绝对定位到 .page-body 上、跨越 .panel 边界"的按钮连**命中区**一起裁掉
+        （elementsFromPoint 在按钮中心拿不到按钮 → 点击被 .page-hd 接走）；
+     ② 抬高 .page-body 层级：它原本 z-index:1 → 自建层叠上下文，把按钮的 z-index:9 封在里面，
+        于是 z-index:2 的 .page-hd 反而盖在上层拦截点击。抬到 5 后按钮才真正可点。
+        各页「标题底→卡顶」实测均已 10px（与其它页一致），内容不溢出、无横向滚动。
+     ③ 用 screen 限定：@media print 里 page-hd 高 10mm、内边距 12mm，top:-31px 不成立，打印/PDF 保持原状。 */
+  .page-supform .page-body,.page-topbottom .page-body{overflow:visible;z-index:5}
+  .page-topbottom .page-body>.panel{overflow:visible}
+  .page-topbottom .page-body>.panel>.lang-bar,
+  .page-supform .supform-cards>.lang-bar{position:absolute;top:-31px;right:0;margin:0;padding:0;min-height:0;height:18px;display:flex;align-items:center;justify-content:flex-end;z-index:9}
+  /* ④ 09-17 卷卷：中文按钮移出卡片后腾出的纵向空间让给表格 → 表格字号各 +1 号（仅桌面；手机端保持原字号）
+        局部细节：供应商表第 10-12 列(OF BAKSKU/BakSales/All Sales)是窄列小字多行表头，
+        保持原 8.5px 不动（:nth-child(-n+9) 只挑前 9 个表头），避免撑破列宽。 */
+  .page-supform .supform-table td{font-size:11px}
+  .page-supform .supform-table thead th:nth-child(-n+9){font-size:10px}
+  .page-topbottom .top-table thead th,.page-topbottom .top-table tbody td{font-size:10px}
 }
 body.hide-top-pages .page-top{display:none}
 .page-storepl{display:none!important}
@@ -1484,7 +1511,7 @@ function renderMonthly(){
   const legDual='<div class="chart-leg">'+legItem('#FDF69C','Daily TC (left axis)')+legItem('#F5A9B8','Avg AC (right axis, ¥)')+'</div>';
   document.getElementById('monthlyChart').innerHTML=
     '<div class="month-grid">'+
-    '<div class="mini sales"><div class="mini-hd"><div class="mini-title">Monthly Sales</div>'+legSales+'</div><div id="monthSales"></div></div>'+
+    '<div class="mini sales"><div class="mini-hd"><div class="mini-title">Monthly Sales <span class="mini-sub">(gross)</span></div>'+legSales+'</div><div id="monthSales"></div></div>'+
     '<div class="mini dual"><div class="mini-hd"><div class="mini-title">Daily Avg TC &amp; Avg AC</div>'+legDual+'</div><div id="monthTcAc"></div></div>'+
     '</div>'+
     '<div class="note">Complete months only (Jan–'+months[_nMo-1]+').</div>'+
@@ -2128,11 +2155,11 @@ window.addEventListener('resize', function(){ var t=null; return function(){ cle
     <div class="page-body">
       <div class="fin-cards">
         <div class="fin-card">
-          <h2>P&amp;L <span class="fin-card-unit">(unit: '000)</span></h2>
+          <h2>P&amp;L</h2>
           <div class="fin-tbl" id="finPlTbl"></div>
         </div>
         <div class="fin-card">
-          <h2>CASH FLOW <span class="fin-card-unit">(unit: '000)</span></h2>
+          <h2>CASH FLOW</h2>
           <div class="fin-tbl" id="finCfTbl"></div>
         </div>
         <div class="note-stack"><div class="note" data-text="note_30" data-en="Company-level basis (SZ + SH combined, incl. HQ costs). Source: latest financial statements." data-cn="公司整体口径（深圳+上海合并，含总部费用）。来源：最新财务报表。">Company-level basis (SZ + SH combined, incl. HQ costs). Source: latest financial statements.</div></div>
