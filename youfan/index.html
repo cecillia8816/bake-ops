@@ -72,6 +72,24 @@
   .slot-tbl col.c-sl { width:112px; } .slot-tbl col.c-n { width:64px; }
   .slot-tbl col.c-m { width:76px; } .slot-tbl col.c-p { width:62px; }
   .slot-tbl col.c-w { width:70px; } .slot-tbl col.c-dv { width:14px; }
+  /* 手机端「首列冻结」（横向滑动时定位不丢）。整表仅 233px 高、一屏可见，故表头无需纵向冻结。
+     ⚠️ 一律用 thead tr:first-child th:first-child，勿写 th:first-child（会误冻每行首格）
+     ⚠️ sticky left 必须取负 padding(-14px)，否则首列左沿露出 15px 穿透 */
+  @media (max-width:900px) {
+    .slot-col > .panel { padding-left:0; padding-right:0; }
+    .slot-tbl thead tr:first-child th:first-child,
+    .slot-tbl tbody td:first-child { position:sticky; left:-14px; z-index:5; background:#FFFFFF; }
+    .slot-tbl thead tr:first-child th:first-child { background:#FCFBF9; }
+    .slot-tbl tr.total td:first-child { background:#FAF7F2; }
+    .slot-tbl thead tr:first-child th:first-child { box-shadow:14px 0 0 #FCFBF9, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
+    .slot-tbl tbody td:first-child { box-shadow:14px 0 0 #FFFFFF, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
+    .slot-tbl tr.total td:first-child { box-shadow:14px 0 0 #FAF7F2, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
+    .slot-tbl th:first-child, .slot-tbl td:first-child { padding-left:14px; }
+    .slot-col .panel .note { padding:0 14px; }
+    h1 { font-size:22px; }
+    .slot-col > .panel { -webkit-overflow-scrolling:touch; }
+    .slot-col .panel::after { content:'← 左右滑动查看全部列'; display:block; font-size:10px; color:#B0ABA4; text-align:right; margin:6px 14px 0; position:sticky; left:0; }
+  }
   /* 主表容器 */
   .slot-col { margin-bottom:16px; }
   .slot-col > .panel { padding:20px 22px; }
@@ -173,8 +191,27 @@
     .slot-row > .panel { min-width:0; max-width:100%; }
     .slot-row .hbar-top { font-size:8.5px; left:-5px; right:-5px; }
     .slot-row .chart { gap:3px; }
+    /* TOP 卡：手机端一行一卡；卡头 sticky 固定，表格横滑；冻结前 2 列（序号 + 产品名） */
+    .pgrid { grid-template-columns:1fr; }
     .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
-    .ptbl { min-width:560px; }
+    .pcard .pcard-head { position:sticky; left:0; z-index:6; }
+    .ptbl { min-width:520px; }
+    /* 冻结前 2 列：序号(left:0, 20px) + 产品名(left:20px)；负 left 抵消卡内 padding，胶带式遮住穿透 */
+    .ptbl th:nth-child(1), .ptbl td:nth-child(1) { position:sticky; left:-16px; z-index:5; background:#FFFFFF; }
+    .ptbl th:nth-child(2), .ptbl td:nth-child(2) { position:sticky; left:4px; z-index:5; background:#FFFFFF; }
+    .ptbl th:nth-child(1) { box-shadow:16px 0 0 #FCFBF9; }
+    .ptbl td:nth-child(1) { box-shadow:16px 0 0 #FFFFFF; }
+    .ptbl th:nth-child(2), .ptbl td:nth-child(2) { box-shadow:4px 0 0 #FFFFFF, 8px 0 10px -8px rgba(120,110,100,.22); }
+    .ptbl th:nth-child(2) { box-shadow:4px 0 0 #FCFBF9, 8px 0 10px -8px rgba(120,110,100,.22); }
+    .ptbl thead th:nth-child(1), .ptbl thead th:nth-child(2) { background:#FCFBF9; z-index:7; }
+    /* TOP20：两卡合并为一张（视觉上单一容器），卡内纵向滑动 */
+    .pgrid.pg-top20 { display:block; background:rgba(255,255,255,.7); backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.9); border-radius:14px; padding:0;
+      box-shadow:0 2px 12px rgba(120,110,100,.06); max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+    .pgrid.pg-top20 .pcard { background:none; backdrop-filter:none; border:none; border-radius:0;
+      box-shadow:none; padding:16px 16px 4px; margin:0; overflow:visible; }
+    .pgrid.pg-top20 .pcard:last-child { padding-bottom:16px; }
+    .pgrid.pg-top20 .ptbl thead th { position:sticky; top:0; z-index:3; background:#FCFBF9; }
     .qgrid .ptbl { min-width:420px; }
     /* 合并表（凑单补差件）为 .panel > .ptbl 直挂，需自身可横向滚动 */
     .qmerge { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
@@ -458,7 +495,7 @@
 
   <section>
     <h2>悠饭整体 TOP 20 产品<span class="en">Overall Top 20</span></h2>
-    <div class="pgrid" style="margin-top:4px">
+    <div class="pgrid pg-top20" style="margin-top:4px">
   <div class="pcard"><table class="ptbl"><colgroup><col class="c-rk"><col class="c-nm"><col class="c-v"><col class="c-a"><col class="c-u"><col class="c-dv"><col class="c-da"><col class="c-pa"><col class="c-ts"></colgroup><thead><tr><th class="rk"></th><th class="l">产品</th><th class="num">销量<span class="u">1-9月</span></th><th class="num">实收<span class="u">1-9月</span></th><th class="num">平均单价<span class="u">1-9月</span></th><th class="num">日均销量</th><th class="num">日均实收</th><th class="num">占本产品<span class="u">全店实收</span></th><th class="num">占全店<span class="u">总实收</span></th></tr></thead><tbody><tr><td class='rk'>1</td><td class="l" title="碱水面包丁"><span class="nm">碱水面包丁</span><span class="sabc sA" title="1-9月全店实收排名 第53名">A53</span></td><td class='num'>3,338</td><td class='num'>¥20,028</td><td class="num">¥6.0</td><td class='num'>12.6</td><td class='num'>¥76</td><td class='num pct'>69.6%</td><td class="num pct">0.39%</td></tr><tr><td class='rk'>2</td><td class="l" title="Voss芙丝饮用天然矿泉水"><span class="nm">Voss芙丝饮用天然矿泉水</span><span class="sabc sA" title="1-9月全店实收排名 第46名">A46</span></td><td class='num'>3,320</td><td class='num'>¥26,560</td><td class="num">¥8.0</td><td class='num'>12.6</td><td class='num'>¥101</td><td class='num pct'>80.2%</td><td class="num pct">0.52%</td></tr><tr><td class='rk'>3</td><td class="l" title="全麦核桃吐司（5片装）"><span class="nm">全麦核桃吐司（5片装）</span><span class="sabc sA" title="1-9月全店实收排名 第30名">A30</span></td><td class='num'>1,682</td><td class='num'>¥25,479</td><td class="num">¥15.1</td><td class='num'>6.4</td><td class='num'>¥97</td><td class='num pct'>48.3%</td><td class="num pct">0.50%</td></tr><tr><td class='rk'>4</td><td class="l" title="手打米面包（原味）"><span class="nm">手打米面包（原味）</span><span class="sabc sS" title="1-9月全店实收排名 第8名">S8</span></td><td class='num'>1,640</td><td class='num'>¥19,353</td><td class="num">¥11.8</td><td class='num'>6.2</td><td class='num'>¥73</td><td class='num pct'>21.0%</td><td class="num pct">0.38%</td></tr><tr><td class='rk'>5</td><td class="l" title="大厨热狗"><span class="nm">大厨热狗</span><span class="sabc sS" title="1-9月全店实收排名 第1名">S1</span></td><td class='num'>1,532</td><td class='num'>¥19,755</td><td class="num">¥12.9</td><td class='num'>5.8</td><td class='num'>¥75</td><td class='num pct'>10.4%</td><td class="num pct">0.39%</td></tr><tr><td class='rk'>6</td><td class="l" title="NFC鲜榨橙汁"><span class="nm">NFC鲜榨橙汁</span><span class="sabc sS" title="1-9月全店实收排名 第15名">S15</span></td><td class='num'>1,517</td><td class='num'>¥27,243</td><td class="num">¥18.0</td><td class='num'>5.7</td><td class='num'>¥103</td><td class='num pct'>33.2%</td><td class="num pct">0.54%</td></tr><tr><td class='rk'>7</td><td class="l" title="热狗芝士"><span class="nm">热狗芝士</span><span class="sabc sS" title="1-9月全店实收排名 第3名">S3</span></td><td class='num'>1,456</td><td class='num'>¥18,489</td><td class="num">¥12.7</td><td class='num'>5.5</td><td class='num'>¥70</td><td class='num pct'>12.4%</td><td class="num pct">0.36%</td></tr><tr><td class='rk'>8</td><td class="l" title="手打米面包（抹茶红豆味）"><span class="nm">手打米面包（抹茶红豆味）</span><span class="sabc sS" title="1-9月全店实收排名 第19名">S19</span></td><td class='num'>1,390</td><td class='num'>¥16,959</td><td class="num">¥12.2</td><td class='num'>5.3</td><td class='num'>¥64</td><td class='num pct'>24.4%</td><td class="num pct">0.33%</td></tr><tr><td class='rk'>9</td><td class="l" title="蓝莓酪酪花酥塔"><span class="nm">蓝莓酪酪花酥塔</span><span class="sabc sS" title="1-9月全店实收排名 第12名">S12</span></td><td class='num'>1,337</td><td class='num'>¥14,380</td><td class="num">¥10.8</td><td class='num'>5.1</td><td class='num'>¥54</td><td class='num pct'>17.1%</td><td class="num pct">0.28%</td></tr><tr><td class='rk'>10</td><td class="l" title="香浓松松"><span class="nm">香浓松松</span><span class="sabc sS" title="1-9月全店实收排名 第7名">S7</span></td><td class='num'>1,327</td><td class='num'>¥16,551</td><td class="num">¥12.5</td><td class='num'>5.0</td><td class='num'>¥63</td><td class='num pct'>14.4%</td><td class="num pct">0.33%</td></tr></tbody></table></div>
   <div class="pcard"><table class="ptbl"><colgroup><col class="c-rk"><col class="c-nm"><col class="c-v"><col class="c-a"><col class="c-u"><col class="c-dv"><col class="c-da"><col class="c-pa"><col class="c-ts"></colgroup><thead><tr><th class="rk"></th><th class="l">产品</th><th class="num">销量<span class="u">1-9月</span></th><th class="num">实收<span class="u">1-9月</span></th><th class="num">平均单价<span class="u">1-9月</span></th><th class="num">日均销量</th><th class="num">日均实收</th><th class="num">占本产品<span class="u">全店实收</span></th><th class="num">占全店<span class="u">总实收</span></th></tr></thead><tbody><tr><td class='rk'>11</td><td class="l" title="颂式海盐卷"><span class="nm">颂式海盐卷</span><span class="sabc sS" title="1-9月全店实收排名 第21名">S21</span></td><td class='num'>1,309</td><td class='num'>¥13,880</td><td class="num">¥10.6</td><td class='num'>5.0</td><td class='num'>¥53</td><td class='num pct'>20.3%</td><td class="num pct">0.27%</td></tr><tr><td class='rk'>12</td><td class="l" title="爆汁肠仔丹麦酥"><span class="nm">爆汁肠仔丹麦酥</span><span class="sabc sB" title="1-9月全店实收排名 第80名">B80</span></td><td class='num'>1,274</td><td class='num'>¥13,814</td><td class="num">¥10.8</td><td class='num'>4.8</td><td class='num'>¥52</td><td class='num pct'>14.8%</td><td class="num pct">0.27%</td></tr><tr><td class='rk'>13</td><td class="l" title="奶油霜餐包"><span class="nm">奶油霜餐包</span><span class="sabc sS" title="1-9月全店实收排名 第5名">S5</span></td><td class='num'>1,222</td><td class='num'>¥15,899</td><td class="num">¥13.0</td><td class='num'>4.6</td><td class='num'>¥60</td><td class='num pct'>11.0%</td><td class="num pct">0.31%</td></tr><tr><td class='rk'>14</td><td class="l" title="Vita唯他可可椰子水饮料"><span class="nm">Vita唯他可可椰子水饮料</span><span class="sabc sB" title="1-9月全店实收排名 第64名">B64</span></td><td class='num'>1,178</td><td class='num'>¥22,382</td><td class="num">¥19.0</td><td class='num'>4.5</td><td class='num'>¥85</td><td class='num pct'>89.8%</td><td class="num pct">0.44%</td></tr><tr><td class='rk'>15</td><td class="l" title="香浓吐司(5片装)"><span class="nm">香浓吐司(5片装)</span><span class="sabc sA" title="1-9月全店实收排名 第29名">A29</span></td><td class='num'>1,156</td><td class='num'>¥17,541</td><td class="num">¥15.2</td><td class='num'>4.4</td><td class='num'>¥66</td><td class='num pct'>32.0%</td><td class="num pct">0.35%</td></tr><tr><td class='rk'>16</td><td class="l" title="厚制肉饼贝果堡"><span class="nm">厚制肉饼贝果堡</span><span class="sabc sS" title="1-9月全店实收排名 第14名">S14</span></td><td class='num'>1,070</td><td class='num'>¥27,199</td><td class="num">¥25.4</td><td class='num'>4.1</td><td class='num'>¥103</td><td class='num pct'>33.5%</td><td class="num pct">0.54%</td></tr><tr><td class='rk'>17</td><td class="l" title="酪烧蛋糕"><span class="nm">酪烧蛋糕</span><span class="sabc sS" title="1-9月全店实收排名 第13名">S13</span></td><td class='num'>1,067</td><td class='num'>¥15,855</td><td class="num">¥14.9</td><td class='num'>4.0</td><td class='num'>¥60</td><td class='num pct'>19.2%</td><td class="num pct">0.31%</td></tr><tr><td class='rk'>18</td><td class="l" title="经典可颂"><span class="nm">经典可颂</span><span class="sabc sS" title="1-9月全店实收排名 第6名">S6</span></td><td class='num'>1,064</td><td class='num'>¥12,696</td><td class="num">¥11.9</td><td class='num'>4.0</td><td class='num'>¥48</td><td class='num pct'>9.5%</td><td class="num pct">0.25%</td></tr><tr><td class='rk'>19</td><td class="l" title="核桃卡仕达可颂"><span class="nm">核桃卡仕达可颂</span><span class="sabc sS" title="1-9月全店实收排名 第2名">S2</span></td><td class='num'>1,040</td><td class='num'>¥14,255</td><td class="num">¥13.7</td><td class='num'>3.9</td><td class='num'>¥54</td><td class='num pct'>9.0%</td><td class="num pct">0.28%</td></tr><tr><td class='rk'>20</td><td class="l" title="生气松松"><span class="nm">生气松松</span><span class="sabc sS" title="1-9月全店实收排名 第16名">S16</span></td><td class='num'>1,031</td><td class='num'>¥12,804</td><td class="num">¥12.4</td><td class='num'>3.9</td><td class='num'>¥48</td><td class='num pct'>16.5%</td><td class="num pct">0.25%</td></tr></tbody></table></div>
 </div>
