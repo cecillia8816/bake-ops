@@ -25,12 +25,12 @@
   /* 上下滑动时标题吸顶（桌面 + 手机统一）；实底色彻底遮住下方滚动内容 */
   h2 { position:sticky; top:0; z-index:20; background:#F4F2EF;
     padding:14px 0 10px; margin:-14px 0 6px; }
-  h2::before { content:''; position:absolute; left:-40px; right:-40px; bottom:100%; height:80px; background:#F4F2EF; }
+  h2::before { content:''; position:absolute; left:0; right:0; top:-40px; height:40px; background:#F4F2EF; }
   h2 { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:19px; font-weight:600; color:#2F2E2C; margin-bottom:6px; }
   h2 .en { color:#B0ABA4; font-weight:400; font-size:13px; margin-left:8px; }
   .h2sub { font-size:13px; color:#8A8681; margin-bottom:16px; }
   .panel { background:rgba(255,255,255,.7); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.9);
-    border-radius:14px; padding:22px 24px; box-shadow:0 2px 12px rgba(120,110,100,.06); }
+    border-radius:14px; padding:20px; box-shadow:0 2px 12px rgba(120,110,100,.06); }
   table { width:100%; border-collapse:collapse; font-size:13.5px; line-height:1; table-layout:fixed; }
   th { font-weight:500; color:#8A8681; font-size:12.5px; text-align:right; padding:10px 8px; border-bottom:1px solid #E4DFD8; }
   th.l, td.l { text-align:left; }
@@ -85,47 +85,14 @@
   /* 手机端「首列冻结」（横向滑动时定位不丢）。整表仅 233px 高、一屏可见，故表头无需纵向冻结。
      ⚠️ 一律用 thead tr:first-child th:first-child，勿写 th:first-child（会误冻每行首格）
      ⚠️ sticky left 必须取负 padding(-14px)，否则首列左沿露出 15px 穿透 */
-  @media (max-width:900px) {
-    /* 手机端压缩页面左右留白，让内容占满屏宽 */
-    body { padding:16px 8px 40px; }
-    .wrap { max-width:100%; }
-    .slot-col > .panel { padding-left:0; padding-right:0; }
-    .slot-tbl thead tr:first-child th:first-child,
-    .slot-tbl tbody td:first-child { position:sticky; left:-14px; z-index:5; background:#FFFFFF; }
-    .slot-tbl thead tr:first-child th:first-child { background:#FCFBF9; }
-    .slot-tbl tr.total td:first-child { background:#FAF7F2; }
-    .slot-tbl thead tr:first-child th:first-child { box-shadow:14px 0 0 #FCFBF9, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
-    .slot-tbl tbody td:first-child { box-shadow:14px 0 0 #FFFFFF, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
-    .slot-tbl tr.total td:first-child { box-shadow:14px 0 0 #FAF7F2, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
-    .slot-tbl th:first-child, .slot-tbl td:first-child { padding-left:14px; }
-    .slot-col .panel .note { padding:0 14px; }
-    h1 { font-size:22px; }
-    /* 手机端字号放大（可读性）：大表 13→14px、表头 11.5→12px，卡片内表同步 */
-    .slot-tbl td { font-size:14px; padding:10px 6px; }
-    .slot-tbl th { font-size:12px; padding:10px 6px; }
-    .slot-tbl .u { font-size:10px; }
-    .slot-tbl td.l b { font-size:14px; }
-    .slot-tbl .rng { font-size:12px; }
-    .ptbl td, .ptbl th { font-size:12px; padding:8px 4px; }
-    .ptbl th { font-size:11px; }
-    .ptbl td.l { font-size:12px; }
-    /* 手机端：TOP 卡头固定（横向滑动时标题不跑）；产品列收窄，让更多指标可见 */
-    .pcard .pcard-head { position:sticky; left:0; z-index:6; }
-    .slot-row .rule-tbl td { font-size:13px; padding:9px 4px; }
-    .slot-row .rule-tbl th { font-size:11.5px; padding:8px 4px; }
-    .qkpi .vv { font-size:21px; }
-    .qsmall, .note, .h2sub { font-size:13px; }
-    .slot-col .panel::after { font-size:11px; }
-    .slot-col > .panel { -webkit-overflow-scrolling:touch; }
-    .slot-col .panel::after { content:'← 左右滑动查看全部列'; display:block; font-size:11px; color:#B0ABA4; text-align:right; margin:6px 14px 0; position:sticky; left:0; }
-  }
+
   /* 主表容器 */
   .slot-col { margin-bottom:16px; }
-  .slot-col > .panel { padding:20px 22px; }
+  .slot-col > .panel { padding:20px; }
   .slot-col .panel .note { font-size:12.5px; line-height:1.75; margin-top:14px; }
   /* 下方两卡（逐小时 + 规则排查） */
   .slot-row { display:grid; grid-template-columns:1.55fr 1fr; gap:16px; align-items:stretch; }
-  .slot-row > .panel { padding:20px 18px; min-width:0; }
+  .slot-row > .panel { padding:20px; min-width:0; }
   .slot-row .slot-hourly { display:flex; flex-direction:column; }
   .slot-row .mix-hd { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:14px; font-weight:600; color:#2F2E2C; margin-bottom:4px; }
   .slot-row .mix-sub { font-size:11.5px; color:#A9A49E; margin-bottom:14px; line-height:1.5; }
@@ -141,7 +108,7 @@
   .slot-row .rule-tbl tr:last-child td { border-bottom:none; }
   .slot-row .rule-tbl tr.total td { background:#FAF7F2; border-top:1.5px solid #E0D8CC; font-weight:600; }
   .pcard { background:rgba(255,255,255,.7); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.9);
-    border-radius:14px; padding:16px 16px; box-shadow:0 2px 12px rgba(120,110,100,.06); }
+    border-radius:14px; padding:16px; box-shadow:0 2px 12px rgba(120,110,100,.06); }
   .pcard-head { margin-bottom:12px; padding-left:10px; }
   .pcard-head b { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:16px; color:#2F2E2C; }
   .pcard-head b .rng { display:inline; font-size:12px; color:#B0ABA4; margin:0 0 0 6px; font-weight:400; font-family:"Microsoft YaHei",sans-serif; }
@@ -182,7 +149,7 @@
   .hl b { color:#8A6A3B; }
   /* ---- 额度使用分析 ---- */
   .qgrid { display:grid; grid-template-columns:1.45fr 1fr; gap:16px; align-items:stretch; }
-  .qgrid > .panel { padding:20px 18px; }
+  .qgrid > .panel { padding:20px; }
   .qhist { display:flex; align-items:flex-end; gap:3px; height:190px; padding:24px 2px 0; }
   .qcol { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; position:relative; }
   .qbar { width:100%; background:#C3CBD6; border-radius:3px 3px 0 0; }
@@ -202,90 +169,123 @@
   .qsmall { font-size:12px; color:#8A8681; line-height:1.7; margin-top:12px; }
   .qsmall b { color:#6B6660; }
   .foot { text-align:center; color:#B0ABA4; font-size:12px; margin-top:44px; line-height:1.8; }
-  @media (max-width:1100px) { .kpis{grid-template-columns:repeat(2,1fr)} .pgrid{grid-template-columns:1fr} .slot-row{grid-template-columns:1fr} .slot-row .hbar-track{min-height:150px} }
-  @media (max-width:1400px) {
-    .slot-col, .slot-col > .panel { min-width:0; max-width:100%; }
-    .slot-col > .panel { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding:16px 14px; }
-    .slot-tbl { min-width:1240px; table-layout:fixed; }
-    .slot-col .panel .note { min-width:1240px; }
-  }
+
+
+
+
+
+  /* ===== 手机端最终覆盖（放最后确保生效）===== */
+
+  /* 平板档（901~1200px）：两列布局下卡片太窄放不下 9 列表格 → 改一行一卡 */
   @media (max-width:1200px) {
+    /* 主表：面板为滚动容器（1240px 表在面板内横滑）*/
+    .slot-col, .slot-col > .panel { min-width:0; max-width:100%; }
+    .slot-col > .panel { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+    .slot-tbl { min-width:1240px; table-layout:fixed; }
+    .slot-col .panel .note { min-width:0; }
+    .pgrid { grid-template-columns:1fr; }
+    .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+    .pgrid.pg-top20 .pcard { overflow-x:auto; overflow-y:hidden; }
+    .pcard .ptbl { width:570px; min-width:570px; }
     .qgrid { grid-template-columns:1fr; }
     .qgrid > .panel { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .qmerge { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
-    .qmerge .ptbl { min-width:820px; }
-    .qmerge .qsmall { min-width:820px; }
-    .slot-row .panel { min-width:0; max-width:100%; }
+    .qmerge .ptbl { min-width:760px; }
+    .qmerge .qsmall { min-width:760px; }
+    .kpis { grid-template-columns:repeat(2,1fr); }
+    .slot-row { grid-template-columns:1fr; }
   }
+
+  /* ============================================================
+     手机端统一块（<=900px）— 2026-10-11 合并原 3 个重叠 @media 块
+     顺序：页面留白 → 大表横滑+冻结 → 卡片横滑+冻结 → 字号 → 布局
+     ============================================================ */
   @media (max-width:900px) {
-    .slot-row > .panel { min-width:0; max-width:100%; }
-    .slot-row .hbar-top { font-size:8.5px; left:-5px; right:-5px; }
-    .slot-row .chart { gap:3px; }
-    /* TOP 卡：手机端一行一卡；卡头 sticky 固定，表格横滑；冻结前 2 列（序号 + 产品名） */
+    /* --- 0. KPI 卡：4 列 → 2 列（否则撑破视口）--- */
+    .kpis { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .kpi { padding:14px 14px; }
+    .kpi .k-val { font-size:21px; }
+
+    /* --- 1. 页面留白：内容占满屏宽 --- */
+    body { padding:16px 8px 40px; }
+    .wrap { max-width:100%; }
+
+    /* --- 2. 主表（时段分布/逐月）：面板为滚动容器，表格 1240px --- */
+    .slot-col, .slot-col > .panel { min-width:0; max-width:100%; }
+    .slot-col > .panel { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; padding:16px 14px; }
+    .slot-tbl { min-width:1240px; table-layout:fixed; }
+    .slot-col .panel .note { min-width:0; }
+    /* 冻结首列（时段/月份，非序号列 → 只冻 1 列）；left 取负 padding 贴边 */
+    .slot-tbl thead tr:first-child th:first-child,
+    .slot-tbl tbody td:first-child { position:sticky; left:-14px; z-index:5; background:#FFFFFF; }
+    .slot-tbl thead tr:first-child th:first-child { background:#FCFBF9; }
+    .slot-tbl tr.total td:first-child { background:#FAF7F2; }
+    .slot-tbl thead tr:first-child th:first-child { box-shadow:14px 0 0 #FCFBF9, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
+    .slot-tbl tbody td:first-child { box-shadow:14px 0 0 #FFFFFF, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
+    .slot-tbl tr.total td:first-child { box-shadow:14px 0 0 #FAF7F2, 1px 0 0 #EDE8E1, 9px 0 10px -8px rgba(120,110,100,.22); }
+    .slot-tbl th:first-child, .slot-tbl td:first-child { padding-left:14px; }
+    .slot-col .panel::after { content:'← 左右滑动查看全部列'; display:block; font-size:11px; color:#B0ABA4;
+      text-align:right; margin:6px 14px 0; position:sticky; left:0; }
+
+    /* --- 3. TOP 产品卡：一行一卡；卡确定宽度，表格 570px 横滑；冻前 2 列 --- */
     .pgrid { grid-template-columns:1fr; }
-    .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
-    .pcard .pcard-head { position:sticky; left:0; z-index:6; }
-    .ptbl { min-width:520px; }
-    /* 冻结前 2 列：序号(left:0, 20px) + 产品名(left:20px)；负 left 抵消卡内 padding，胶带式遮住穿透 */    /* TOP20：两卡合并为一张连续表格，完整展开（不做卡内滚动，避免观察文字被压 / 用户不知要滚）*/
+    .pcard { min-width:0; width:100%; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+    .pcard .pcard-head { position:sticky; left:0; z-index:6; background:#FCFBF9; }
+    .pcard .ptbl { width:570px; min-width:570px; table-layout:fixed; }
+    .pcard .ptbl col.c-rk { width:22px; } .pcard .ptbl col.c-nm { width:126px; }
+    .pcard .ptbl col.c-v { width:52px; } .pcard .ptbl col.c-a { width:56px; }
+    .pcard .ptbl col.c-u { width:52px; } .pcard .ptbl col.c-dv { width:50px; }
+    .pcard .ptbl col.c-da { width:54px; } .pcard .ptbl col.c-pq { width:52px; }
+    .pcard .ptbl col.c-pa { width:52px; } .pcard .ptbl col.c-ts { width:54px; }
+    .pcard .ptbl td, .pcard .ptbl th { padding:9px 4px; }
+    /* 冻结前 2 列（序号 22px + 产品名）；序号列加内边距防贴边被切 */
+    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { position:sticky; left:0; z-index:5; background:#FFFFFF; padding-left:8px; padding-right:8px; }
+    .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { position:sticky; left:22px; z-index:5; background:#FFFFFF; }
+    .pcard .ptbl thead th:nth-child(1), .pcard .ptbl thead th:nth-child(2) { background:#FCFBF9; z-index:6; }
+    .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { box-shadow:6px 0 8px -6px rgba(120,110,100,.2); }
+    /* 卡片内去掉左右 padding，冻结列左侧补白遮住残影 */
+    .pcard { padding-left:0; padding-right:0; }
+    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { box-shadow:-16px 0 0 #FFFFFF; }
+    .pcard .ptbl thead th:nth-child(1) { box-shadow:-16px 0 0 #FCFBF9; }
+
+    /* --- 4. TOP20：两卡视觉合一，不再卡内纵向滚动（完整展开）；表格仍横向滑动 --- */
     .pgrid.pg-top20 { display:block; background:rgba(255,255,255,.7); backdrop-filter:blur(8px);
       border:1px solid rgba(255,255,255,.9); border-radius:14px; padding:16px 0;
       box-shadow:0 2px 12px rgba(120,110,100,.06); max-height:none; overflow:visible; }
     .pgrid.pg-top20 .pcard { background:none; backdrop-filter:none; border:none; border-radius:0;
-      box-shadow:none; padding:0; margin:0; overflow:visible; }
-    /* 第二张表去掉重复表头（视觉上连成一张） */
+      box-shadow:none; padding:16px 0; margin:0; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .pgrid.pg-top20 .pcard:nth-child(2) .ptbl thead { display:none; }
-    /* 综合毛利率表：4 列无需横滑，压窄首列 */
+    .pgrid.pg-top20 .ptbl { width:570px; min-width:570px; }
+
+    /* --- 5. 两卡行（逐小时 + 规则排查）与 qgrid（毛利/方向）--- */
+    .slot-row { grid-template-columns:1fr; }
+    .slot-row > .panel { min-width:0; max-width:100%; }
+    .slot-row .hbar-track { min-height:150px; }
+    .slot-row .hbar-top { font-size:8.5px; left:-5px; right:-5px; }
+    .slot-row .chart { gap:3px; }
+    .qgrid { grid-template-columns:1fr !important; }
+    .qgrid > .panel { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .qgrid .ptbl { min-width:0 !important; }
     .qgrid .ptbl th.l, .qgrid .ptbl td.l { width:88px; white-space:nowrap; }
-    .qgrid .ptbl td, .qgrid .ptbl th { padding:8px 6px; }
-    .grid .ptbl th:nth-child(1) { font-size:11px; }
-    /* 合并表（凑单补差件）为 .panel > .ptbl 直挂，需自身可横向滚动 */
     .qmerge { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .qmerge .ptbl { min-width:760px; }
     .qmerge .qsmall { min-width:760px; }
-    .qkpi { grid-template-columns:1fr 1fr; }
-    .qhist { height:150px; }
-    .qval { font-size:8px; left:-4px; right:-4px; }
-    .qx { font-size:9px; }
+
+    /* --- 6. 字号放大（可读性）--- */
+    h1 { font-size:22px; }
+    .slot-tbl td { font-size:14px; padding:10px 6px; }
+    .slot-tbl th { font-size:12px; padding:10px 6px; }
+    .slot-tbl .u { font-size:10px; }
+    .slot-tbl td.l b { font-size:14px; }
+    .slot-tbl .rng { font-size:12px; }
+    .ptbl td, .ptbl th { font-size:12px; }
+    .ptbl th { font-size:11px; }
+    .slot-row .rule-tbl td { font-size:13px; padding:9px 4px; }
+    .slot-row .rule-tbl th { font-size:11.5px; padding:8px 4px; }
+    .qkpi .vv { font-size:21px; }
+    .qsmall, .note, .h2sub { font-size:13px; }
   }
 
-  /* ===== 手机端最终覆盖（放最后确保生效）===== */
-  @media (max-width:900px) {
-    /* 综合毛利率 / 可行方向：手机端一行一卡（覆盖行内 grid-template-columns）*/
-    .qgrid { grid-template-columns:1fr !important; }
-    /* TOP 卡：卡头固定 */
-    .pcard .pcard-head { position:sticky; left:0; z-index:6; }
-    /* TOP 卡列宽：产品名 130px（能放长名）+ 指标列 54px（不挤压、不空）
-       总宽约 130+9×54 ≈ 620px → 横滑一次可看 4~5 列，比原来（产品列150px）每屏多看 1 列 */
-    /* TOP 卡列宽（!important 强制，否则 fixed 布局会按内容重新分配）*/
-    .pcard .ptbl col.c-rk { width:22px !important; }
-    .pcard .ptbl col.c-nm { width:126px !important; }
-    .pcard .ptbl col.c-v { width:52px !important; }
-    .pcard .ptbl col.c-a { width:56px !important; }
-    .pcard .ptbl col.c-u { width:52px !important; }
-    .pcard .ptbl col.c-dv { width:50px !important; }
-    .pcard .ptbl col.c-da { width:54px !important; }
-    .pcard .ptbl col.c-pq { width:52px !important; }
-    .pcard .ptbl col.c-pa { width:52px !important; }
-    .pcard .ptbl col.c-ts { width:54px !important; }
-    .pcard .ptbl { width:570px !important; min-width:570px !important; table-layout:fixed !important; }
-    .pcard .ptbl td, .pcard .ptbl th { padding:9px 4px; }
-    /* 冻结前 2 列：left:0 / 22px（不能用负值，否则滑出卡内边界） */
-    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { position:sticky; left:0; background:#FFFFFF; z-index:5; }
-    .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { position:sticky; left:22px; background:#FFFFFF; z-index:5; }
-    .pcard .ptbl thead th:nth-child(1), .pcard .ptbl thead th:nth-child(2) { background:#FCFBF9; z-index:6; }
-    .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { box-shadow:6px 0 8px -6px rgba(120,110,100,.2); }
-    /* 序号列加内边距，避免滑到最右时序号贴边被切 */
-    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { padding-left:8px; padding-right:8px; }
-    /* 卡片左右去掉 padding，让冻结列贴卡边（否则 padding 区露出滑过内容）*/
-    .pcard { padding-left:0 !important; padding-right:0 !important; }
-    .pcard > .pcard-head, .pcard > .ptbl, .pcard > .note { margin-left:16px; margin-right:16px; }
-    .pcard > .ptbl { margin-left:0; margin-right:0; }
-    .pcard > .pcard-head { margin-left:16px; margin-right:16px; }
-    /* 冻结列左侧补白，遮住 padding 区残影 */
-    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { box-shadow:-16px 0 0 #FFFFFF; }
-    .pcard .ptbl thead th:nth-child(1) { box-shadow:-16px 0 0 #FCFBF9; }
-  }
 </style></head><body><div class="wrap">
 
   <h1>悠饭团餐 · 时段与产品分析</h1>
