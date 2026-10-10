@@ -246,6 +246,8 @@
 
   /* ===== 手机端最终覆盖（放最后确保生效）===== */
   @media (max-width:900px) {
+    /* 综合毛利率 / 可行方向：手机端一行一卡（覆盖行内 grid-template-columns）*/
+    .qgrid { grid-template-columns:1fr !important; }
     /* TOP 卡：卡头固定 */
     .pcard .pcard-head { position:sticky; left:0; z-index:6; }
     /* TOP 卡列宽：产品名 130px（能放长名）+ 指标列 54px（不挤压、不空）
