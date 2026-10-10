@@ -21,6 +21,10 @@
   .kpi .k-pct { color:#A7BEE0; font-weight:700; }
   .kpi .k-diff { color:#8A9A7B; font-weight:700; }
   section { margin-bottom:40px; }
+  /* 上下滑动时标题吸顶（桌面 + 手机统一），带毛玻璃底避免透出内容 */
+  h2 { position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#F7F5F2 72%,rgba(247,245,242,0));
+    padding:12px 0 10px; margin:-12px 0 0; }
+  h2::after { content:''; position:absolute; left:0; right:0; bottom:100%; height:60px; background:#F7F5F2; }
   h2 { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:19px; font-weight:600; color:#2F2E2C; margin-bottom:6px; }
   h2 .en { color:#B0ABA4; font-weight:400; font-size:13px; margin-left:8px; }
   .h2sub { font-size:13px; color:#8A8681; margin-bottom:16px; }
@@ -52,7 +56,11 @@
   .hbar-fill { position:absolute; bottom:0; left:0; right:0; background:#C3CBD6; border-radius:4px 4px 0 0; }
   .hbar-fill.peak { background:#A7BEE0; }
   .hbar-top { position:absolute; left:-9px; right:-9px; text-align:center; font-size:10.5px; color:#6B6660; white-space:nowrap; }
-  .hbar-x { text-align:center; font-size:11.5px; color:#8A8681; margin-top:8px; padding-top:8px; border-top:1px solid #EAE5DE; }
+  .hbar-x { text-align:center; font-size:11.5px; color:#8A8681; margin-top:8px; padding-top:8px; border-top:1px solid #EAE5DE; white-space:nowrap; }
+  /* 窄列下让标签溢出但不撑开布局（否则 10时/21时 会换行或裁切） */
+  .hbar { position:relative; }
+  .hbar-x { position:absolute; left:50%; transform:translateX(-50%); bottom:0; min-width:100%; }
+  .hbar { padding-bottom:30px; }
   .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   /* ===== 大表统一样式（.slot-tbl 为全站大表基础类）===== */
   .slot-tbl { table-layout:fixed; }
@@ -77,6 +85,9 @@
      ⚠️ 一律用 thead tr:first-child th:first-child，勿写 th:first-child（会误冻每行首格）
      ⚠️ sticky left 必须取负 padding(-14px)，否则首列左沿露出 15px 穿透 */
   @media (max-width:900px) {
+    /* 手机端压缩页面左右留白，让内容占满屏宽 */
+    body { padding:16px 8px 40px; }
+    .wrap { max-width:100%; }
     .slot-col > .panel { padding-left:0; padding-right:0; }
     .slot-tbl thead tr:first-child th:first-child,
     .slot-tbl tbody td:first-child { position:sticky; left:-14px; z-index:5; background:#FFFFFF; }
@@ -97,6 +108,8 @@
     .ptbl td, .ptbl th { font-size:12px; padding:8px 4px; }
     .ptbl th { font-size:11px; }
     .ptbl td.l { font-size:12px; }
+    /* 手机端：TOP 卡头固定（横向滑动时标题不跑）；产品列收窄，让更多指标可见 */
+    .pcard .pcard-head { position:sticky; left:0; z-index:6; }
     .slot-row .rule-tbl td { font-size:13px; padding:9px 4px; }
     .slot-row .rule-tbl th { font-size:11.5px; padding:8px 4px; }
     .qkpi .vv { font-size:21px; }
@@ -130,7 +143,8 @@
     border-radius:14px; padding:16px 16px; box-shadow:0 2px 12px rgba(120,110,100,.06); }
   .pcard-head { margin-bottom:12px; padding-left:10px; }
   .pcard-head b { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:16px; color:#2F2E2C; }
-  .pcard-head span { display:block; font-size:12px; color:#8A8681; margin-top:5px; }
+  .pcard-head b .rng { display:inline; font-size:12px; color:#B0ABA4; margin:0 0 0 6px; font-weight:400; font-family:"Microsoft YaHei",sans-serif; }
+  .pcard-head > span { display:block; font-size:12px; color:#8A8681; margin-top:5px; }
   .ptbl { table-layout:fixed; }
   .ptbl col.c-rk { width:20px; } .ptbl col.c-nm { width:150px; }
   .ptbl col.c-v { width:46px; } .ptbl col.c-a { width:52px; }
@@ -211,15 +225,7 @@
     .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .pcard .pcard-head { position:sticky; left:0; z-index:6; }
     .ptbl { min-width:520px; }
-    /* 冻结前 2 列：序号(left:0, 20px) + 产品名(left:20px)；负 left 抵消卡内 padding，胶带式遮住穿透 */
-    .ptbl th:nth-child(1), .ptbl td:nth-child(1) { position:sticky; left:-16px; z-index:5; background:#FFFFFF; }
-    .ptbl th:nth-child(2), .ptbl td:nth-child(2) { position:sticky; left:4px; z-index:5; background:#FFFFFF; }
-    .ptbl th:nth-child(1) { box-shadow:16px 0 0 #FCFBF9; }
-    .ptbl td:nth-child(1) { box-shadow:16px 0 0 #FFFFFF; }
-    .ptbl th:nth-child(2), .ptbl td:nth-child(2) { box-shadow:4px 0 0 #FFFFFF, 8px 0 10px -8px rgba(120,110,100,.22); }
-    .ptbl th:nth-child(2) { box-shadow:4px 0 0 #FCFBF9, 8px 0 10px -8px rgba(120,110,100,.22); }
-    .ptbl thead th:nth-child(1), .ptbl thead th:nth-child(2) { background:#FCFBF9; z-index:7; }
-    /* TOP20：两卡合并为一张（视觉上单一容器），卡内纵向滑动 */
+    /* 冻结前 2 列：序号(left:0, 20px) + 产品名(left:20px)；负 left 抵消卡内 padding，胶带式遮住穿透 */    /* TOP20：两卡合并为一张（视觉上单一容器），卡内纵向滑动 */
     .pgrid.pg-top20 { display:block; background:rgba(255,255,255,.7); backdrop-filter:blur(8px);
       border:1px solid rgba(255,255,255,.9); border-radius:14px; padding:0;
       box-shadow:0 2px 12px rgba(120,110,100,.06); max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
@@ -236,6 +242,32 @@
     .qhist { height:150px; }
     .qval { font-size:8px; left:-4px; right:-4px; }
     .qx { font-size:9px; }
+  }
+
+  /* ===== 手机端最终覆盖（放最后确保生效）===== */
+  @media (max-width:900px) {
+    /* TOP 卡：卡头固定 */
+    .pcard .pcard-head { position:sticky; left:0; z-index:6; }
+    /* TOP 卡列宽：产品名 130px（能放长名）+ 指标列 54px（不挤压、不空）
+       总宽约 130+9×54 ≈ 620px → 横滑一次可看 4~5 列，比原来（产品列150px）每屏多看 1 列 */
+    /* TOP 卡列宽（!important 强制，否则 fixed 布局会按内容重新分配）*/
+    .pcard .ptbl col.c-rk { width:22px !important; }
+    .pcard .ptbl col.c-nm { width:126px !important; }
+    .pcard .ptbl col.c-v { width:52px !important; }
+    .pcard .ptbl col.c-a { width:56px !important; }
+    .pcard .ptbl col.c-u { width:52px !important; }
+    .pcard .ptbl col.c-dv { width:50px !important; }
+    .pcard .ptbl col.c-da { width:54px !important; }
+    .pcard .ptbl col.c-pq { width:52px !important; }
+    .pcard .ptbl col.c-pa { width:52px !important; }
+    .pcard .ptbl col.c-ts { width:54px !important; }
+    .pcard .ptbl { width:570px !important; min-width:570px !important; table-layout:fixed !important; }
+    .pcard .ptbl td, .pcard .ptbl th { padding:9px 4px; }
+    /* 冻结前 2 列：left:0 / 22px（不能用负值，否则滑出卡内边界） */
+    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { position:sticky; left:0; background:#FFFFFF; z-index:5; }
+    .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { position:sticky; left:22px; background:#FFFFFF; z-index:5; }
+    .pcard .ptbl thead th:nth-child(1), .pcard .ptbl thead th:nth-child(2) { background:#FCFBF9; z-index:6; }
+    .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { box-shadow:6px 0 8px -6px rgba(120,110,100,.2); }
   }
 </style></head><body><div class="wrap">
 
