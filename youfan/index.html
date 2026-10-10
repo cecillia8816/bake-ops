@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>悠饭团餐时段与产品分析 · 陆家嘴店 2026</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
@@ -87,8 +88,22 @@
     .slot-tbl th:first-child, .slot-tbl td:first-child { padding-left:14px; }
     .slot-col .panel .note { padding:0 14px; }
     h1 { font-size:22px; }
+    /* 手机端字号放大（可读性）：大表 13→14px、表头 11.5→12px，卡片内表同步 */
+    .slot-tbl td { font-size:14px; padding:10px 6px; }
+    .slot-tbl th { font-size:12px; padding:10px 6px; }
+    .slot-tbl .u { font-size:10px; }
+    .slot-tbl td.l b { font-size:14px; }
+    .slot-tbl .rng { font-size:12px; }
+    .ptbl td, .ptbl th { font-size:12px; padding:8px 4px; }
+    .ptbl th { font-size:11px; }
+    .ptbl td.l { font-size:12px; }
+    .slot-row .rule-tbl td { font-size:13px; padding:9px 4px; }
+    .slot-row .rule-tbl th { font-size:11.5px; padding:8px 4px; }
+    .qkpi .vv { font-size:21px; }
+    .qsmall, .note, .h2sub { font-size:13px; }
+    .slot-col .panel::after { font-size:11px; }
     .slot-col > .panel { -webkit-overflow-scrolling:touch; }
-    .slot-col .panel::after { content:'← 左右滑动查看全部列'; display:block; font-size:10px; color:#B0ABA4; text-align:right; margin:6px 14px 0; position:sticky; left:0; }
+    .slot-col .panel::after { content:'← 左右滑动查看全部列'; display:block; font-size:11px; color:#B0ABA4; text-align:right; margin:6px 14px 0; position:sticky; left:0; }
   }
   /* 主表容器 */
   .slot-col { margin-bottom:16px; }
