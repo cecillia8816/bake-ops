@@ -226,15 +226,19 @@
     .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .pcard .pcard-head { position:sticky; left:0; z-index:6; }
     .ptbl { min-width:520px; }
-    /* 冻结前 2 列：序号(left:0, 20px) + 产品名(left:20px)；负 left 抵消卡内 padding，胶带式遮住穿透 */    /* TOP20：两卡合并为一张（视觉上单一容器），卡内纵向滑动 */
+    /* 冻结前 2 列：序号(left:0, 20px) + 产品名(left:20px)；负 left 抵消卡内 padding，胶带式遮住穿透 */    /* TOP20：两卡合并为一张连续表格，完整展开（不做卡内滚动，避免观察文字被压 / 用户不知要滚）*/
     .pgrid.pg-top20 { display:block; background:rgba(255,255,255,.7); backdrop-filter:blur(8px);
-      border:1px solid rgba(255,255,255,.9); border-radius:14px; padding:0;
-      box-shadow:0 2px 12px rgba(120,110,100,.06); max-height:72vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+      border:1px solid rgba(255,255,255,.9); border-radius:14px; padding:16px 0;
+      box-shadow:0 2px 12px rgba(120,110,100,.06); max-height:none; overflow:visible; }
     .pgrid.pg-top20 .pcard { background:none; backdrop-filter:none; border:none; border-radius:0;
-      box-shadow:none; padding:16px 16px 4px; margin:0; overflow:visible; }
-    .pgrid.pg-top20 .pcard:last-child { padding-bottom:16px; }
-    .pgrid.pg-top20 .ptbl thead th { position:sticky; top:0; z-index:3; background:#FCFBF9; }
-    .qgrid .ptbl { min-width:420px; }
+      box-shadow:none; padding:0; margin:0; overflow:visible; }
+    /* 第二张表去掉重复表头（视觉上连成一张） */
+    .pgrid.pg-top20 .pcard:nth-child(2) .ptbl thead { display:none; }
+    /* 综合毛利率表：4 列无需横滑，压窄首列 */
+    .qgrid .ptbl { min-width:0 !important; }
+    .qgrid .ptbl th.l, .qgrid .ptbl td.l { width:88px; white-space:nowrap; }
+    .qgrid .ptbl td, .qgrid .ptbl th { padding:8px 6px; }
+    .grid .ptbl th:nth-child(1) { font-size:11px; }
     /* 合并表（凑单补差件）为 .panel > .ptbl 直挂，需自身可横向滚动 */
     .qmerge { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
     .qmerge .ptbl { min-width:760px; }
@@ -271,6 +275,16 @@
     .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { position:sticky; left:22px; background:#FFFFFF; z-index:5; }
     .pcard .ptbl thead th:nth-child(1), .pcard .ptbl thead th:nth-child(2) { background:#FCFBF9; z-index:6; }
     .pcard .ptbl th:nth-child(2), .pcard .ptbl td:nth-child(2) { box-shadow:6px 0 8px -6px rgba(120,110,100,.2); }
+    /* 序号列加内边距，避免滑到最右时序号贴边被切 */
+    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { padding-left:8px; padding-right:8px; }
+    /* 卡片左右去掉 padding，让冻结列贴卡边（否则 padding 区露出滑过内容）*/
+    .pcard { padding-left:0 !important; padding-right:0 !important; }
+    .pcard > .pcard-head, .pcard > .ptbl, .pcard > .note { margin-left:16px; margin-right:16px; }
+    .pcard > .ptbl { margin-left:0; margin-right:0; }
+    .pcard > .pcard-head { margin-left:16px; margin-right:16px; }
+    /* 冻结列左侧补白，遮住 padding 区残影 */
+    .pcard .ptbl th:nth-child(1), .pcard .ptbl td:nth-child(1) { box-shadow:-16px 0 0 #FFFFFF; }
+    .pcard .ptbl thead th:nth-child(1) { box-shadow:-16px 0 0 #FCFBF9; }
   }
 </style></head><body><div class="wrap">
 
