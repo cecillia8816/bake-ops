@@ -21,10 +21,11 @@
   .kpi .k-pct { color:#A7BEE0; font-weight:700; }
   .kpi .k-diff { color:#8A9A7B; font-weight:700; }
   section { margin-bottom:40px; }
-  /* 上下滑动时标题吸顶（桌面 + 手机统一），带毛玻璃底避免透出内容 */
-  h2 { position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#F7F5F2 72%,rgba(247,245,242,0));
-    padding:12px 0 10px; margin:-12px 0 0; }
-  h2::after { content:''; position:absolute; left:0; right:0; bottom:100%; height:60px; background:#F7F5F2; }
+  h2 { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:19px; font-weight:600; color:#2F2E2C; margin-bottom:6px; }
+  /* 上下滑动时标题吸顶（桌面 + 手机统一）；实底色彻底遮住下方滚动内容 */
+  h2 { position:sticky; top:0; z-index:20; background:#F4F2EF;
+    padding:14px 0 10px; margin:-14px 0 6px; }
+  h2::before { content:''; position:absolute; left:-40px; right:-40px; bottom:100%; height:80px; background:#F4F2EF; }
   h2 { font-family:Montserrat,"Microsoft YaHei",sans-serif; font-size:19px; font-weight:600; color:#2F2E2C; margin-bottom:6px; }
   h2 .en { color:#B0ABA4; font-weight:400; font-size:13px; margin-left:8px; }
   .h2sub { font-size:13px; color:#8A8681; margin-bottom:16px; }
