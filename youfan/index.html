@@ -180,16 +180,16 @@
   @media (max-width:1200px) {
     /* 主表：面板为滚动容器（1240px 表在面板内横滑）*/
     .slot-col, .slot-col > .panel { min-width:0; max-width:100%; }
-    .slot-col > .panel { overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+    .slot-col > .panel { overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; }
     .slot-tbl { min-width:1240px; table-layout:fixed; }
     .slot-col .panel .note { min-width:0; }
     .pgrid { grid-template-columns:1fr; }
-    .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
-    .pgrid.pg-top20 .pcard { overflow-x:auto; overflow-y:hidden; }
+    .pcard { min-width:0; max-width:100%; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; }
+    .pgrid.pg-top20 .pcard { overflow-x:auto; overflow-y:visible; }
     .pcard .ptbl { width:570px; min-width:570px; }
     .qgrid { grid-template-columns:1fr; }
-    .qgrid > .panel { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
-    .qmerge { min-width:0; max-width:100%; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; }
+    .qgrid > .panel { min-width:0; max-width:100%; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; }
+    .qmerge { min-width:0; max-width:100%; overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; }
     .qmerge .ptbl { min-width:760px; }
     .qmerge .qsmall { min-width:760px; }
     .kpis { grid-template-columns:repeat(2,1fr); }
