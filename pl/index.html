@@ -2264,14 +2264,17 @@ function fitStaticWidths(){
     }
     ths.forEach((th,i)=>{
       if(id==='plStaticTbl' && i >= ths.length-4){ th.style.width=tailW+'px'; th.style.padding='6px 4px'; return; } // 尾4列统一
-      const isFirst = i===0;
-      const m = isFirst ? 2 : (id==='cfStaticTbl' ? 12 : 6); // CF 数据列余量加宽（08-27 dsh：11/12月大数值 -1,121 不挤）
-      const foldPad = (id==='plStaticTbl' && i===0) ? 15 : 0; // P&L 首列小三角占位
+      const m = i===0 ? 2 : (id==='cfStaticTbl' ? 12 : 6); // CF 数据列余量加宽（08-27 dsh：11/12月大数值 -1,121 不挤）
       const tailExtra = (id==='cfStaticTbl' && i >= ths.length-1) ? 8 : 0; // CF 合计列防贴边
-      let w=textWidth((th.textContent||'').trim(), fs)+10+m+tailExtra+foldPad;
+      let w=textWidth((th.textContent||'').trim(), fs)+10+m+tailExtra;
       rows.forEach(tr=>{
         const tds=tr.querySelectorAll('td');
-        if(tds[i]){ const t=(tds[i].textContent||'').trim(); w=Math.max(w, textWidth(t,fs)+12+m+tailExtra+foldPad); }
+        if(!tds[i]) return;
+        // 按每格实际内边距+三角占位取宽（10-13 dsh：sub 行首列 padding-left 26px+15px 空 span，固定 12px 假设导致「当月预算」等折行）
+        const td=tds[i], cs=getComputedStyle(td);
+        const padH=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
+        const spanW=td.querySelector('.fold-arr')?15:0;
+        w=Math.max(w, textWidth((td.textContent||'').trim(),fs)+padH+spanW+m+tailExtra);
       });
       th.style.width=w+'px';
       th.style.padding='';
