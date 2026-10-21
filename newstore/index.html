@@ -1246,7 +1246,7 @@ function renderSlots(r){
     return `<tr class="${isBest?"top-slot":""}"><td class="left-b">${name}<span class="slot-h">${hr}</span>${isBest?'<span class="badge">最高</span>':""}</td>
       ${s?`<td>${fmtY0(s.amt)}</td><td class="sj">${_nd?fmtY0(s.amt/_nd):"—"}</td><td>${pct(s.amt_share,1)}</td>`
          :`<td>—</td><td>—</td><td>—</td>`}
-      <td class="sj">${t.paid||"—"}</td><td class="sj">${t.zero||"—"}</td><td>${all||"—"}</td>
+      <td class="sj">${t.paid||"—"}</td><td class="sj">${t.zero||"—"}</td><td>${all?all.toLocaleString("en-US"):"—"}</td>
       <td class="sji" title="合计单数 ÷ 区间有销售天数 ${_nd}">${_nd?Math.round(all/_nd).toLocaleString("en-US"):"—"}</td>
       <td>${s&&t.paid?fmtAC(s.amt/t.paid):"—"}</td></tr>`;
   };
@@ -1261,7 +1261,7 @@ function renderSlots(r){
     ${by["其他"]?row("其他","23-7",by["其他"]):""}
     ${extra.map(s=>row(s.slot,"",s)).join("")}
     <tr class="tot"><td>合计</td><td>${fmtY0(r.slot_amt_total)}</td><td class="sj">${r.n_days?fmtY0(r.slot_amt_total/r.n_days):"—"}</td><td>100.0%</td>
-      <td class="sj">${pSum||"—"}</td><td class="sj">${zSum||"—"}</td><td>${pSum+zSum||"—"}</td>
+      <td class="sj">${pSum||"—"}</td><td class="sj">${zSum||"—"}</td><td>${(pSum+zSum).toLocaleString("en-US")}</td>
       <td class="sji">${r.n_days?Math.round((pSum+zSum)/r.n_days).toLocaleString("en-US"):"—"}</td>
       <td>${pSum?fmtAC(r.slot_amt_total/pSum):"—"}</td></tr>
    </tbody></table>
@@ -1542,7 +1542,7 @@ function renderDaytype(r){
   if(!(r.daytype||[]).length){ host.innerHTML='<div class="empty">暂无数据</div>'; return; }
   host.innerHTML=`<table><thead><tr><th>日型</th><th>天数</th><th>日均实收</th><th>日均单数</th><th>AC</th></tr></thead><tbody>
     ${r.daytype.map(d=>`<tr><td>${d.type}</td><td>${d.n}</td><td>${fmtY0(d.avg_sales)}</td>
-      <td>${fmtN(d.avg_tc)}</td><td>${fmtAC(d.ac)}</td></tr>`).join("")}
+      <td>${fmtC(d.avg_tc)}</td><td>${fmtAC(d.ac)}</td></tr>`).join("")}
     <tr class="tot"><td>合计</td><td>${r.n_days}</td><td>${fmtY0(r.avg_daily_sales)}</td>
       <td>${fmtC(r.avg_daily_tc)}</td><td>${fmtAC(r.ac)}</td></tr>
    </tbody></table>`;
