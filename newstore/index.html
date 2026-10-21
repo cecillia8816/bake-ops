@@ -1516,7 +1516,7 @@ function renderDays(r){
       <td>${s.sales?pct(s.o2o/s.sales,1):"—"}</td></tr>`;
   host.innerHTML=`<table><colgroup>
       <col style="width:8.2%"><col style="width:3.2%"><col style="width:4.2%">
-      <col style="width:5.7%"><col style="width:4.5%"><col style="width:3.5%"><col style="width:3.7%"><col style="width:4.2%"><col style="width:4.9%"><col style="width:5.2%">
+      <col style="width:5.5%"><col style="width:5.1%"><col style="width:3.5%"><col style="width:3.6%"><col style="width:3.9%"><col style="width:4.9%"><col style="width:5.2%">
       <col style="width:5.8%"><col style="width:5.6%"><col style="width:4.8%"><col style="width:4.8%">
       <col style="width:6.2%"><col style="width:4.8%"><col style="width:5.6%"><col style="width:4.8%"><col style="width:5.6%"><col style="width:4.8%"></colgroup>
     <thead>
@@ -1680,6 +1680,9 @@ function renderLossProd(r){
       <td>—</td><td class="left-b">—</td></tr>
     </tfoot></table>
     <div class="note">· 银豹「报损原因」只有三类：<b>丢弃</b>（备货/动销 → 改订货、陈列）、<b>试吃</b>（推广投入）、<b>报损</b>（品质或流程问题）；本表把总额叫<b>合计成本</b>（＝三类相加），避免与原因名「报损」混淆。</div>`;
+  // 10-21 防御：切门店/日期后此 note 曾被重复追加（一次一条，注入者未定位）——渲染后去重，只留第一条
+  const _pn=host.parentElement, _ns=_pn.querySelectorAll(":scope > .note");
+  for(let i=1;i<_ns.length;i++) _ns[i].remove();
 }
 
 function renderConc(r){
@@ -2280,9 +2283,16 @@ function winView(r){
 /* 说明文字不放在横向/纵向滚动容器里：渲染完把 .note 挪到容器后面，
    否则一横向滑动说明就被拖走了（卷卷 10-20）。*/
 function externalizeNotes(){
+  // 10-21 修幂等：模板每次渲染都把说明写回容器，本函数再把说明搬出来——原实现不清旧拷贝，
+  // 切一次门店/日期就累积一条（即「拖影」）。搬出前先删同文本的上一轮外置说明。
   document.querySelectorAll(".tbl-wrap,.scroll-y").forEach(h=>{
-    [...h.children].forEach(c=>{
-      if(c.classList && c.classList.contains("note")) h.parentNode.insertBefore(c, h.nextSibling);
+    const notes=[...h.children].filter(c=>c.classList && c.classList.contains("note"));
+    if(!notes.length) return;
+    notes.forEach(n=>{
+      [...h.parentNode.children].forEach(s=>{
+        if(s!==n && s.classList && s.classList.contains("note") && s.textContent===n.textContent) s.remove();
+      });
+      h.parentNode.insertBefore(n, h.nextSibling);
     });
   });
 }
@@ -2408,14 +2418,14 @@ function renderReport(r, key){
   if (tcIdx != null && acIdx != null && idx != null){
     const flowGap = tcIdx <= acIdx;
     startTxt = rlines(flowGap
-        ? "现在缺的是<b>客人</b>，不是客单价——进来的人花得并不少"
-        : "客人来得够多，但<b>每人花得还少</b>——先把连带做起来")
-      + rlines("<span style=\"color:#5F6B7A\">单量到老店 <b>" + pct(tcIdx,0) + "</b>、客单价 <b>" + pct(acIdx,0) + "</b>，合起来营收是老店的 " + pct(idx,0) + "</span>");
-    startAct = flowGap ? "把人先引进来：引流活动、门口动线，先别动价格"
-                       : "先做连带：组合装、陈列相邻、加购推荐，比继续引流更急";
+        ? "缺的是<b>客流量</b>，不是客单价"
+        : "<b>客单价</b>偏低——先做连带，不是引流")
+      + rlines("<span style=\"color:#5F6B7A\">单量 <b>" + pct(tcIdx,0) + "</b> · 客单价 <b>" + pct(acIdx,0) + "</b> · 营收 " + pct(idx,0) + "（对老店）</span>");
+    startAct = flowGap ? "引流优先：活动、动线，不动价格"
+                       : "连带优先：组合装、相邻陈列、加购";
   } else {
     startTxt = rlines("日均实收 <b>¥" + fmtN0(avg) + "</b>（" + nDays + " 天）" + (idx != null ? " · 老店 ¥" + fmtN0(peerLvl.avg_daily_sales) + " → <b>" + pct(idx,0) + "</b>" : ""));
-    startAct = "样本不足，先攒数据再下判断";
+    startAct = "样本不足，暂不下判断";
   }
 
   // ② 爬坡与开业日 → 洞察：脉冲已回落，基准用稳态平台（门店级事实，不随区间）
@@ -2427,9 +2437,9 @@ function renderReport(r, key){
   const platAvg = postOpen.length ? postOpen.reduce((a, b) => a + b.sales, 0) / postOpen.length : null;
   let rampTxt;
   if (od && platAvg != null && preAvg && openRow && postOpen.length >= 2){
-    rampTxt = rlines("开业当天的火爆已经回落，现在稳定在试营业的 <b>" + (platAvg / preAvg).toFixed(1) + " 倍</b>左右——订货排班按这个水平备，别按开业当天")
-      + rlines("<span style=\"color:#5F6B7A\">开业当天 ¥" + fmtN0(openRow.sales) + "（" + openRow.tc + " 单）；之后 " + postOpen.length + " 天平均 ¥" + fmtN0(platAvg) + "；试营业 " + preD.length + " 天平均 ¥" + fmtN0(preAvg) + "</span>")
-      + rj("开业当天是一次性高峰，不能当常态");
+    rampTxt = rlines("开业高峰回落，稳在试营业的 <b>" + (platAvg / preAvg).toFixed(1) + " 倍</b>——订货排班按此基准")
+      + rlines("<span style=\"color:#5F6B7A\">开业当天 ¥" + fmtN0(openRow.sales) + "（" + openRow.tc + " 单）；后 " + postOpen.length + " 天日均 ¥" + fmtN0(platAvg) + "；试营业 ¥" + fmtN0(preAvg) + "</span>")
+      + rj("首日为一次性高峰，勿作常态");
   } else if (od){
     rampTxt = rlines("正式开业 " + md(od) + (openRow ? " 单日 ¥" + fmtN0(openRow.sales) + "（" + openRow.tc + " 单）" : ""),
         (preAvg && openRow) ? "为试营业日均 ¥" + fmtN0(preAvg) + " 的 <b>" + (openRow.sales / preAvg).toFixed(1) + " 倍</b>" : null,
@@ -2446,7 +2456,7 @@ function renderReport(r, key){
   const _lrs = r.loss_reasons || [];
   const _dis = _lrs.find(x => x.reason === "丢弃"), _tri = _lrs.find(x => x.reason === "试吃");
   const lossReasonLine = (_dis || _tri)
-    ? rlines("<span style=\"color:#5F6B7A\">丢弃 " + pct((_dis || {}).share || 0, 0) + "（¥" + fmtN0((_dis || {}).amt || 0) + "）是订多了 · 试吃 " + pct((_tri || {}).share || 0, 0) + "（¥" + fmtN0((_tri || {}).amt || 0) + "）是推广花销，不算浪费</span>")
+    ? rlines("<span style=\"color:#5F6B7A\">丢弃 " + pct((_dis || {}).share || 0, 0) + "（¥" + fmtN0((_dis || {}).amt || 0) + "）＝订货问题 · 试吃 " + pct((_tri || {}).share || 0, 0) + "（¥" + fmtN0((_tri || {}).amt || 0) + "）＝推广投入</span>")
     : "";
   const lossTxt = lr == null ? "—"
     : rlines("完整报损率 <b>" + pct(lr, 2) + "</b>" + (plr ? " · 老店 " + pct(plr, 2) + (lratio >= 1 ? " → <b>" + lratio.toFixed(1) + " 倍</b>" : " → <b>" + lratio.toFixed(2) + " 倍</b>") : ""))
@@ -2455,7 +2465,7 @@ function renderReport(r, key){
                                             : lratio >= 1 ? "高于老店，需关注"
                                             : "优于老店，保持"));
   const lossAct = lr == null ? "—"
-    : (lratio == null || lratio >= 1) ? rlines("丢得多的品（丢掉占一半以上）重定订货量", "挞/起酥先按老店最低量试跑", "试吃算推广费，别混进报损看")
+    : (lratio == null || lratio >= 1) ? rlines("丢弃占比 ≥50% 的品重定订货", "挞/起酥按老店最低量试跑", "试吃计入推广预算")
     : rlines("维持现有订货节奏", "继续盯丢弃占比");
 
   // ④ 商品结构 → 洞察：先分清「结构差异」与「执行短板」
@@ -2472,14 +2482,14 @@ function renderReport(r, key){
         const lo = gaps[0], hi = gaps[gaps.length - 1];
         const _top = (r.prod_vs_peer || []).find(x => x.ratio != null && x.big === hi.cat)
                   || (r.prod_vs_peer || []).find(x => x.ratio != null) || null;
-        const _ev = "<span style=\"color:#5F6B7A\">主力是" + ord.slice(0, 2).map(x => x.cat + " " + pct(x.amt / tot, 1)).join(" / ")
-          + "；" + lo.cat + "比老店少 " + Math.abs(lo.d * 100).toFixed(1) + " 个点、" + hi.cat + "多 " + (hi.d * 100).toFixed(1) + " 个点</span>";
+        const _ev = "<span style=\"color:#5F6B7A\">主力：" + ord.slice(0, 2).map(x => x.cat + " " + pct(x.amt / tot, 1)).join(" / ")
+          + "；" + lo.cat + " -" + Math.abs(lo.d * 100).toFixed(1) + " 个点、" + hi.cat + " +" + (hi.d * 100).toFixed(1) + " 个点</span>";
         if (hi.d > 0.03){
-          catTxt = rlines("偏高的是<b>" + hi.cat + "</b>（比老店多 " + (hi.d * 100).toFixed(1) + " 个点）"
-                    + ((_top && _top.big === hi.cat) ? "、招牌「" + esc(_top.name) + "」一天的量是老店的 " + fmtN0(_top.ratio) + " 倍" : "")
-                    + "——这是<b>商圈不同</b>，不是做错了什么")
+          catTxt = rlines("偏高的是<b>" + hi.cat + "</b>（+" + (hi.d * 100).toFixed(1) + " 个点）"
+                    + ((_top && _top.big === hi.cat) ? "、招牌「" + esc(_top.name) + "」日均 " + fmtN0(_top.ratio) + " 倍于老店" : "")
+                    + "——<b>商圈结构差异</b>，非执行问题")
             + rlines(_ev);
-          catAct = rlines("先查" + lo.cat + "是不是缺货，再谈调不调", hi.cat + "的产能和陈列位优先保证");
+          catAct = rlines("先查 " + lo.cat + " 缺货", hi.cat + " 产能/陈列优先");
         } else {
           catTxt = rlines("品类结构和老店差不多，没有明显缺口") + rlines(_ev);
           catAct = "维持现结构";
@@ -2499,13 +2509,13 @@ function renderReport(r, key){
     const _nc = (r0.newcust || {}).n || null;
     const _conv = (_nc && r.recharge_members) ? pct(r.recharge_members / _nc, 0) : null;
     actTxt = rlines(_conv
-        ? "约 <b>" + _conv + "</b> 的新会员是被充值礼带来的——这条路走通了"
+        ? "<b>" + _conv + "</b> 新会员来自充值礼——拉新→储值跑通"
         : "充值 <b>¥" + fmtN0(r.recharge) + "</b>（" + (r.recharge_members || "-") + " 人）")
       + rlines("<span style=\"color:#5F6B7A\">充值 ¥" + fmtN0(r.recharge) + "（" + (r.recharge_members || "-") + " 人" + (r.recharge_gift ? "，赠送 ¥" + fmtN0(r.recharge_gift) : "") + "）"
         + (_nc ? " ≈ 本月开卡 " + fmtN0(_nc) + " 人" : "")
-        + (ps2[0] ? " · 最划算：「" + esc(ps2[0].name).slice(0, 14) + "」让 1 元换回 ¥" + ps2[0].roas.toFixed(2) : "")
-        + (pl2[0] ? " · 最没人用：「" + esc(pl2[0].name).slice(0, 12) + "」参与率只有 " + pct(pl2[0].part_rate, 1) : "") + "</span>")
-      + rj("充进来的钱是欠客人的，每月对一次账看花掉多少");
+        + (ps2[0] ? " · 最划算：「" + esc(ps2[0].name).slice(0, 12) + "」1 换 " + ps2[0].roas.toFixed(2) : "")
+        + (pl2[0] ? " · 最弱：「" + esc(pl2[0].name).slice(0, 12) + "」参与率 " + pct(pl2[0].part_rate, 1) : "") + "</span>")
+      + rj("储值是负债，按月对账看消耗");
   } else if (ps2.length || pl2.length){
     const parts = [];
     if (ps2[0]) parts.push("最划算：<b>" + esc(ps2[0].name).slice(0, 16) + "</b> 让 1 元换回 ¥" + ps2[0].roas.toFixed(2) + "（" + ps2[0].orders + " 单）");
@@ -2513,8 +2523,8 @@ function renderReport(r, key){
     actTxt = rlines(...parts);
   }
   const actAct = (ps2.length || pl2.length || r.recharge != null)
-    ? rlines("让 1 元能换回 3 元以上的活动，加大投放", "充值礼/入群礼按<b>拉新成本</b>算账，不看让利多少")
-    : "活动还太小，先看能不能起量，先别评好坏";
+    ? rlines("折让产出 ≥3 的活动加大投放", "充值礼按<b>拉新成本</b>考核")
+    : "样本不足，暂不评效率";
 
   // ⑥ 分流验证（门店级：样本够不够）
   const postDays = od ? (r0.days || []).filter(x => x.date >= od).length : 0;
@@ -2528,7 +2538,7 @@ function renderReport(r, key){
 
   const items = [
     ["开业起点", startTxt, startAct],
-    ["爬坡与开业日", rampTxt, "订货排班按当前水平备；观察 2~4 周看能不能再往上走"],
+    ["爬坡与开业日", rampTxt, "按当前水平备货排班；观察 2~4 周趋势"],
     ["⚠️ 报损", lossTxt, lossAct],
     ["商品结构", catTxt, catAct],
     ["活动与充值", actTxt, actAct],
