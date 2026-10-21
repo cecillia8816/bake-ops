@@ -20,7 +20,7 @@
 body{margin:0;font-family:Arial,'Segoe UI','Helvetica Neue','PingFang SC','Microsoft YaHei',sans-serif;
 background:var(--bg);color:var(--ink);font-size:14px;line-height:1.3}
 .wrap{max-width:1400px;margin:0 auto;padding:0 22px 60px}
-.topbar{position:sticky;top:0;z-index:900;background:rgba(242,246,250,.94);
+.topbar{position:sticky;top:0;z-index:900;background:rgba(242,246,250,.94);transform:translateZ(0);
 backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
 padding:12px 22px 10px;margin:0 -22px}
 .topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -133,6 +133,7 @@ tr:hover td{background:var(--mist-soft)}
 @media(max-width:720px){#lossWrap,#couponWrap,#promoWrap,#concWrap,#bigWrap,#dayWrap,#catWrap,#peerCmp,#reportWrap,#cmpWrap,#productsWrap,#liftWrap,#miscWrap,#segWrap,#slotWrap,#daytypeWrap,#zeroWrap,#prodWrap{overflow-x:auto}}
 /* 卡内竖向滚动（TOP30 等）：限高出滚动条，表头吸顶（卷卷 10-20） */
 .tbl-wrap.scroll-y{overflow:auto;max-height:560px}
+.tbl-wrap.scroll-y{transform:translateZ(0)}   /* 10-21：滚动残影缓解——滚动重绘圈在自己层里 */
 .tbl-wrap.scroll-y thead th{position:sticky;top:0;z-index:2;background:#EDF2F8;
   box-shadow:0 1px 0 var(--line)}
 th.num,td.num{width:34px;text-align:center;color:var(--mute)}
