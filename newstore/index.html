@@ -464,7 +464,7 @@ svg{display:block;max-width:100%}
     <h3>口径说明</h3>
     <ul>
       <li><b>日均实收</b>＝实收 ÷ 有销售天数；<b>AC</b>＝实收 ÷ 单数 · 均为所选区间口径</li>
-      <li><b>累计达成率</b>＝累计实收 ÷ 累计预算（日均预算 × 已过开业天数）；<b>本月目标</b>＝日均预算 × 本月开业总天数（按店按年动态计算），用于「剩余需日均」</li>
+      <li><b>累计达成率</b>＝累计实收 ÷ 累计预算（日均预算 × 已过开业天数）；<b>本月目标</b>＝日均预算 × 本月开业总天数（按店按年动态计算），用于「接下来每天要卖」</li>
       <li><b>日均预算</b>＝月保本 ÷ 当月自然天数（养成期 10–11 月）· 12 月起转常规预算</li>
       <li><b>报损率</b>＝报损成本 ÷ 营业实收，分子含无销售天；试吃是推广投入、不是浪费</li>
       <li><b>SABC</b>＝本区间金额排名（≤50% S / 75% A / 90% B / 余 C）· 跨店跨期不比字母</li>
@@ -571,7 +571,7 @@ svg{display:block;max-width:100%}
   <div class="grid2">
     <div class="chart-card">
       <h3>时段结构</h3>
-      <div class="pnote">时段分布反映商圈客群构成（办公 / 住宅 / 旅游）。<br>· 日均实收＝累计实收 ÷ 区间有销售天数；日均单数＝全部单 ÷ 区间有销售天数。</div>
+      <div class="pnote">时段分布反映商圈客群构成（办公 / 住宅 / 旅游）。<br>· 日均实收＝累计实收 ÷ 区间有销售天数；日均单数＝合计单数 ÷ 区间有销售天数。</div>
       <div id="slotWrap"></div>
       <div class="subhd">工作日 / 节假日</div>
       <div id="daytypeWrap"></div>
@@ -850,6 +850,12 @@ function renderPeerCmp(){
       <td>${fmtY0(o2oAmt)}</td><td>${sSum?pct(o2oAmt/sSum,1):"—"}</td></tr>`;
   };
   const r0cur=D.stores[cur]||{};
+  // O2O 注脚动态化（10-21）：SZ 外卖/团购明细 10-17~20 曾因导出失败缺数，修回后新店有零星线上单
+  // ——静态「0 单」文案会和数据打架，改成按两家店开业至今实算。
+  // 与逐日表同源同窗口（byDay.o2o＝渠道口径，正式开业起）：全店曾出现 307 vs 262 两个数，勿再分叉
+  const _o2sum=keys.reduce((a,k)=>{const r=D.stores[k]||{};const _od2=r.open_date||r.first_date||"";
+    return a+(((r.byDay&&r.byDay.o2o)||[]).filter(x=>!_od2||x.d>=_od2).reduce((b,y)=>b+(y.amt||0),0));},0);
+  const _s2sum=keys.reduce((a,k)=>a+((D.stores[k]||{}).sum_sales||0),0);
   host.style.display="block";
   host.innerHTML=`<div class="subhd">双店对照（正式开业起 ${md(r0cur.open_date)||"—"} ~ ${md(r0cur.window_end)} · 不随所选区间）</div>
    <table class="peer-tbl"><colgroup>
@@ -903,7 +909,7 @@ function renderPeerCmp(){
        <td>${richSales?pct(o2oSales/richSales,1):"—"}</td></tr>`;
    })()}</tbody></table>
    <div class="note">· 列同「逐日明细」，口径＝正式开业日（含）起；老店行＝4 家老店同区间的单店值（金额为区间合计）。<br>
-   · <b>O2O＝外卖＋团购＋小程序外卖/自提</b>（周看板口径）：新店区间内 <b>0 单</b>——渠道拆分无外卖/团购，单据支付方式只有储值卡与银豹付；老店占实收 35%。</div>`;
+   · <b>O2O＝外卖＋团购＋小程序外卖/自提</b>（周看板口径）：${_o2sum>0?`新店正式开业至今合计 <b>${fmtY0(_o2sum)}</b>（占 ${pct(_o2sum/_s2sum,1)}）——零星外卖/团购单，量级很小`:`新店区间内 <b>0 单</b>——渠道拆分无外卖/团购，单据支付方式只有储值卡与银豹付`}；老店占实收 35%。</div>`;
 }
 
 const tip = document.createElement("div"); tip.className="chart-tip"; document.body.appendChild(tip);
@@ -945,7 +951,8 @@ function renderKPI(r){
     ["累计实收", fmtY0(r.sum_sales), "", "区间 " + md(r.first_date) + " ~ " + md(r.window_end)],
     ["日均实收", fmtY0(r.avg_daily_sales), "", "有销售 " + r.n_days + " 天"],
     // 753 ＝ 付费 518 ＋ 零元 235（同一天的单不许混着看，故把拆解写全，日均放最后）
-    ["累计单数", fmtN(r.sum_tc), "", "付费 " + fmtN(r.sum_tc - _zero) + " 单 ＋ 零元 " + fmtN(_zero) + " 单<br><span style='font-size:12px;font-weight:700;color:var(--ink)'>日均 " + fmtC(r.avg_daily_tc) + " 单</span>"],
+    // 日均单数当主值（10-21 卷卷）：爬坡期日均才可比，累计退小字——与「日均实收」卡同构
+    ["日均单数", fmtC(r.avg_daily_tc), "", "区间累计 " + fmtN(r.sum_tc) + " 单<br>付费 " + fmtN(r.sum_tc - _zero) + " 单 ＋ 零元 " + fmtN(_zero) + " 单"],
     // 客单价两个口径：银豹 TC 含零元兑换/赠品单（235 张/本区间），会把 AC 拉低；付费客单价才是"花钱那批人"的单均。
     ["平均客单 AC", fmtAC(r.ac), "", "实收 ÷ " + fmtN(r.sum_tc) + " 单（含零元）<br>付费客单价 " + fmtY(_zero > 0 ? r.sum_sales/(r.sum_tc-_zero) : r.ac)],
     ["报损率", r.loss_rate==null?"—":pct(r.loss_rate,2), "warnc",
@@ -1239,8 +1246,8 @@ function renderSlots(r){
     return `<tr class="${isBest?"top-slot":""}"><td class="left-b">${name}<span class="slot-h">${hr}</span>${isBest?'<span class="badge">最高</span>':""}</td>
       ${s?`<td>${fmtY0(s.amt)}</td><td class="sj">${_nd?fmtY0(s.amt/_nd):"—"}</td><td>${pct(s.amt_share,1)}</td>`
          :`<td>—</td><td>—</td><td>—</td>`}
-      <td>${t.paid||"—"}</td><td>${t.zero||"—"}</td><td>${all||"—"}</td>
-      <td class="sji" title="全部单 ÷ 区间有销售天数 ${_nd}">${_nd?(all/_nd).toLocaleString("en-US",{maximumFractionDigits:1}):"—"}</td>
+      <td class="sj">${t.paid||"—"}</td><td class="sj">${t.zero||"—"}</td><td>${all||"—"}</td>
+      <td class="sji" title="合计单数 ÷ 区间有销售天数 ${_nd}">${_nd?Math.round(all/_nd).toLocaleString("en-US"):"—"}</td>
       <td>${s&&t.paid?fmtAC(s.amt/t.paid):"—"}</td></tr>`;
   };
   const extra=(r.slots||[]).filter(s=>!FIX.some(f=>f[0]===s.slot));
@@ -1249,13 +1256,13 @@ function renderSlots(r){
   const pSum=(r.ticket_slots||[]).reduce((a,b)=>a+b.paid,0);
   document.getElementById("slotWrap").innerHTML =
    `<table><thead><tr><th>时段</th><th>累计实收</th><th class="sj">日均实收</th><th>占比</th>
-      <th>付费单</th><th>零元单</th><th>全部单</th><th class="sji">日均单数</th><th>AC</th></tr></thead><tbody>
+      <th class="sj">付费单</th><th class="sj">零元单</th><th>合计单数</th><th class="sji">日均单数</th><th>AC</th></tr></thead><tbody>
     ${FIX.map(([n,h])=>row(n,h,by[n])).join("")}
     ${by["其他"]?row("其他","23-7",by["其他"]):""}
     ${extra.map(s=>row(s.slot,"",s)).join("")}
     <tr class="tot"><td>合计</td><td>${fmtY0(r.slot_amt_total)}</td><td class="sj">${r.n_days?fmtY0(r.slot_amt_total/r.n_days):"—"}</td><td>100.0%</td>
-      <td>${pSum||"—"}</td><td>${zSum||"—"}</td><td>${pSum+zSum||"—"}</td>
-      <td class="sji">${r.n_days?((pSum+zSum)/r.n_days).toLocaleString("en-US",{maximumFractionDigits:1}):"—"}</td>
+      <td class="sj">${pSum||"—"}</td><td class="sj">${zSum||"—"}</td><td>${pSum+zSum||"—"}</td>
+      <td class="sji">${r.n_days?Math.round((pSum+zSum)/r.n_days).toLocaleString("en-US"):"—"}</td>
       <td>${pSum?fmtAC(r.slot_amt_total/pSum):"—"}</td></tr>
    </tbody></table>
    <div class="note">· 覆盖 100%：付费单 ${pSum} ＋ 零元单 ${zSum} ＝ 银豹交易 ${pSum+zSum} 单；AC＝时段实收 ÷ 付费单。</div>`;
@@ -1292,7 +1299,7 @@ function renderZeroOrders(r){
       <td title="合计赠送率＝Σ零元件数 ÷ Σ（付费＋零元）件数，仅 TOP${zp.length} 加权">${(()=>{let zq=0,pq=0; zp.forEach(x=>{zq+=x.qty||0; pq+=paidQty[x.name]||0;}); return (zq+pq)>0?pct(zq/(zq+pq),1):"—";})()}</td></tr>
    </tbody></table>
    <div class="note">· 零元单 ${zSum} 单＝兑换券/赠品核销（实付 0）；券类另有实付 ${vp.orders||0} 单 ¥${fmtY0(vp.amt||0)}（兑换时顺手加购）。<br>
-   · 合计行为 TOP${zp.length} 小计；「占零元单」分母仍是全部零元单 ${zSum} 单${zSum-zp.reduce((a,b)=>a+(b.orders||0),0)>0?"，差额 "+(zSum-zp.reduce((a,b)=>a+(b.orders||0),0))+" 单分散在更多单品":""}。<br>
+   · 合计行为 TOP${zp.length} 小计；占零元单按全部零元单 ${zSum} 单算${zSum-zp.reduce((a,b)=>a+(b.orders||0),0)>0?"，差额 "+(zSum-zp.reduce((a,b)=>a+(b.orders||0),0))+" 单分散在更多单品":""}。<br>
    · 占零元单看谁在吃兑换配额；赠送率 ≥50% 标红＝主要靠赠送走。</div>
   </div>`;
 }
@@ -1371,7 +1378,7 @@ function renderProg(r){
     host.style.display="block";
     host.innerHTML=`<div class="prog-hd"><span>本月尚未正式开业</span>
       <span class="r">正式开业 ${B.openDate||"—"} 起计预算 · 日均预算 ${fmtY0(B.daily||0)}（＝月预算÷${mi.dim} 天）</span></div>
-      <div class="prog-ft">· 财务口径：预算天数<b>从正式开业日算起</b>，开业前与试营业都不计入，故开业前不存在达成率。</div>`;
+      <div class="prog-ft">· 预算天数<b>从正式开业那天算起</b>，开业前和试营业都不算——所以开业前没有达成率（财务定的规则）。</div>`;
     return;
   }
   const bPeriod=B.bPeriod, at=(bPeriod&&bPeriod>0)?B.afterSales/bPeriod:null;
@@ -1400,8 +1407,8 @@ function renderProg(r){
         <i>月${ramp?"保本":"预算"} ${fmtY0(g)} ÷ ${mi.dim} 天</i></div>
      <div class="kv"><span>本月目标</span><b>${fmtY0(B.monthTarget)}</b>
         <i>按开业 ${B.monthDays} 天折算</i></div>
-     <div class="kv"><span>剩余需日均</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
-        <i>剩余 ${left} 天 · 本月缺口 ${fmtY0(gap)}</i></div>
+     <div class="kv"><span>接下来每天要卖</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
+        <i>本月还差 ${fmtY0(gap)} · 还剩 ${left} 天</i></div>
      <div class="kv"><span>月累计预测</span><b>${fmtY0(proj)}</b>
         <i>按当前日均外推 · 占目标 ${pct(B.monthTarget?proj/B.monthTarget:0,1)}</i></div>
    </div>
@@ -1422,7 +1429,8 @@ function renderDays(r){
   const WK="日一二三四五六";
   // 逐日会员/团餐/O2O/充值拆分（与双店对照同一套字段）
   const _bd=r.byDay||{};
-  const _memD={}, _segD={}, _o2oD={}, _rcD={};
+  const _memD={}, _segD={}, _o2oD={}, _rcD={}, _tkD={};
+  (r.byDay.ticketslot||[]).forEach(x=>{const o=_tkD[x.d]||(_tkD[x.d]={p:0,z:0});o.p+=x.paid||0;o.z+=x.zero||0;});
   (_bd.member||[]).forEach(x=>{_memD[x.d]=x;});
   (_bd.seg||[]).forEach(x=>{(_segD[x.d]=_segD[x.d]||[]).push(x);});
   (_bd.o2o||[]).forEach(x=>{_o2oD[x.d]=x;});
@@ -1439,6 +1447,7 @@ function renderDays(r){
     const att = (_post && mb) ? cumPost/((mb/dim)*Math.max(1, dd-_od+1)) : null;
     const _Sd = memberSplit({member:_memD[d.date]||{}, segs:_segD[d.date]||[]});
     const _o2o = _o2oD[d.date] ? (_o2oD[d.date].amt||0) : 0;
+    const _tk = _tkD[d.date] || {p:0,z:0};
     const _rc = _rcD[d.date] ? (_rcD[d.date].recharge||0) : 0;
     const pv=r.days[i-1];
     const dod=pv&&pv.sales? (d.sales/pv.sales-1) : null;
@@ -1454,7 +1463,9 @@ function renderDays(r){
       <td class="sep-l">${fmtY0(d.sales)}</td>
       <td class="${dod==null?"":(dod>=0.05?"up":(dod<=-0.05?"down":""))}" title="${pv?"对 "+md(pv.date)+"（周"+WK[new Date(pv.date+"T00:00:00").getDay()]+"）":"首日无前值"}">${dod==null?"—":(dod>=0?"+":"")+pct(dod,1)}</td>
       <td>${d.tc}</td>
+      <td class="sj" title="零元单＝兑换券/赠品核销的单数（实付 0，银豹交易含它、商品流水不含）">${_tkD[d.date]?_tkD[d.date].z:"—"}</td>
       <td>${fmtAC(d.ac)}</td>
+      <td class="sj" title="付费单AC＝销售实收 ÷ 付费单（剔零元单后的客单价）">${(_tkD[d.date]&&_tkD[d.date].p)?fmtAC(d.sales/_tkD[d.date].p):"—"}</td>
       <td>${_post?fmtY0(cumPost):"—"}</td>
       <td title="${_post?"累计实收 "+fmtY0(cumPost)+" ÷ 累计预算 "+fmtY0(_mtd):"试营业期不计入"}">${att==null?"—":pct(att,1)}</td>
       <td>${_rc?fmtY0(_rc):"—"}</td>
@@ -1470,9 +1481,10 @@ function renderDays(r){
   // 页脚：正式开业后合计 / 日均 / 试营业（单列不计入）
   const postDays=r.open_date?r.days.filter(x=>x.date>=r.open_date):r.days;
   const preD=r.days.filter(x=>r.open_date && x.date<r.open_date);
-  const agg=(arr)=>{const s={n:arr.length,sales:0,tc:0,loss:0,rech:0,act:0,o2o:0};
+  const agg=(arr)=>{const s={n:arr.length,sales:0,tc:0,loss:0,rech:0,act:0,o2o:0,paid:0,zero:0};
     arr.forEach(x=>{s.sales+=x.sales||0;s.tc+=x.tc||0;s.loss+=x.loss_full||0;s.act+=x.act_amt||0;
-      s.rech+=((_rcD[x.date]||{}).recharge||0); s.o2o+=((_o2oD[x.date]||{}).amt||0);});
+      s.rech+=((_rcD[x.date]||{}).recharge||0); s.o2o+=((_o2oD[x.date]||{}).amt||0);
+      const _t=_tkD[x.date]||{}; s.paid+=_t.p||0; s.zero+=_t.z||0;});
     const m={m_amt:0,g_amt:0,m_tc:0,g_tc:0},sg={};
     arr.forEach(x=>{const mm=_memD[x.date]||{};m.m_amt+=mm.m_amt||0;m.g_amt+=mm.g_amt||0;
       (_segD[x.date]||[]).forEach(y=>{const o=sg[y.seg]||(sg[y.seg]={seg:y.seg,amt:0,orders:0});o.amt+=y.amt||0;o.orders+=y.orders||0;});});
@@ -1487,7 +1499,9 @@ function renderDays(r){
       <td class="sep-l">${showAgg?fmtY0(s.sales):fmtY0(s.sales/days)}</td>
       <td>—</td>
       <td>${showAgg?fmtN(s.tc):fmtC(s.tc/days)}</td>
+      <td class="sj">${showAgg?fmtN(s.zero):fmtC(s.zero/days)}</td>
       <td>${s.tc?fmtAC(s.sales/s.tc):"—"}</td>
+      <td class="sj">${s.paid?fmtAC(s.sales/s.paid):"—"}</td>
       <td>${cumTxt==null?(showAgg?fmtY0(rPostVal(r)):"—"):cumTxt}</td>
       <td>${attTxt!=null?attTxt:((cumTxt==null&&showAgg)?(rAtt==null?"—":pct(rAtt,1)):"—")}</td>
       <td>${showAgg?fmtY0(s.rech):fmtY0(s.rech/days)}</td>
@@ -1501,13 +1515,13 @@ function renderDays(r){
       <td>${s.sales?pct(s.o2o/s.sales,1):"—"}</td></tr>`;
   host.innerHTML=`<table><colgroup>
       <col style="width:8.2%"><col style="width:3.2%"><col style="width:4.2%">
-      <col style="width:6.2%"><col style="width:4.6%"><col style="width:4.6%"><col style="width:4.2%"><col style="width:6%">
+      <col style="width:5.7%"><col style="width:4.5%"><col style="width:3.5%"><col style="width:3.7%"><col style="width:4.2%"><col style="width:4.9%"><col style="width:5.2%">
       <col style="width:5.8%"><col style="width:5.6%"><col style="width:4.8%"><col style="width:4.8%">
       <col style="width:6.2%"><col style="width:4.8%"><col style="width:5.6%"><col style="width:4.8%"><col style="width:5.6%"><col style="width:4.8%"></colgroup>
     <thead>
-      <tr class="col2"><th colspan="3">日历</th><th colspan="9" class="sep-l">经营表现</th><th colspan="6" class="sep-l">客群与渠道</th></tr>
+      <tr class="col2"><th colspan="3">日历</th><th colspan="11" class="sep-l">经营表现</th><th colspan="6" class="sep-l">客群与渠道</th></tr>
       <tr><th class="left-b">日期</th><th class="left-b">星期</th><th class="left-b">日型</th>
-        <th class="sep-l">销售实收</th><th>销售环比</th><th>单数</th><th>AC</th><th>累计实收</th><th>累计达成率</th><th>充值收款</th>
+        <th class="sep-l">销售实收</th><th>销售环比</th><th>单数</th><th class="sj">零元单</th><th>AC</th><th class="sj">付费单AC</th><th>累计实收</th><th>累计达成率</th><th>充值收款</th>
         <th>折扣率</th><th>报损率</th>
         <th class="sep-l">会员实收</th><th>会员%</th><th>活动实收</th><th>活动%</th><th>O2O 实收</th><th>O2O%</th></tr>
     </thead><tbody>
@@ -1851,7 +1865,7 @@ function renderPromos(r){
   // 买赠/免单＝「整单回填」口径：实收＝活动单整单实收，避免出现 ¥0.00 的误导。
   // ⚠️ 标签改为名字后一个 * 号 + 表下一句说明（2026-10-19 审计：原来 8 行都挂「整单回填」胶囊，
   //    把活动名挤成两行、行高不齐，而且工程口径词直接进了业务名称）。
-  const mark=p=> p.gf===1 ? '<span class="gm" title="买赠/免单按整单回填计：实收＝活动单整单实收，让利＝赠品价值">*</span>' : '';
+  const mark=p=> p.gf===1 ? '<span class="gm" title="带 * 的是买赠/免单：送出的东西没法单独算钱，实收按客人整单实付算">*</span>' : '';
   const dTot=r.promo_disc_total, nTot=r.promo_net_total;
   const allOrd=r.promo_all_orders||0;
   // 会员/散客参与率＝**渗透率**：该活动的会员单 ÷ 本区间会员单（不是"该活动单里会员占几成"）。
@@ -1860,9 +1874,9 @@ function renderPromos(r){
   const _SP=memberSplit(r);
   const mTot=_SP.mTcEx, gTot=_SP.gTcEx;   // 不含团餐（与会员卡同口径）
   // 分母上台（10-20 卷卷）：三列三个分母并排最易误读——分母常显在表上方，随区间实时更新
-  if(_den) _den.innerHTML="参与率分母 · <b>参与率</b> ÷ 本区间付费单 <b>"+(allOrd||"—")+"</b>"
-    +" · <b>会员参与率</b> ÷ 会员单 <b>"+(mTot||"—")+"</b>"
-    +" · <b>散客参与率</b> ÷ 散客单 <b>"+(gTot||"—")+"</b>";
+  if(_den) _den.innerHTML="参与率怎么算 · 参与率＝活动单 ÷ 付费单 <b>"+(allOrd||"—")+"</b>"
+    +" · 会员参与率＝会员活动单 ÷ 会员单 <b>"+(mTot||"—")+"</b>"
+    +" · 散客参与率＝散客活动单 ÷ 散客单 <b>"+(gTot||"—")+"</b>";
   const mRate=p=> (mTot && p.m_orders!=null) ? p.m_orders/mTot : null;
   const gRate=p=> (gTot && p.g_orders!=null) ? p.g_orders/gTot : null;
   // 活动单 / 非活动单 的客单价（订单结构口径，不含团餐）：回答"活动有没有把客单拉高"
@@ -1921,7 +1935,7 @@ function renderPromos(r){
       <td>${r.promo_orders_total||0}*</td><td>—</td>
       <td>—</td><td>—</td><td>—</td><td>—</td></tr>
    </tbody></table>
-   <div class="note">*人次合计：同一单可同时参与多个活动（重复计）、并含零元兑换单——三列参与率对合计不适用。</div>
+   <div class="note">*人次合计：同一单参加几个活动就算几次，也含 0 元兑换的单——三列参与率对合计无意义。</div>
    <div class="subhd">按折扣类型汇总（银豹「折扣名称」分类）</div>
    <table class="fit-tbl"><thead><tr><th class="left-b">折扣类型</th><th>活动数</th><th>单数</th><th>让利</th><th>让利占比</th><th title="该性质实收 ÷ 让利">折让产出</th></tr></thead><tbody>
    ${(()=>{
@@ -1938,7 +1952,7 @@ function renderPromos(r){
      return rows+tot;
    })()}
    </tbody></table>
-   <div class="note">· 折让产出＝实收 ÷ 折让（&gt;1 才不亏）；带 * 的活动按整单回填实收；「未分类」＝银豹无折扣类型记录。</div>`;
+   <div class="note">· 折让产出＝实收 ÷ 折让（&gt;1 才不亏）；带 * 的活动按客人整单实付算实收；「未分类」＝银豹无折扣类型记录。</div>`;
 }
 
 /* ---------─ 优惠券带动 ---------- */
@@ -2393,11 +2407,11 @@ function renderReport(r, key){
   if (tcIdx != null && acIdx != null && idx != null){
     const flowGap = tcIdx <= acIdx;
     startTxt = rlines(flowGap
-        ? "缺口主要在<b>客流</b>、不在客单：单量恢复慢于客单，先抓引流与转化"
-        : "短板在<b>客单</b>：客已进来、单人产出还明显低于老店，先抓连带与结构")
-      + rlines("<span style=\"color:#5F6B7A\">证据：日均单数已到老店 <b>" + pct(tcIdx,0) + "</b> · 客单价 <b>" + pct(acIdx,0) + "</b> → 日均实收 " + pct(idx,0) + "（两者相乘）</span>");
-    startAct = flowGap ? "引流/转化优先（自然流、活动触达、动线），不动价格结构"
-                       : "连带优先（组合、陈列、加购），先于继续引流";
+        ? "现在缺的是<b>客人</b>，不是客单价——进来的人花得并不少"
+        : "客人来得够多，但<b>每人花得还少</b>——先把连带做起来")
+      + rlines("<span style=\"color:#5F6B7A\">单量到老店 <b>" + pct(tcIdx,0) + "</b>、客单价 <b>" + pct(acIdx,0) + "</b>，合起来营收是老店的 " + pct(idx,0) + "</span>");
+    startAct = flowGap ? "把人先引进来：引流活动、门口动线，先别动价格"
+                       : "先做连带：组合装、陈列相邻、加购推荐，比继续引流更急";
   } else {
     startTxt = rlines("日均实收 <b>¥" + fmtN0(avg) + "</b>（" + nDays + " 天）" + (idx != null ? " · 老店 ¥" + fmtN0(peerLvl.avg_daily_sales) + " → <b>" + pct(idx,0) + "</b>" : ""));
     startAct = "样本不足，先攒数据再下判断";
@@ -2412,9 +2426,9 @@ function renderReport(r, key){
   const platAvg = postOpen.length ? postOpen.reduce((a, b) => a + b.sales, 0) / postOpen.length : null;
   let rampTxt;
   if (od && platAvg != null && preAvg && openRow && postOpen.length >= 2){
-    rampTxt = rlines("开业脉冲已回落，当前平台 ≈ 试营业的 <b>" + (platAvg / preAvg).toFixed(1) + " 倍</b>——订货/排班基准用平台，别用首日")
-      + rlines("<span style=\"color:#5F6B7A\">首日 ¥" + fmtN0(openRow.sales) + "（" + openRow.tc + " 单）· 开业后其余 " + postOpen.length + " 天日均 ¥" + fmtN0(platAvg) + " · 试营业 " + preD.length + " 天日均 ¥" + fmtN0(preAvg) + "</span>")
-      + rj("单日爆量不可外推");
+    rampTxt = rlines("开业当天的火爆已经回落，现在稳定在试营业的 <b>" + (platAvg / preAvg).toFixed(1) + " 倍</b>左右——订货排班按这个水平备，别按开业当天")
+      + rlines("<span style=\"color:#5F6B7A\">开业当天 ¥" + fmtN0(openRow.sales) + "（" + openRow.tc + " 单）；之后 " + postOpen.length + " 天平均 ¥" + fmtN0(platAvg) + "；试营业 " + preD.length + " 天平均 ¥" + fmtN0(preAvg) + "</span>")
+      + rj("开业当天是一次性高峰，不能当常态");
   } else if (od){
     rampTxt = rlines("正式开业 " + md(od) + (openRow ? " 单日 ¥" + fmtN0(openRow.sales) + "（" + openRow.tc + " 单）" : ""),
         (preAvg && openRow) ? "为试营业日均 ¥" + fmtN0(preAvg) + " 的 <b>" + (openRow.sales / preAvg).toFixed(1) + " 倍</b>" : null,
@@ -2431,7 +2445,7 @@ function renderReport(r, key){
   const _lrs = r.loss_reasons || [];
   const _dis = _lrs.find(x => x.reason === "丢弃"), _tri = _lrs.find(x => x.reason === "试吃");
   const lossReasonLine = (_dis || _tri)
-    ? rlines("<span style=\"color:#5F6B7A\">丢弃 " + pct((_dis || {}).share || 0, 0) + "（¥" + fmtN0((_dis || {}).amt || 0) + "）＝订货问题 · 试吃 " + pct((_tri || {}).share || 0, 0) + "（¥" + fmtN0((_tri || {}).amt || 0) + "）＝推广投入</span>")
+    ? rlines("<span style=\"color:#5F6B7A\">丢弃 " + pct((_dis || {}).share || 0, 0) + "（¥" + fmtN0((_dis || {}).amt || 0) + "）是订多了 · 试吃 " + pct((_tri || {}).share || 0, 0) + "（¥" + fmtN0((_tri || {}).amt || 0) + "）是推广花销，不算浪费</span>")
     : "";
   const lossTxt = lr == null ? "—"
     : rlines("完整报损率 <b>" + pct(lr, 2) + "</b>" + (plr ? " · 老店 " + pct(plr, 2) + (lratio >= 1 ? " → <b>" + lratio.toFixed(1) + " 倍</b>" : " → <b>" + lratio.toFixed(2) + " 倍</b>") : ""))
@@ -2440,7 +2454,7 @@ function renderReport(r, key){
                                             : lratio >= 1 ? "高于老店，需关注"
                                             : "优于老店，保持"));
   const lossAct = lr == null ? "—"
-    : (lratio == null || lratio >= 1) ? rlines("按丢弃占比 ≥50% 的品重定订货量", "挞/起酥按老店最低量试跑", "试吃按推广预算单独核销，不挤报损")
+    : (lratio == null || lratio >= 1) ? rlines("丢得多的品（丢掉占一半以上）重定订货量", "挞/起酥先按老店最低量试跑", "试吃算推广费，别混进报损看")
     : rlines("维持现有订货节奏", "继续盯丢弃占比");
 
   // ④ 商品结构 → 洞察：先分清「结构差异」与「执行短板」
@@ -2457,16 +2471,16 @@ function renderReport(r, key){
         const lo = gaps[0], hi = gaps[gaps.length - 1];
         const _top = (r.prod_vs_peer || []).find(x => x.ratio != null && x.big === hi.cat)
                   || (r.prod_vs_peer || []).find(x => x.ratio != null) || null;
-        const _ev = "<span style=\"color:#5F6B7A\">主力：" + ord.slice(0, 2).map(x => x.cat + " " + pct(x.amt / tot, 1)).join(" / ")
-          + " · 低最多：" + lo.cat + " → -" + Math.abs(lo.d * 100).toFixed(1) + "pp · 高最多：" + hi.cat + " → +" + (hi.d * 100).toFixed(1) + "pp（老店同窗口）</span>";
+        const _ev = "<span style=\"color:#5F6B7A\">主力是" + ord.slice(0, 2).map(x => x.cat + " " + pct(x.amt / tot, 1)).join(" / ")
+          + "；" + lo.cat + "比老店少 " + Math.abs(lo.d * 100).toFixed(1) + " 个点、" + hi.cat + "多 " + (hi.d * 100).toFixed(1) + " 个点</span>";
         if (hi.d > 0.03){
-          catTxt = rlines("偏高的是<b>" + hi.cat + "</b>（+" + (hi.d * 100).toFixed(1) + "pp）"
-                    + ((_top && _top.big === hi.cat) ? "、招牌「" + esc(_top.name) + "」日均销量为老店 " + _top.ratio + " 倍" : "")
-                    + "——更像<b>商圈结构差异</b>，不是执行短板")
+          catTxt = rlines("偏高的是<b>" + hi.cat + "</b>（比老店多 " + (hi.d * 100).toFixed(1) + " 个点）"
+                    + ((_top && _top.big === hi.cat) ? "、招牌「" + esc(_top.name) + "」一天的量是老店的 " + fmtN0(_top.ratio) + " 倍" : "")
+                    + "——这是<b>商圈不同</b>，不是做错了什么")
             + rlines(_ev);
-          catAct = rlines("低项（" + lo.cat + "）先查缺货，再谈结构调整", hi.cat + " 产能/陈列动线优先加配");
+          catAct = rlines("先查" + lo.cat + "是不是缺货，再谈调不调", hi.cat + "的产能和陈列位优先保证");
         } else {
-          catTxt = rlines("结构与老店接近，无明显结构缺口") + rlines(_ev);
+          catTxt = rlines("品类结构和老店差不多，没有明显缺口") + rlines(_ev);
           catAct = "维持现结构";
         }
       } else { catTxt = rlines("暂无可对照品类"); }
@@ -2484,22 +2498,22 @@ function renderReport(r, key){
     const _nc = (r0.newcust || {}).n || null;
     const _conv = (_nc && r.recharge_members) ? pct(r.recharge_members / _nc, 0) : null;
     actTxt = rlines(_conv
-        ? "充值礼已把约 <b>" + _conv + "</b> 的本月新会员转成储值会员——「拉新→储值」链路成立"
+        ? "约 <b>" + _conv + "</b> 的新会员是被充值礼带来的——这条路走通了"
         : "充值 <b>¥" + fmtN0(r.recharge) + "</b>（" + (r.recharge_members || "-") + " 人）")
       + rlines("<span style=\"color:#5F6B7A\">充值 ¥" + fmtN0(r.recharge) + "（" + (r.recharge_members || "-") + " 人" + (r.recharge_gift ? "，赠送 ¥" + fmtN0(r.recharge_gift) : "") + "）"
         + (_nc ? " ≈ 本月开卡 " + fmtN0(_nc) + " 人" : "")
-        + (ps2[0] ? " · 折让产出最高：「" + esc(ps2[0].name).slice(0, 14) + "」每 1 元折让换 ¥" + ps2[0].roas.toFixed(2) : "")
-        + (pl2[0] ? " · 触达最窄：「" + esc(pl2[0].name).slice(0, 12) + "」参与率 " + pct(pl2[0].part_rate, 1) : "") + "</span>")
-      + rj("储值是负债：本金消耗进度按月对账盯");
+        + (ps2[0] ? " · 最划算：「" + esc(ps2[0].name).slice(0, 14) + "」让 1 元换回 ¥" + ps2[0].roas.toFixed(2) : "")
+        + (pl2[0] ? " · 最没人用：「" + esc(pl2[0].name).slice(0, 12) + "」参与率只有 " + pct(pl2[0].part_rate, 1) : "") + "</span>")
+      + rj("充进来的钱是欠客人的，每月对一次账看花掉多少");
   } else if (ps2.length || pl2.length){
     const parts = [];
-    if (ps2[0]) parts.push("折让产出最高：<b>" + esc(ps2[0].name).slice(0, 16) + "</b> 每 1 元折让换回 ¥" + ps2[0].roas.toFixed(2) + " 实收（" + ps2[0].orders + " 单）");
-    if (pl2[0]) parts.push("触达最窄：<b>" + esc(pl2[0].name).slice(0, 16) + "</b> 参与率 " + pct(pl2[0].part_rate, 1) + "（" + pl2[0].orders + " 单）");
+    if (ps2[0]) parts.push("最划算：<b>" + esc(ps2[0].name).slice(0, 16) + "</b> 让 1 元换回 ¥" + ps2[0].roas.toFixed(2) + "（" + ps2[0].orders + " 单）");
+    if (pl2[0]) parts.push("最没人用：<b>" + esc(pl2[0].name).slice(0, 16) + "</b> 参与率只有 " + pct(pl2[0].part_rate, 1) + "（" + pl2[0].orders + " 单）");
     actTxt = rlines(...parts);
   }
   const actAct = (ps2.length || pl2.length || r.recharge != null)
-    ? rlines("保留「折让产出 ≥3」的活动并加大投放", "充值礼/入群礼按<b>获客成本</b>看，不看折让产出")
-    : "样本太少（<10 单或 <3 天），先看活动起量，别急着评效率";
+    ? rlines("让 1 元能换回 3 元以上的活动，加大投放", "充值礼/入群礼按<b>拉新成本</b>算账，不看让利多少")
+    : "活动还太小，先看能不能起量，先别评好坏";
 
   // ⑥ 分流验证（门店级：样本够不够）
   const postDays = od ? (r0.days || []).filter(x => x.date >= od).length : 0;
@@ -2509,11 +2523,11 @@ function renderReport(r, key){
       + (postDays >= 14 && postWk >= 2 ? rj("样本够，可复跑断点口径")
                                        : rj("样本不足，判不出来")
                                          + rlines("<span style=\"color:#5F6B7A\">门槛：前后各 28 天、含约 2 个完整周末</span>"));
-  const divAct = (postDays >= 14 && postWk >= 2) ? "跑 _ns_diversion2.py 出分流结论" : "攒够 14 天 + 2 个完整周末后复跑";
+  const divAct = (postDays >= 14 && postWk >= 2) ? "到点复跑分流对比，出结论" : "攒够 14 天 + 2 个完整周末后复跑";
 
   const items = [
     ["开业起点", startTxt, startAct],
-    ["爬坡与开业日", rampTxt, "订货/排班按稳态平台做基准；观察 2~4 周看平台抬升"],
+    ["爬坡与开业日", rampTxt, "订货排班按当前水平备；观察 2~4 周看能不能再往上走"],
     ["⚠️ 报损", lossTxt, lossAct],
     ["商品结构", catTxt, catAct],
     ["活动与充值", actTxt, actAct],
@@ -2521,7 +2535,7 @@ function renderReport(r, key){
   ];
 
   document.getElementById("reportWrap").innerHTML =
-    `<table class="rpt-tbl"><colgroup><col style="width:116px"><col><col style="width:286px"></colgroup><thead><tr><th>维度</th><th>洞察 · 判断先行（跟随所选日期区间）</th><th>建议动作</th></tr></thead><tbody>`
+    `<table class="rpt-tbl"><colgroup><col style="width:104px"><col><col style="width:316px"></colgroup><thead><tr><th>维度</th><th>判断（跟随所选日期区间）</th><th>建议动作</th></tr></thead><tbody>`
     + items.map(([k, v, a]) => `<tr><td class="rptk">${k}</td><td>${v}</td><td class="rpta">${a}</td></tr>`).join("")
     + `</tbody></table>
      <div class="note">· ⚠️ 本区是「新店爬坡期 vs 老店成熟稳态」对照，<b>不严格可比</b>（老店已过爬坡期，占比天然更高）。<br>
