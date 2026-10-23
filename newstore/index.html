@@ -1006,7 +1006,7 @@ function renderPeerCmp(){
        <th class="sep-l">日均实收</th><th>日均单数</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th>累计实收</th>
        <th title="累计实收 ÷ 累计预算">累计达成率</th><th>充值收款</th>
        <th title="整店折扣＝全店实收 ÷ 全店原价 ×10（含会员价、活动折让等所有让价）；与⑥「活动折扣」只算活动单不同">整店折扣</th><th title="报损成本 ÷ 营业实收">报损率</th>
-       <th class="sep-l" title="会员实收（不含团餐）">会员实收</th><th title="会员实收 ÷ 会员＋散客实收（不含团餐）">会员%</th>
+       <th class="sep-l" title="会员实收（不含团餐）">会员实收</th><th title="分子＝会员实收；分母＝全部实收 − 团餐大单">会员%</th>
        <th>活动实收</th><th title="活动单实收 ÷ 全店实收">活动%</th><th>O2O 实收</th><th title="O2O 实收 ÷ 全店实收">O2O%</th></tr></thead>
    <tbody>${keys.map(cell).join("")}${(()=>{
      const _r=D.stores[cur]||{}, _pr=_r.peer||{}, _rich=_r.peer_rich||{};
@@ -1052,7 +1052,7 @@ function renderPeerCmp(){
        <td title="同区间实收 ÷ 原价 加权（与上行同刻度：×10 写成折）">${discRate==null?"—":(10*discRate).toFixed(1)+"折"}</td>
        <td>${sSum?pct(lSum/sSum,2):"—"}</td>
        <td class="sep-l" title="单店 ${days} 天合计会员实收（销售单据会员标记，与新品同源）">${fmtY0(memTot/rn)}</td>
-       <td title="会员实收 ÷ 会员＋散客实收（4 家加权；单店区间 ${_memRng}）">${memDen?pct(memTot/memDen,1):"—"}</td>
+       <td title="分子＝会员实收；分母＝全部实收 − 团餐（4 家加权；单店区间 ${_memRng}）">${memDen?pct(memTot/memDen,1):"—"}</td>
        <td title="单店 ${days} 天合计活动单实收（整单口径，与新品同源）">${fmtY0(actTot/rn)}</td>
        <td>${sSum?pct(actTot/sSum,1):"—"}</td>
        <td title="单店 ${days} 天合计 O2O（外卖＋团购＋小程序外卖/自提）">${fmtY0(o2oSales/rn)}</td>
@@ -1829,7 +1829,7 @@ function renderDays(r){
       <tr><th class="left-b">日期</th><th class="left-b">星期</th><th class="left-b">日型</th>
         <th class="sep-l">销售实收</th><th>销售环比</th><th title="交易单数（含零元单）">单数</th><th class="sj">零元单</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th class="sj">付费客单价</th><th>累计实收</th><th>累计达成率</th><th>充值收款</th>
         <th title="整店折扣＝全店实收 ÷ 全店原价 ×10（含所有让价）">整店折扣</th><th>报损率</th>
-        <th class="sep-l" title="当天新办卡会员数（单位：人；银豹「会员新增统计」逐日，按开卡门店）">新会员</th><th title="会员单的实收（不含团餐）">会员实收</th><th title="分子＝会员实收；分母＝会员实收＋散客实收（不含团餐，含零元单）">会员%</th><th title="活动单的实收（单内有商品按活动价成交）">活动实收</th><th title="分子＝活动实收；分母＝当日销售实收（含零元单）">活动%</th><th title="外卖＋团购＋小程序实收">O2O 实收</th><th title="分子＝O2O 实收；分母＝当日销售实收">O2O%</th></tr>
+        <th class="sep-l" title="当天新办卡会员数（单位：人；银豹「会员新增统计」逐日，按开卡门店）">新会员</th><th title="会员单的实收（不含团餐）">会员实收</th><th title="分子＝会员实收；分母＝全部实收 − 团餐大单（含零元单）">会员%</th><th title="活动单的实收（单内有商品按活动价成交）">活动实收</th><th title="分子＝活动实收；分母＝当日销售实收（含零元单）">活动%</th><th title="外卖＋团购＋小程序实收">O2O 实收</th><th title="分子＝O2O 实收；分母＝当日销售实收">O2O%</th></tr>
     </thead><tbody>
     ${rows.filter(x=>x.trial).map(x=>x.h).join("")}
     ${T.n?lineTot("trial-row subtotal","试营业 "+T.n+" 天 · 不计入",T,T.n,true,"—","—",tDisc):""}
@@ -3563,7 +3563,7 @@ function renderMisc(r){
   document.getElementById("miscWrap").innerHTML = `<table><thead><tr>
       <th class="left-b">指标</th><th>数值</th><th class="left-b">口径 / 说明</th></tr></thead><tbody>
     <tr><td class="left-b">会员占比</td><td><b>${pct(_postS?_postS.mShare:S.mShare,2)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="会员实收 ${fmtY0(S.mEx)} ÷ 会员＋散客实收 ${fmtY0(S.mEx+S.gEx)}${_postS?`；含试营业时为 ${pct(S.mShare,2)}（试营业 ${_gapDs.length} 天会员标记缺失 ${_gapOrd} 单仅 ${_gapMem} 单带标记，不可用，故取开业后）`:""}">会员实收 ÷ 全部实收</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="分子＝会员实收 ${fmtY0(S.mEx)}；分母＝全部实收 − 团餐 ${fmtY0(S.mEx+S.gEx)}${_postS?`；含试营业时为 ${pct(S.mShare,2)}（试营业 ${_gapDs.length} 天会员标记缺失 ${_gapOrd} 单仅 ${_gapMem} 单带标记，不可用，故取开业后）`:""}">会员实收 ÷ 全部实收</td></tr>
     <tr><td class="left-b">会员单占比</td><td><b>${pct(S.mTcShare,2)}</b></td>
         <td class="left-b" style="color:#5F6B7A" title="会员 ${S.mTcEx} 单 ÷ 全部 ${S.mTcEx+S.gTcEx} 单">会员单 ÷ 全部单（不含团餐）</td></tr>
     <tr><td class="left-b">团餐大单</td><td><b>${S.bigOrd} 单 · ${fmtY0(S.bigAmt)}</b></td>
