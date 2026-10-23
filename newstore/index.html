@@ -1109,23 +1109,23 @@ function renderKPI(r){
   const _trialIn = ((r.days||[]).filter(x=>r.open_date && x.date < r.open_date).length)||0;
   const _tTag = _trialIn ? '<span class="tag" title="本卡含试营业 '+_trialIn+' 天；右侧达成率只算开业后">含试营业</span>' : '';
   const k = [
-    ["累计实收" + _tTag, fmtY0(r.sum_sales), "", "本店累计"],
+    ["累计实收" + _tTag, fmtY0(r.sum_sales), "", ""],
     ["日均实收" + _tTag, fmtY0(r.avg_daily_sales), "", "有销售 " + r.n_days + " 天"],
     // 753 ＝ 付费 518 ＋ 零元 235（同一天的单不许混着看，故把拆解写全，日均放最后）
     // 日均单数当主值（10-21 卷卷）：爬坡期日均才可比，累计退小字——与「日均实收」卡同构
     ["日均单数" + _tTag, fmtC(r.avg_daily_tc), "", "累计 " + fmtN(r.sum_tc) + " 单<br>付费 " + fmtN(r.sum_tc - _zero) + " ＋ 零元 " + fmtN(_zero)],
     // 客单价两个口径：银豹 TC 含零元兑换/赠品单（235 张/本区间），会把 AC 拉低；付费客单价才是"花钱那批人"的单均。
-    ["客单价" + _tTag, fmtAC(r.ac), "", "实收 ÷ " + fmtN(r.sum_tc) + " 单（含零元单）<br>付费客单价 " + fmtY(_zero > 0 ? r.sum_sales/(r.sum_tc-_zero) : r.ac)],
+    ["客单价" + _tTag, fmtAC(r.ac), "", "含零元单<br>付费客单价 " + fmtY(_zero > 0 ? r.sum_sales/(r.sum_tc-_zero) : r.ac)],
     ["报损率" + _tTag, r.loss_rate==null?"—":pct(r.loss_rate,2), "warnc",
-      r.loss_total==null?"":"报损成本 " + fmtY0(r.loss_total) + "<br>÷ 营业实收 " + fmtY0(r.sum_sales)],
-    ["整店折扣" + _tTag, r.discount_rate==null?"—":(10*r.discount_rate).toFixed(1)+"折", "", "全店实收 ÷ 全店原价 ×10（含所有让价）"],
+      r.loss_total==null?"":"¥" + fmtY0(r.loss_total).replace("¥","") + " ÷ 实收"],
+    ["整店折扣" + _tTag, r.discount_rate==null?"—":(10*r.discount_rate).toFixed(1)+"折", "", "实收 ÷ 原价 ×10"],
   ];
   if (attain != null){
     // 养成期：预算＝月保本、按**开业天数**折算（财务 10-19 定稿）
     // 开业 <7 天：达成率加 ※（睿印里 4 天含 2 个周末 → 231%，不外推）——2026-10-21 审计 P1-5
     const _fewK = B.accrued < 7;
     k.push([mLab+" 累计达成率", pct(attain,1) + (_fewK ? "※" : ""), attain>=1?"up":"down",
-      "累计实收 " + fmtY0(B.afterSales) + "<br>÷ 累计预算 " + fmtY0(bPeriod) + "（" + B.accrued + " 天）"
+      fmtY0(B.afterSales) + " ÷ <span style=\"white-space:nowrap\">预算 " + fmtY0(bPeriod) + "</span>"
       + (_fewK ? "<br>※ 开业 " + B.accrued + " 天，样本不足" : "")]);
   } else {
     k.push([mLab+"达成率", "—", "", B.inMonth && B.accrued === 0 ? "本月尚未正式开业" : "预算未就位"]);
