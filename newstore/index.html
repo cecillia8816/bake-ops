@@ -1110,7 +1110,7 @@ function renderKPI(r){
   const _tTag = _trialIn ? '<span class="tag" title="本卡含试营业 '+_trialIn+' 天；右侧达成率只算开业后">含试营业</span>' : '';
   const k = [
     ["累计实收" + _tTag, fmtY0(r.sum_sales), "", ""],
-    ["日均实收" + _tTag, fmtY0(r.avg_daily_sales), "", ""],
+    ["日均实收" + _tTag, fmtY0(r.avg_daily_sales), "", "有销售 " + r.n_days + " 天"],
     // 753 ＝ 付费 518 ＋ 零元 235（同一天的单不许混着看，故把拆解写全，日均放最后）
     // 日均单数当主值（10-21 卷卷）：爬坡期日均才可比，累计退小字——与「日均实收」卡同构
     ["日均单数" + _tTag, fmtC(r.avg_daily_tc), "", "累计 " + fmtN(r.sum_tc) + " 单<br>付费 " + fmtN(r.sum_tc - _zero) + " ＋ 零元 " + fmtN(_zero)],
@@ -1704,7 +1704,7 @@ function renderProg(r){
      <div class="kv"><span>接下来每天要卖</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
         <i>本月还差 ${fmtY0(gap)} · 还剩 ${left} 天</i></div>
      <div class="kv"><span>月累计预测</span><b style="${proj==null?'color:#98A3B0':''}">${proj==null?"—":fmtY0(proj)}</b>
-        <i>${proj==null?('开业 '+B.accrued+' 天 &lt;7，样本不足不推算'):('按近 7 日均推算 · 缺口 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0"))}</i></div>
+        <i title="取最近 7 个销售日的日均（已剔开业首日高峰），故比上方「日均实收」的 N 天少 1 天">${proj==null?('开业 '+B.accrued+' 天 &lt;7，样本不足不推算'):('按近 7 日均推算 · 缺口 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0"))}</i></div>
    </div>
    <div class="prog-ft">
      · 日均预算＝月${ramp?"保本":"预算"}÷${mi.dim} 天，已计 ${B.accrued} 天 → 累计预算 ${fmtY0(bPeriod)}。<br>
