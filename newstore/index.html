@@ -1261,7 +1261,7 @@ function renderDaily(r){
     const yy = y(beD);
     refLine = `<line x1="${PL}" y1="${yy}" x2="${W-PR}" y2="${yy}" stroke="#8C5B54" stroke-width="1"
         stroke-dasharray="2 3" opacity=".8"/>
-      <text x="${PL+2}" y="${yy-5}" text-anchor="start" font-size="10.5" font-weight="700" fill="#8C5B54">保本日均 ${fmtY0(beD)}</text>`;
+      <text x="${PL+2}" y="${yy-5}" text-anchor="start" font-size="10.5" font-weight="700" fill="#8C5B54">${B0.ramp?"日均预算":"保本日均"} ${fmtY0(beD)}</text>`;
   }
   let bars="", dots="", dlab="", runCum=0;
   const bw = Math.max(10, Math.min(38, iw/Math.max(d.length,1)*0.6));
@@ -1392,7 +1392,7 @@ function renderCum(r){
      </svg>
      <div class="legend-inline">
        <span><i style="background:#3A4553"></i>累计实收</span>
-       <span><i style="background:#8C5B54"></i>累计${B.ramp?"保本":"预算"}（日均×开业天数）</span></div>`;
+       <span title="${B.ramp?("养成期：月预算＝月保本 "+fmtY0(g)+"，所以这条线的口径就是保本"):("月预算 "+fmtY0(g)+" ÷ 当月 "+dim+" 天 ＝ 日均预算 "+fmtY0(B.daily))}"><i style="background:#8C5B54"></i>累计预算（日均×开业天数）</span></div>`;
   // 2026-10-22：区间 / 累计缺口 / 达成率原来缩在图例末尾，太不起眼 → 提到卡片标题右侧高亮
   const _gap = last.b - last.s;
   const _sumEl = document.getElementById("cumSum");
