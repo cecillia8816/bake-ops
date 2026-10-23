@@ -615,10 +615,7 @@ svg{display:block;max-width:100%}
   <div class="grid2 trend2">
     <div class="chart-card">
       <div class="chart-hd"><h3>开业爬坡曲线（横轴＝日期）</h3></div>
-      <div class="pnote">
-        · 逐日走势，点色分工作日/周末。<br>
-        · 砖红虚线＝保本日均，线以上＝当天够保本。<br>
-        · <span class="fixed-note">不随顶部区间</span></div>
+    <div class="pnote">· 点色分工作日/周末；砖红虚线＝保本日均。</div>
       <div id="dailyWrap"></div>
     </div>
     <div class="chart-card">
@@ -631,10 +628,7 @@ svg{display:block;max-width:100%}
   </div>
   <div class="panel">
     <h2>逐日明细</h2>
-    <div class="pnote">
-      · <span class="fixed-note">不随顶部区间</span><br>
-      · 累计两列从正式开业日起算，试营业显「—」；环比在日期悬停里。<br>
-      · 合计行按原始值加总，与逐行四舍五入可能差 ¥1。</div>
+    <div class="pnote" style="display:none"></div>
     <div id="dayWrap" class="tbl-wrap"></div>
     <div id="dayInsight" class="insight" style="display:none"></div>
   </div>
@@ -2052,7 +2046,7 @@ function renderDayInsight(r){
   const _segCore=["m_act","m_nat","g_act","g_nat"].reduce((a,k)=>a+((segAgg[k]||{}).amt||0),0);
   const newMemPct=_segCore?(((segAgg.m_act||{}).amt||0)+((segAgg.m_nat||{}).amt||0))/_segCore:null;
   const _nc2=(r.newcust&&r.newcust.n)||null;
-  host.innerHTML = `<div class="ih">开业活动影响<em>每条是判断，括号里是证据 · ${od&&post.length>=2?"开业后 "+post.length+" 天":"全部销售日 "+base.length+" 天"}</em></div>`
+  host.innerHTML = `<div class="ih">开业活动影响</div>`
     + items.map(([k,v,a])=>`<div class="il"><span class="ik">${k}</span><span>${v}${a?`<span class="act">→ ${a}</span>`:""}</span></div>`).join("")
     + `<div class="note" style="margin:6px 0 0" title="会员＝销售单带会员标记，含当月新开卡；拉新与回馈按「券核销单 × 会员开卡日」区分">· <b>会员</b>＝带会员标记的单，<b>含当月新开卡</b>${_nc2?"（"+_nc2+" 人）":""}。<br>
        · 新店会员实收占比 ${newMemPct==null?"—":pct(newMemPct,1)}${oldMemPct!=null?" vs 老店 "+pct(oldMemPct,1):""}：会员多是开业办卡的结果，不是存量套利。</div>`;
