@@ -78,6 +78,8 @@ box-shadow:var(--shadow);min-width:0}
 .caliber h3 .cal-sub{font-weight:400;font-size:11px;color:#7C8CA0;margin-left:8px}
 .caliber li{margin-bottom:5px;line-height:1.55}
 /* 卡片区间标签（2026-10-23 卷卷：有的卡写「本区间」有的写日期，不统一） */
+.storehd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.storehd h2{margin:0}
 .wtag{display:inline-block;margin-left:8px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:600;
   line-height:16px;vertical-align:middle;letter-spacing:.2px}
 .wtag.range{background:#EAF2FB;color:#3E6591;border:1px solid #D3E2F2}
@@ -598,8 +600,7 @@ svg{display:block;max-width:100%}
 
   <div class="sec"><em>①</em>经营概况<small>核心 KPI · 达成进度 · 双店对照</small></div>
   <div class="panel">
-    <h2 id="storeTitle">—</h2>
-    <div class="pnote" id="storeInfo" style="margin:0 0 10px;display:none"></div>
+    <div class="storehd"><h2 id="storeTitle">—</h2><div class="pnote" id="storeInfo" style="margin:0;display:none"></div></div>
     <div class="kpis" id="kpiRow"></div>
     <div class="prog" id="progWrap" style="display:none"></div>
     <div class="trials" id="trialNote" style="display:none"></div>
@@ -722,7 +723,7 @@ svg{display:block;max-width:100%}
   <div class="sec"><em>⑤</em>经营质量<small>报损结构（按原因）· 单品报损明细</small></div>
   <div class="panel">
     <h2>报损结构（按原因）</h2>
-    <div class="pnote">· 先看「为什么报」，再看「谁在报」；真实损耗看「丢弃」，试吃是投放。</div>
+    
     <div id="lossWrap"></div>
   </div>
   <div class="panel">
@@ -753,7 +754,7 @@ svg{display:block;max-width:100%}
 
   <div class="mkt-duo gz">
     <div class="chart-card"><div id="giftWrap"></div></div>
-    <div class="chart-card"><div class="subhd">零元单：兑换/赠品消耗了什么</div><div id="zeroWrap"></div></div>
+    <div class="chart-card"><div class="subhd">零元单送掉了哪些品</div><div id="zeroWrap"></div></div>
   </div>
   <div class="mkt-duo cs">
     <div class="chart-card"><div id="catDiscWrap"></div></div>
@@ -995,7 +996,7 @@ function renderPeerCmp(){
   const _peerO2oPct=_pk0("sales")? _pk0("o2o")/_pk0("sales") : null;
   let _peerMemRng="—";
   host.style.display="block";
-  host.innerHTML=`<div class="subhd">双店对照（正式开业起 ${md(r0cur.open_date)||"—"} ~ ${md(r0cur.window_end)} · 不随所选区间）</div>
+  host.innerHTML=`<div class="subhd">双店对照（正式开业起 · 不随区间）</div>
    <table class="peer-tbl"><colgroup>
      <col style="width:9%"><col style="width:5.5%"><col style="width:5%">
      <col style="width:6.5%"><col style="width:5.5%"><col style="width:4.5%"><col style="width:6.5%">
@@ -1105,11 +1106,11 @@ function renderKPI(r){
   const _trialIn = ((r.days||[]).filter(x=>r.open_date && x.date < r.open_date).length)||0;
   const _tTag = _trialIn ? '<span class="tag" title="本卡含试营业 '+_trialIn+' 天；右侧达成率只算开业后">含试营业</span>' : '';
   const k = [
-    ["累计实收" + _tTag, fmtY0(r.sum_sales), "", "区间 " + md(r.first_date) + " ~ " + md(r.window_end)],
+    ["累计实收" + _tTag, fmtY0(r.sum_sales), "", "本店累计"],
     ["日均实收" + _tTag, fmtY0(r.avg_daily_sales), "", "有销售 " + r.n_days + " 天"],
     // 753 ＝ 付费 518 ＋ 零元 235（同一天的单不许混着看，故把拆解写全，日均放最后）
     // 日均单数当主值（10-21 卷卷）：爬坡期日均才可比，累计退小字——与「日均实收」卡同构
-    ["日均单数" + _tTag, fmtC(r.avg_daily_tc), "", "区间累计 " + fmtN(r.sum_tc) + " 单<br>付费 " + fmtN(r.sum_tc - _zero) + " ＋ 零元 " + fmtN(_zero)],
+    ["日均单数" + _tTag, fmtC(r.avg_daily_tc), "", "累计 " + fmtN(r.sum_tc) + " 单<br>付费 " + fmtN(r.sum_tc - _zero) + " ＋ 零元 " + fmtN(_zero)],
     // 客单价两个口径：银豹 TC 含零元兑换/赠品单（235 张/本区间），会把 AC 拉低；付费客单价才是"花钱那批人"的单均。
     ["客单价" + _tTag, fmtAC(r.ac), "", "实收 ÷ " + fmtN(r.sum_tc) + " 单（含零元单）<br>付费客单价 " + fmtY(_zero > 0 ? r.sum_sales/(r.sum_tc-_zero) : r.ac)],
     ["报损率" + _tTag, r.loss_rate==null?"—":pct(r.loss_rate,2), "warnc",
@@ -1703,11 +1704,9 @@ function renderProg(r){
         <i>${proj==null?('开业 '+B.accrued+' 天 &lt;7，样本不足不做外推'):('按近 7 个销售日日均 '+fmtY0(_avg7)+' 外推 · 距目标还差 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0"))}</i></div>
    </div>
    <div class="prog-ft">
-     · 预算天数<b>从正式开业日起算</b>：日均预算＝月${ramp?"保本":"预算"}÷${mi.dim} 天，已计 ${B.accrued} 天 → 累计预算 ${fmtY0(bPeriod)}。<br>
-     ${trialDays?`· 试营业 ${trialDays} 天（${md(fsd)} ~ ${md(dAdd(od,-1))}）销售 <b>${fmtY0(trialAmt)}</b> <b>不计入</b>预算考核（分子分母同区间从开业日算起）。<br>`:""}
-     · 达成率<b>不随顶部日期区间变化</b>；日期区间只影响强度指标（日均/客单价/报损率/结构）。<br>
-     ${ramp?`· 养成期（${mi.m}–${mi.m+1} 月）预算＝月保本、按开业天数折算：<b>本月目标小于整月预算</b>，别拿整月数比。`:`· 12 月起预算与保本脱钩，达成率按常规口径。`}
-     ${B.nextM&&B.nextGross?`<br>· ⚠️ <b>${B.nextM} 月起预算 ${fmtY0(B.nextGross)}，较本档 +${pct(B.nextGross/g-1,1)}</b>（与保本脱钩），完整月经营后按新口径算，勿与本季数字直接连读。`:""}
+     · 日均预算＝月${ramp?"保本":"预算"}÷${mi.dim} 天，已计 ${B.accrued} 天 → 累计预算 ${fmtY0(bPeriod)}。<br>
+     ${trialDays?`· 试营业 ${trialDays} 天销售 <b>${fmtY0(trialAmt)}</b>，不计入预算考核。`:""}
+     ${B.nextM&&B.nextGross?`<br>· ⚠️ <b>${B.nextM} 月起预算 ${fmtY0(B.nextGross)}（+${pct(B.nextGross/g-1,1)}）</b>，与保本脱钩，勿与本季直接连读。`:""}
    </div>`;
 }
 
@@ -2527,7 +2526,7 @@ function renderPromos(r){
   const gHost=document.getElementById("giftWrap");
   if(gHost){
     gHost.innerHTML = `
-   <div class="subhd">兑换 / 赠品类（获客成本，不用折让产出评）</div>
+   <div class="subhd">送出去的券：花了多少、拉来几个新客</div>
    ${_grpG.length?`<table class="gift-tbl"><colgroup><col style="width:28%"><col style="width:12%"><col style="width:9%"><col style="width:7%">
        <col style="width:9%"><col style="width:9%"><col style="width:8%"><col style="width:10%"><col style="width:8%"></colgroup>
      <thead><tr><th class="left-b">活动</th><th class="left-b">类型</th><th title="该活动让掉的金额（＝成本）">折让成本</th><th>兑换单</th><th title="本月刚办卡会员的核销单 ÷ 该活动核销单（会员号去会员名单查开卡日）；查不到的按老客算，故为下限">新客占比</th>
@@ -2622,7 +2621,7 @@ function renderPromos(r){
                 + (_evenLow?`（「${esc(_evenLow.cat)}」毛利更低 ${pct(_gpOf(_evenLow.cat),1)}，但折让只占 ${pct(_sumDisc?_wOf[_evenLow.cat].disc/_sumDisc:0,1)}，不在此列）`:"")
               : `<br>· 折让已集中在毛利最高的大类，重点转向收窄深度`)
          : "";
-       return `<div class="subhd">折让落在哪些大类（跟随所选区间${_win?" · 明细窗口 "+_win:""}）</div>
+       return `<div class="subhd">折让花在哪些品类</div>
          <table class="cat-disc"><colgroup><col style="width:14%"><col style="width:13%"><col style="width:10%">
            <col style="width:12%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:10%"></colgroup>
            <thead><tr><th class="left-b">大类</th><th title="该大类让掉的金额（悬浮里含其中兑换/赠品的部分）">折让</th><th>占折让</th>
@@ -2637,7 +2636,7 @@ function renderPromos(r){
          · <b>回本线 vs 折让产出</b>：回本线是需要值（1÷毛利率），折让产出是实测值。低于回本线＝这笔折让连毛利都没补回来；高于也只是必要条件（活动实收含本来就会买的部分），真判据看增量。${judge}</div>`;
      })()}`; }
   var sumHost=document.getElementById("promoSum");
-  if(sumHost){ sumHost.innerHTML = `   <div class="subhd">按折扣类型汇总（银豹「折扣名称」分类）</div>
+  if(sumHost){ sumHost.innerHTML = `   <div class="subhd">各类折扣各花了多少</div>
    <table class="fit-tbl"><thead><tr><th class="left-b">折扣类型</th><th>活动数</th><th title="该类型下的活动单数（一单多活动会重复计）">活动单数</th><th>折让</th><th>占折让</th><th title="该类型实收 ÷ 折让">折让产出</th></tr></thead><tbody>
    ${(()=>{
      const g={};
@@ -3118,21 +3117,21 @@ function render(key){
   const si = document.getElementById("storeInfo");
   si.style.display="block";
   // ⚠️ 「当前视图区间」必须显式标出：选了子区间时所有数字都只代表该区间，不标会误读。
-  // 整区间时不挂牌（选了子区间才需要提示"数字只代表该区间"——卷卷：太啰嗦）。
-  const winTag = isFullWindow()
-    ? ""
-    : `<span class="wt sel">已选区间 ${md(dFrom)} ~ ${md(dTo)}（${w.n_days} 天）<i>· 除标注「不随区间」的卡片外，下方数字代表所选区间</i></span><br>`;
+  // 时间胶囊：任何时候都显示（选「全部」时就是全窗口日期），与门店名并排
+  const winTag = `<span class="wt sel" id="selPill">${md(dFrom)} ~ ${md(dTo)}</span>`;
   const sd = s => md(s);   // 年份省略——同一年内，月/日足够
   // ⚠️ 「第 N 天」必须只有一个含义（审计 10-19）：横轴是「开业第 N 天」（10-15 = 第 6 天），
   //    而这里的 dSell 是「首销日至今的日历天数」（9 天）。原来写成「正式开业 10-15（第 9 天）」
   //    两个"第几天"打架 → 拆成「已营业 N 天」。老店倍数移到 ⑦（那里能带区间标签），避免一处两义。
   const B0 = budgetOf(r);
-  si.innerHTML = winTag
-    + `深圳 · 首销 <b>${sd(r.first_sale_date||r.first_date)}</b>`
-    + (r.open_date ? ` · 正式开业 <b>${sd(r.open_date)}</b>` : "")
-    + ` · 已营业 <b>${dSell}</b> 天`
-    + (B0.ramp ? ` · <b>养成期</b> ${B0.mi.m}–${B0.mi.m+1} 月` : "")
-    + ` · SKU ${w.n_products}`;
+  si.innerHTML = winTag;
+  // 首销 / 正式开业 / 已营业 不再占一行，挂在时间胶囊的悬浮里（2026-10-23 卷卷：只挂胶囊就够）
+  const _pill = document.getElementById("selPill");
+  if (_pill) {
+    _pill.title = "首销 " + sd(r.first_sale_date || r.first_date)
+      + (r.open_date ? " · 正式开业 " + sd(r.open_date) : "")
+      + " · 已营业 " + dSell + " 天";
+  }
   renderKPI(w);
   renderProg(w);
   renderPeerCmp();
@@ -3168,7 +3167,8 @@ function render(key){
   externalizeNotes();
   // 每张卡右上角挂区间标签（w＝所选区间；r.days＝全部销售日）
   tagCards(w.first_date, w.last_date || w.window_end,
-           (r.days && r.days[0] || {}).date, (r.days && r.days[r.days.length - 1] || {}).date);
+           (r.days && r.days[0] || {}).date, (r.days && r.days[r.days.length - 1] || {}).date,
+           r.open_date, w.window_end);
 }
 
 /* ---------- 开业分析（10-20 起 md 报告下线，结论直接看板内实算呈现） ----------
@@ -3193,21 +3193,14 @@ const _WIN_KIND = [
   ["充值概况", "range"], ["报损结构", "range"], ["单品报损明细", "range"],
   ["折扣与活动", "range"], ["新店开业分析", "range"],
 ];
-function tagCards(lo, hi, allLo, allHi){
+function tagCards(lo, hi, allLo, allHi, openDate, dataEnd){
   document.querySelectorAll(".chart-card,.panel").forEach(card => {
     const h = card.querySelector("h2,h3");
-    if (!h || h.querySelector(".wtag")) return;
+    if (!h) return;
+    // 每次重绘都要重算：切门店/切区间时旧标签必须换掉（2026-10-23 修：原来有就跳过 → 睿印里显示安荟邻的日期）
+    const _old = h.querySelector(".wtag");
+    if (_old) _old.remove();
     const t = (h.textContent || "").trim();
-    // 双店对照：窗口是「正式开业起」，既不是所选区间也不是全部销售日
-    const sub = card.querySelector(".subhd");
-    if (sub && (sub.textContent || "").trim().startsWith("双店对照")) {
-      const sp0 = document.createElement("span");
-      sp0.className = "wtag fixed";
-      sp0.textContent = "正式开业起";
-      sp0.title = "正式开业日起、不随顶部区间";
-      h.appendChild(sp0);
-      return;
-    }
     const hit = _WIN_KIND.find(([k]) => t.startsWith(k));
     if (!hit) return;
     const kind = hit[1];
@@ -3215,7 +3208,13 @@ function tagCards(lo, hi, allLo, allHi){
     sp.className = "wtag " + kind;
     if (kind === "range") { sp.textContent = md(lo) + " ~ " + md(hi); sp.title = "跟随顶部所选区间"; }
     else if (kind === "all") { sp.textContent = "全部 " + md(allLo) + " ~ " + md(allHi); sp.title = "不随顶部区间"; }
-    else { sp.textContent = "BI 月"; sp.title = "银豹 BI 月粒度，不随所选区间"; }
+    else {
+      // 按自然月取数：直接给日期（10/1 ~ 数据日），别写「BI 月」这种黑话
+      const _ms = (dataEnd || "").slice(0, 8) + "01";
+      const _d = s2 => String(s2 || "").slice(5, 7).replace(/^0/, "") + "/" + String(s2 || "").slice(8, 10).replace(/^0/, "");
+      sp.textContent = _d(_ms) + " ~ " + _d(dataEnd);
+      sp.title = "按自然月统计（银豹 BI），不随顶部所选区间";
+    }
     h.appendChild(sp);
   });
 }
