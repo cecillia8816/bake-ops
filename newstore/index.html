@@ -177,6 +177,7 @@ tr:hover td{background:var(--mist-soft)}
 #lossWrap,#couponWrap,#promoWrap,#promoSum,#concWrap,#bigWrap{overflow-x:visible}
 /* 只在手机档（≤720px）允许这些宽表横向滑动，桌面端一律不出滚动条（卷卷 10-19） */
 @media(max-width:720px){#lossWrap,#couponWrap,#promoWrap,#promoSum,#concWrap,#bigWrap,#dayWrap,#catWrap,#peerCmp,#reportWrap,#cmpWrap,#productsWrap,#liftWrap,#miscWrap,#segWrap,#slotWrap,#daytypeWrap,#zeroWrap,#prodWrap,#giftWrap,#catDiscWrap{overflow-x:auto}}
+
 /* 2026-10-22 审计 P0-4：这几张表没有 min-width + table-layout:fixed，480px 下每列被压到 21~46px、
    表头与数字互相压字（且不产生横向溢出 → 旧断言「480 无溢出」照样通过）。给定最小宽度让它们横滑。 */
 @media(max-width:720px){
@@ -567,6 +568,33 @@ svg{display:block;max-width:100%}
 .chart-tip .tip-row .val.bad{color:#E9A0A0}
 .chart-tip .tip-ft{margin-top:5px;padding-top:4px;border-top:1px solid rgba(255,255,255,.14);
   font-size:11px;color:rgba(255,255,255,.55);white-space:nowrap}
+
+/* ═══ 手机端补丁（2026-10-23，放在最后以保证覆盖前面的基础规则）═══ */
+/* 日期组：标签＋两个输入必须成一行（.dtgroup 是 flex，不然 block 会把标签顶到上面一行） */
+.dtgroup{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.dtgroup .ctllbl{flex:0 0 auto;display:inline-flex;align-items:center;height:24px;line-height:1}
+.dtgroup .dtbar{flex:0 1 auto;min-width:0}
+@media(max-width:720px){
+  .dtgroup .ctllbl{height:30px}
+  /* ① 日期标签与两个日期输入同一行；输入平分宽度（原来只有 107px，「2026/10/15」显示不全） */
+  .ctl .dtgroup{flex:1 1 100%;flex-wrap:nowrap}
+  .ctl .dtbar{flex:1 1 auto;width:auto;min-width:0;gap:6px;flex-wrap:wrap}
+  .ctl .dtbar input[type=date]{flex:1 1 110px;width:auto;min-width:110px;height:30px;font-size:12px;padding:2px 6px}
+  .ctl .dtquick{flex:1 1 100%;flex-wrap:wrap}
+  .ctl .dtnote{flex:0 0 auto}
+  /* ② 达成区 4 张卡：一行 2 张（原来 auto-fit minmax(178) 在 390 宽下只剩 1 列） */
+  #progWrap .prog-kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  /* ③ 趋势卡标题不许省略号截断（区间标签会把「累计实收 vs 累计预算」挤掉半截） */
+  .grid2.trend2 .chart-hd{flex-wrap:wrap}
+  .grid2.trend2 .chart-hd h3{white-space:normal;overflow:visible;text-overflow:clip;max-width:100%}
+  .grid2.trend2 .cum-sum{flex-wrap:wrap;justify-content:flex-start}
+  /* ④ 表格首列吸左（表宽 900~1330，容器只有 324）——标题与说明同吸左，不跟着滑走 */
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) :is(thead th,tbody td,tfoot td):first-child{position:sticky;left:0;z-index:3;background:#fff;box-shadow:1px 0 0 var(--line-strong)}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) thead th:first-child{background:#EDF2F8;z-index:5}
+  :is(#prodWrap,#zeroWrap) :is(thead th,tbody td,tfoot td):nth-child(2){position:sticky;left:var(--c1,34px);z-index:3;background:#fff;box-shadow:1px 0 0 var(--line-strong)}
+  :is(#prodWrap,#zeroWrap) thead th:nth-child(2){background:#EDF2F8;z-index:5}
+  /* 小标题/说明不再用 sticky（flex 子项不生效），改由 externalizeNotes 物理搬到滚动容器外 */
+}
 </style></head>
 <body class="deploy">
 <div class="wrap">
@@ -579,22 +607,25 @@ svg{display:block;max-width:100%}
       <button class="hdcal" id="calBtn" type="button" title="看板口径说明（点开看全部定义）">口径说明</button>
     </div>
     <div class="ctl">
-      <span style="font-size:11px;color:var(--mute);font-weight:600">门店</span>
+      <span class="ctllbl">门店</span>
       <div class="stores" id="storeToggle"></div>
       <span class="cdvd"></span>
-      <span style="font-size:11px;color:var(--mute);font-weight:600">日期</span>
-      <div class="dtbar">
-        <input type="date" id="dtFrom" aria-label="开始日期">
-        <span class="dtsep">~</span>
-        <input type="date" id="dtTo" aria-label="结束日期">
-        <div class="dtquick" id="dtQuick">
-          <button data-q="all" class="on">全部</button>
-          <button data-q="d3">近 3 天</button>
-          <button data-q="d7">近 7 天</button>
-          <button data-q="trial">试营业期</button>
-          <button data-q="after">开业后</button>
+      <!-- 2026-10-23 卷卷：日期标签与它管的两个输入必须同一行（原来标签留在门店那行、输入掉到下一行） -->
+      <div class="dtgroup">
+        <span class="ctllbl">日期</span>
+        <div class="dtbar">
+          <input type="date" id="dtFrom" aria-label="开始日期">
+          <span class="dtsep">~</span>
+          <input type="date" id="dtTo" aria-label="结束日期">
+          <div class="dtquick" id="dtQuick">
+            <button data-q="all" class="on">全部</button>
+            <button data-q="d3">近 3 天</button>
+            <button data-q="d7">近 7 天</button>
+            <button data-q="trial">试营业期</button>
+            <button data-q="after">开业后</button>
+          </div>
+          <span class="dtnote" id="dtNote">全部销售日</span>
         </div>
-        <span class="dtnote" id="dtNote">全部销售日</span>
       </div>
     </div>
   </div>
@@ -1231,6 +1262,19 @@ function trendGeom(){
    右图 10/15,10/17,10/19,10/21 跳日。改为**只看共用的 px/天**（trendGeom 的 sp）：
    一天占不到 46px 就统一隔天，够就统一逐日，两卡永远一致。*/
 function xLblStep(sp){ return Math.max(1, Math.ceil(46 / Math.max(1, sp))); }
+/* 横轴标签下标：等距取点 + 必含末日；末日与上一个等距点只差不到一个 step 时把上一个去掉，
+   否则手机上会出现「10/21 10/22」挤在一起（2026-10-23 实测）。两图共用，节奏才一致。 */
+function lblIdx(n, step){
+  const s = new Set();
+  for (let i = 0; i < n; i += step) s.add(i);
+  const last = n - 1;
+  if (last > 0){
+    const near = [...s].filter(i => i < last).sort((a, b) => b - a)[0];
+    if (near != null && last - near < step) s.delete(near);
+    s.add(last);
+  }
+  return s;
+}
 /* 窄屏（≤1080）两卡会堆成一列，各算各的 px/天 → 节奏又会分叉（480px 实测：左隔天、右逐日）。
    故窄屏下**左图算出的步长存下来给右图用**（左图天数多、per-day 更挤，取它是保守解）。
    render() 里固定先 renderDaily 后 renderCum，顺序不能反。 */
@@ -1311,7 +1355,8 @@ function renderDaily(r){
   _xStepShared = step;
   // ⚠️ 首/末标签必须贴边对齐（start / end），否则居中会让「10/22」右半截溢出卡片（2026-10-23 卷卷实测）
   const _anc = i => i === 0 ? "start" : (i === d.length - 1 ? "end" : "middle");
-  const xl = d.map((p,i)=> (i % step === 0 || i === d.length-1)
+  const _idx = lblIdx(d.length, step);
+  const xl = d.map((p,i)=> _idx.has(i)
       ? `<text x="${x(i)}" y="${H-32}" text-anchor="${_anc(i)}" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
          <text x="${x(i)}" y="${H-15}" text-anchor="${_anc(i)}" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
   document.getElementById("dailyWrap").innerHTML =
@@ -1367,7 +1412,8 @@ function renderCum(r){
   const dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.s)}" r="3.5" fill="${isWknd(p.d)?"#FFD27D":"#00A4DE"}" stroke="#000" stroke-width="1.5"/>`).join("");
   const step=geo?xLblStep(sp):(_xStepShared||1);
   const _anc = i => i === 0 ? "start" : (i === pts.length - 1 ? "end" : "middle");
-  const xl=pts.map((p,i)=> (i%step===0||i===pts.length-1)
+  const _idx = lblIdx(pts.length, step);
+  const xl=pts.map((p,i)=> _idx.has(i)
       ? `<text x="${x(i)}" y="${H-32}" text-anchor="${_anc(i)}" font-size="10.5" fill="#3D4753">${p.d.slice(5).replace("-","/")}</text>
          <text x="${x(i)}" y="${H-15}" text-anchor="${_anc(i)}" font-size="10" fill="${isWknd(p.d)?"#A9843F":"#6B7684"}">${weekDay(p.d)}</text>` : "").join("");
   const at=last.b?last.s/last.b:null;
@@ -3085,6 +3131,28 @@ function externalizeNotes(){
       h.parentNode.insertBefore(n, h.nextSibling);
     });
   });
+  // 2026-10-23 手机端：这一批容器的横滚不是 .tbl-wrap（是 #promoWrap/#peerCmp/#zeroWrap…），
+  // 里面的小标题与说明会跟着表格一起滑走。CSS 的 sticky 对 flex 子项（#zeroWrap .zero-flex）不生效，
+  // 所以改成**物理搬出去**：小标题挪到容器前、说明挪到容器后，并用 data-ns-pull 标记，
+  // 保证每轮重绘先清旧再搬新（不搬会逐轮累积）。
+  const _PULL = ["peerCmp","dayWrap","prodWrap","slotWrap","segWrap","liftWrap","miscWrap","lossProdWrap",
+                 "promoWrap","giftWrap","zeroWrap","catDiscWrap","promoSum","lossWrap","concWrap","bigWrap",
+                 "catWrap","reportWrap","cmpWrap","productsWrap","daytypeWrap","couponWrap"];
+  _PULL.forEach(id=>{
+    const host = document.getElementById(id);
+    if (!host || !host.parentNode) return;
+    const par = host.parentNode;
+    [...par.children].forEach(s=>{ if (s.dataset && s.dataset.nsPull === id) s.remove(); });
+    [...host.querySelectorAll(".subhd")].forEach(e=>{
+      e.dataset.nsPull = id;
+      par.insertBefore(e, host);
+    });
+    const _anchor = host.nextSibling;      // 同一个锚点插入 → 多条说明保持原顺序
+    [...host.querySelectorAll(".note")].forEach(e=>{
+      e.dataset.nsPull = id;
+      par.insertBefore(e, _anchor);
+    });
+  });
 }
 
 // ── 2026-10-22 卷卷：看板要让人看得懂 ──
@@ -3214,6 +3282,19 @@ function render(key){
   tagCards(w.first_date, w.last_date || w.window_end,
            (r.days && r.days[0] || {}).date, (r.days && r.days[r.days.length - 1] || {}).date,
            r.open_date, w.window_end);
+  stickyFirstCols();      // 手机端首列吸左：序号列宽度每次重绘都要重测（换店/换区间列宽会变）
+}
+
+/* 手机端「固定首列」：序号列宽不写死（单品明细 39px、零元单 29px），
+   每次渲染后实测写进容器变量 --c1，第二列才能贴着第一列吸左。 */
+function stickyFirstCols(){
+  ["prodWrap", "zeroWrap"].forEach(id => {
+    const host = document.getElementById(id);
+    if (!host) return;
+    const t = host.querySelector("table");
+    const th = t && t.querySelector("thead tr:last-child th");
+    if (th) host.style.setProperty("--c1", Math.round(th.getBoundingClientRect().width) + "px");
+  });
 }
 
 /* ---------- 开业分析（10-20 起 md 报告下线，结论直接看板内实算呈现） ----------
