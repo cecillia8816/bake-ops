@@ -236,6 +236,8 @@ font-weight:700;text-align:center;line-height:18px}
 @media(max-width:720px){.grid2.trend2 #dailySvg,.grid2.trend2 #cumSvg{height:200px!important}}
 /* 超窄屏：图例里的长解释句会换行、把两张卡撑成一高一矮 → 让位（口径在悬浮与口径抽屉里都有） */
 @media(max-width:560px){.grid2.trend2 .legend-inline .mt{display:none}}
+/* 两张趋势卡左右内边距收窄（2026-10-23 卷卷：左侧太空、图往左拉） */
+.grid2.trend2>.chart-card{padding-left:14px;padding-right:14px}
 @media(max-width:1080px){.grid2.trend2{grid-template-columns:1fr}}
 /* 活动表定宽 + 首列定宽：列宽不再被最长活动名吸走，整表落在容器内 */
 #promoWrap table{table-layout:fixed;min-width:0;width:100%}
@@ -1210,7 +1212,7 @@ function trendGeom(){
   const N1 = all.length;                                            // 爬坡：全部有销售日
   const N2 = all.filter(x => x.date >= (B.openDate || "")).length;  // 累计：正式开业起
   if (N1 < 2 || N2 < 2){ _trendGeo = null; return null; }
-  const P = 68;                       // PL 52 + PR 16
+  const P = 46;                       // PL 36 + PR 10（2026-10-23 卷卷：左边太空，轴线再往左拉）
   const gap = 16;                     // .grid2 gap
   const S = grid.clientWidth - gap - 2 * C;   // 两图可用的内宽合计
   const sp = (S - 2 * P) / ((N1 - 1) + (N2 - 1));
@@ -1236,7 +1238,7 @@ function renderDaily(r){
   const geo = trendGeom();
   const W = geo ? geo.leftW : Math.max(300, Math.min(860, Math.round(host0.clientWidth || 860)));
   const _narrow = window.innerWidth < 720;
-  const H = _narrow ? 200 : 230, PL=_narrow?40:52, PR=16, PT=14, PB=_narrow?44:48;
+  const H = _narrow ? 200 : 230, PL=_narrow?32:36, PR=10, PT=14, PB=_narrow?44:48;
   const baseY = PT + (H-PT-PB);
   const d=r.days; if(!d.length){ document.getElementById("dailyWrap").innerHTML='<div class="empty">暂无数据</div>'; return; }
   const ax = niceAxis(Math.max(...d.map(x=>x.sales)) * 1.18 || 1, 4);
@@ -1250,7 +1252,7 @@ function renderDaily(r){
   // 线=黑 1.5、圆点=彩底黑描边 r3.5、数值标签加粗白晕。字号按本卡尺寸取周看板的紧凑档。
   const FS_TICK=11;
   ax.ticks.forEach(val=>{ const yy=y(val);
-    g += `<text x="${PL-7}" y="${yy+4}" text-anchor="end" font-size="${FS_TICK}" fill="#667085">${fmtAxis(val)}</text>`; });
+    g += `<text x="${PL-5}" y="${yy+4}" text-anchor="end" font-size="${FS_TICK}" fill="#667085">${fmtAxis(val)}</text>`; });
   // 保本日均参考线（2026-10-19 加）：养成期"够不够保本"一眼可见，不用心算 146,739÷31。
   const B0 = budgetOf(r), beD = B0.beDaily;
   let refLine = "";
@@ -1303,9 +1305,11 @@ function renderDaily(r){
   // 原写法是「第N天 / MM-DD」且字号 9.5/8.5 偏大、顺序与全站相反。
   const step = xLblStep(sp);
   _xStepShared = step;
+  // ⚠️ 首/末标签必须贴边对齐（start / end），否则居中会让「10/22」右半截溢出卡片（2026-10-23 卷卷实测）
+  const _anc = i => i === 0 ? "start" : (i === d.length - 1 ? "end" : "middle");
   const xl = d.map((p,i)=> (i % step === 0 || i === d.length-1)
-      ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
-         <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
+      ? `<text x="${x(i)}" y="${H-32}" text-anchor="${_anc(i)}" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
+         <text x="${x(i)}" y="${H-15}" text-anchor="${_anc(i)}" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
   document.getElementById("dailyWrap").innerHTML =
     `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" id="dailySvg">
       ${g}${refLine}<line x1="${PL}" y1="${baseY}" x2="${W-PR}" y2="${baseY}" stroke="#C9D6E3" stroke-width="1"/>
@@ -1339,7 +1343,7 @@ function renderCum(r){
     host.innerHTML='<div class="empty">所选区间没有正式开业后的销售日（开业 '+(B.openDate||"—")+'）——切「开业后」或「全部」查看</div>'; return; }
   const W=geo ? geo.rightW : Math.max(300,Math.min(860,Math.round(host.clientWidth||600)));
   const _narrow = window.innerWidth < 720;
-  const H=_narrow?200:230, PL=_narrow?40:52, PR=16, PT=14, PB=_narrow?44:48;
+  const H=_narrow?200:230, PL=_narrow?32:36, PR=10, PT=14, PB=_narrow?44:48;
   const iw=W-PL-PR, ih=H-PT-PB;
   let s=0;
   const pts=ds.map(x=>{ s+=x.sales; const dom=+String(x.date).slice(8,10);
@@ -1353,14 +1357,15 @@ function renderCum(r){
   const x = i => PL + (pts.length===1 ? iw/2 : i*sp);
   const y=v=>PT+ih-v/maxV*ih;
   let gph="";
-  ax.ticks.forEach(v=>{ gph+=`<text x="${PL-7}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#667085">${fmtAxis(v)}</text>`; });
+  ax.ticks.forEach(v=>{ gph+=`<text x="${PL-5}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#667085">${fmtAxis(v)}</text>`; });
   const lineS=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.s)}`).join(" ");
   const lineB=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.b)}`).join(" ");
   const dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.s)}" r="3.5" fill="${isWknd(p.d)?"#FFD27D":"#00A4DE"}" stroke="#000" stroke-width="1.5"/>`).join("");
   const step=geo?xLblStep(sp):(_xStepShared||1);
+  const _anc = i => i === 0 ? "start" : (i === pts.length - 1 ? "end" : "middle");
   const xl=pts.map((p,i)=> (i%step===0||i===pts.length-1)
-      ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.d.slice(5).replace("-","/")}</text>
-         <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.d)?"#A9843F":"#6B7684"}">${weekDay(p.d)}</text>` : "").join("");
+      ? `<text x="${x(i)}" y="${H-32}" text-anchor="${_anc(i)}" font-size="10.5" fill="#3D4753">${p.d.slice(5).replace("-","/")}</text>
+         <text x="${x(i)}" y="${H-15}" text-anchor="${_anc(i)}" font-size="10" fill="${isWknd(p.d)?"#A9843F":"#6B7684"}">${weekDay(p.d)}</text>` : "").join("");
   const at=last.b?last.s/last.b:null;
   // 悬浮卡（与爬坡曲线同款）：每个点一个透明热区
   const _gapOf=(p)=>p.b-p.s;
