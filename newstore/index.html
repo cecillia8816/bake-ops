@@ -2496,7 +2496,7 @@ function renderPromos(r){
     <table class="promo-tbl"><colgroup><col style="width:21.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:7%">
       <col style="width:8.5%"><col style="width:6%"><col style="width:5.5%"><col style="width:5%"><col style="width:7%">
       <col style="width:7%"><col style="width:6%"><col style="width:5.5%"><col style="width:4.5%"></colgroup>
-    <thead><tr>${TH("name","活动","left-b")}${TH("kind","折扣类型","left-b","折扣类型＝银豹后台「折扣名称」（打折与特价/搭赠送出/套餐/换购商品/满额返现…）")}${TH("net","活动实收")}${TH("disc","折让")}${TH("roas","折让产出（人次）","","每 1 元折让换回多少实收＝活动实收 ÷ 折让。此行＝该活动自己的实收（一单多活动会重复计入）")}
+    <thead><tr>${TH("name","活动","left-b")}${TH("kind","折扣类型","left-b","折扣类型＝银豹后台「折扣名称」（打折与特价/搭赠送出/套餐/换购商品/满额返现…）")}${TH("net","活动实收")}${TH("disc","折让")}${TH("roas","折让产出","","每 1 元折让换回多少实收＝活动实收 ÷ 折让。此行＝该活动自己的实收（一单多活动会重复计入）")}
       ${TH("zhe","活动折扣","","该活动整单平均打到几折＝实收 ÷（实收＋折让）；兑换券/赠品天然接近 0 折（让价深度＝100%−折扣，不再单列）")}${TH("orders","单数")}${TH("avg","单均实收")}${TH("part","参与率")}
       ${TH("m","会员参与率","sj","＝ 该活动会员单 ÷ 本区间会员单（会员标记单数，已剔团餐、含零元单）；是渗透率，不是「活动单里会员占几成」")}${TH("g","散客参与率","sj","＝ 该活动散客单 ÷ 本区间散客单（同上）")}${TH("nc","新客占比","sj","＝ 该活动核销单里，本月刚办卡会员占多少（会员号去会员名单查开卡日）；查不到的按老客算。与左右两列的渗透率不是一回事")}${TH("days","出现天数")}</tr></thead><tbody>
     ${_grpD.map(p=>{ const mr=mRate(p), gr=gRate(p), nc=_ncOf(p); const zh=_zhe(p); return `<tr><td class="left-b" title="${esc(p.name)}">${esc(p.name)}${mark(p)}</td>
@@ -2512,7 +2512,7 @@ function renderPromos(r){
       <td class="sj" title="散客参与率 ＝ 该活动散客单 ${p.g_orders==null?"—":p.g_orders} ÷ 本区间散客单 ${gTot}（已剔团餐、含零元单）">${gr==null?"—":pct(gr,1)}</td>
       <td class="sj" title="${nc.o?("该活动核销 "+nc.o+" 单，其中本月开卡会员 "+nc.n+" 单（带会员号 "+nc.m+"、能对档 "+nc.k+"）"):"本期折扣明细无该券核销单"}">${nc.o?pct(nc.n/nc.o,1):"—"}</td><td>${p.days}</td></tr>`;}).join("")}
     <tr class="tot"><td class="left-b">小计（折扣类）</td><td class="left-b">—</td><td>${fmtY0(_sD.net)}</td><td>${fmtY0(_sD.disc)}</td>
-      <td title="折让产出（人次）＝折扣类活动实收 ÷ 折让">${_sD.disc?(_sD.net/_sD.disc).toFixed(2):"—"}</td>
+      <td title="折让产出＝该行活动实收 ÷ 折让（本表逐行按活动算，一单多活动会重复计；合计看页脚整单去重值）">${_sD.disc?(_sD.net/_sD.disc).toFixed(2):"—"}</td>
       <td title="折扣类实收 ÷ 原价">${(_sD.net+_sD.disc)?(10*_sD.net/(_sD.net+_sD.disc)).toFixed(1)+"折":"—"}</td>
       <td title="折扣类人次合计（同一单多活动重复计）">${_sD.ord}*</td><td>—</td>
       <td>—</td><td>—</td><td>—</td><td>${(()=>{let o=0,n=0;_grpD.forEach(p=>{const x=_ncOf(p);o+=x.o;n+=x.n;});return o?pct(n/o,1):"—";})()}</td><td>—</td></tr>
@@ -2525,6 +2525,7 @@ function renderPromos(r){
      · <b>折让产出（整单去重）</b>：活动单实收 ${fmtY0(nShow)} ÷ 折让 ${fmtY0(dTot)} ＝ <b>${dTot?(nShow/dTot).toFixed(2):"—"}</b>，整体活动单 ${(nShow+dTot)?(10*nShow/(nShow+dTot)).toFixed(1)+"折":"—"}。逐行/小计是<b>人次口径</b>，与整单去重不可比。<br>
      · <b>活动折扣</b>＝该活动整单实收 ÷（实收＋折让）×10；让价深度＝100%−活动折扣，不另设列。<br>
      · <b>新客占比</b>＝该活动核销单里本月开卡会员的占比，是<b>构成</b>口径；左右三列参与率是<b>渗透率</b>，二者不可加。<br>
+     · <b>折让产出＝实收 ÷ 折让</b>（1 元折让换回多少实收）。本表逐行＝该活动<b>整单</b>实收 ÷ 该活动商品折让，整单实收含客人同单顺带买的别的商品，所以会比「折让：品类分布」的按商品口径偏高，两个数不要直接比；逐行相加也 ≠ 页脚整单去重值（一单多活动会重复计）。<br>
      · *单数为活动人次合计（含零元兑换单），三列参与率对小计无意义。</div>
 `;
   // 兑换 / 赠品类单独一张表，放到「零元单」左边（2026-10-21 卷卷：提上来并排）
