@@ -1701,7 +1701,7 @@ function renderProg(r){
         <i>月${ramp?"保本":"预算"} ${fmtY0(g)} ÷ ${mi.dim} 天</i></div>
      <div class="kv"><span>本月目标</span><b>${fmtY0(B.monthTarget)}</b>
         <i>按开业 ${B.monthDays} 天折算</i></div>
-     <div class="kv"><span>接下来每天要卖</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
+     <div class="kv"><span>余期日均</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
         <i>本月还差 ${fmtY0(gap)} · 还剩 ${left} 天</i></div>
      <div class="kv"><span>月累计预测</span><b style="${proj==null?'color:#98A3B0':''}">${proj==null?"—":fmtY0(proj)}</b>
         <i title="取最近 7 个销售日的日均（已剔开业首日高峰），故比上方「日均实收」的 N 天少 1 天">${proj==null?('开业 '+B.accrued+' 天 &lt;7，样本不足不推算'):('按近 7 日均推算 · 缺口 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0"))}</i></div>
@@ -2490,7 +2490,7 @@ function renderPromos(r){
     return { o, n, m, k };
   };
   const _vp=(r.tickets&&r.tickets.voucher_paid)||{orders:0,amt:0};
-  host.innerHTML = `<div class="subhd">折扣类活动（看折扣与产出）</div>
+  host.innerHTML = `<div class="subhd">折扣类活动</div>
     <table class="promo-tbl"><colgroup><col style="width:21.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:7%">
       <col style="width:8.5%"><col style="width:6%"><col style="width:5.5%"><col style="width:5%"><col style="width:7%">
       <col style="width:7%"><col style="width:6%"><col style="width:5.5%"><col style="width:4.5%"></colgroup>
@@ -3445,7 +3445,7 @@ function renderReport(r, key){
   ];
 
   document.getElementById("reportWrap").innerHTML =
-    `<table class="rpt-tbl"><colgroup><col style="width:104px"><col><col style="width:316px"></colgroup><thead><tr><th>维度</th><th>判断（跟随所选日期区间）</th><th>建议动作</th></tr></thead><tbody>`
+    `<table class="rpt-tbl"><colgroup><col style="width:104px"><col><col style="width:316px"></colgroup><thead><tr><th>维度</th><th>判断</th><th>建议动作</th></tr></thead><tbody>`
     + items.map(([k, v, a]) => `<tr><td class="rptk">${k}</td><td>${v}</td><td class="rpta">${a}</td></tr>`).join("")
     + `</tbody></table>
      <div class="note">· 本区是「新店爬坡期 vs 老店成熟稳态」对照，<b>不严格可比</b>（老店已过爬坡期）。<br>
