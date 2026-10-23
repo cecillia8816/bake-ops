@@ -246,6 +246,8 @@ font-weight:700;text-align:center;line-height:18px}
 /* 单品明细「活动与毛利」三列：只用左侧竖线分组，不填充（填充会看成"这几列跟别的不是一类"） */
 #prodWrap th.sep-l,#prodWrap td.sep-l{border-left:1px solid var(--line)}
 td.sj,th.sj{color:#5F6B7A;font-style:italic;font-size:11px;font-weight:400}
+/* 辅助列（零元单 / 付费客单价）：两张表统一成更浅的灰 + 斜体 + 小一号，和试营业行同一档 */
+#dayWrap td.sj,#dayWrap th.sj,.peer-tbl td.sj,.peer-tbl th.sj{color:#98A3B0;font-style:italic;font-weight:400;font-size:11px}
 td.sji,th.sji{color:#5F6B7A;font-style:italic;font-weight:400}
 /* 报损构成速览：定宽防溢出 */
 @media(max-width:1080px){.grid3{grid-template-columns:1fr}}
@@ -1036,7 +1038,7 @@ function renderPeerCmp(){
      const o2oSales=pick("o2o"), rechSales=pick("recharge");
      const rn=RS0.length||1;
      // 会员同源（2026-10-21 卷卷）：老店会员实收/会员% 直接取 peer.by_day 的 member_daily 口径
-     // （销售单据会员标记，与新品同一张表），并按日剔除团餐大单（order_seg.big），与新品同一算法。
+     // （销售单据会员标记，与新店同一张表），并按日剔除团餐大单（order_seg.big），与新店同一算法。
      const memSame=sel.reduce((a,x)=>a+(x.m_ex!=null?x.m_ex:(x.m_amt||0)),0);
      const guestSame=sel.reduce((a,x)=>a+(x.g_ex!=null?x.g_ex:(x.g_amt||0)),0);
      const actSame=sel.reduce((a,x)=>a+(x.act||0),0);
@@ -1055,15 +1057,15 @@ function renderPeerCmp(){
        <td title="单店 ${days} 天合计充值本金（储值卡变动明细）">${fmtY0(rechSales/rn)}</td>
        <td title="同区间实收 ÷ 原价 加权（与上行同刻度：×10 写成折）">${discRate==null?"—":(10*discRate).toFixed(1)+"折"}</td>
        <td>${sSum?pct(lSum/sSum,2):"—"}</td>
-<td class="sep-l" title="老店新增会员未纳入取数">—</td>       <td class="sep-l" title="单店 ${days} 天合计会员实收（销售单据会员标记，与新品同源）">${fmtY0(memTot/rn)}</td>
+<td class="sep-l" title="老店新增会员未纳入取数">—</td>       <td class="sep-l" title="单店 ${days} 天合计会员实收（销售单据会员标记，与新店同源）">${fmtY0(memTot/rn)}</td>
        <td title="分子＝会员实收；分母＝全部实收 − 团餐（4 家加权；单店区间 ${_memRng}）">${memDen?pct(memTot/memDen,1):"—"}</td>
-       <td title="单店 ${days} 天合计活动单实收（整单口径，与新品同源）">${fmtY0(actTot/rn)}</td>
+       <td title="单店 ${days} 天合计活动单实收（整单口径，与新店同源）">${fmtY0(actTot/rn)}</td>
        <td>${sSum?pct(actTot/sSum,1):"—"}</td>
        <td title="单店 ${days} 天合计 O2O（外卖＋团购＋小程序外卖/自提）">${fmtY0(o2oSales/rn)}</td>
        <td>${richSales?pct(o2oSales/richSales,1):"—"}</td></tr>`;
    })()}</tbody></table>
    <div class="note">· 口径同「逐日明细」，正式开业日（含）起；老店行＝4 家老店同区间的单店值。<br>
-   · 老店「会员% / 活动%」与新品<b>同源</b>、团餐大单已按日剔出，可直接比；但 4 家自身差异大（会员 ${_peerMemRng}），看区间、不看单点。<br>
+   · 老店「会员% / 活动%」与新店<b>同源</b>，团餐大单已按日剔出；但 4 家本身差异大（会员 ${_peerMemRng}），比区间、不比单家。<br>
    · <b>O2O＝外卖＋团购＋小程序外卖/自提</b>：本店正式开业后 <b>${fmtY0(_o2self)}</b>（两店合计 ${fmtY0(_o2sum)}，占 ${pct(_o2sum/_s2sum,1)}）；老店占 ${_peerO2oPct==null?"—":pct(_peerO2oPct,1)}。</div>`;
 }
 
