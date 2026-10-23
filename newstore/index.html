@@ -1917,7 +1917,9 @@ function renderDayInsight(r){
   //    2026-10-22 审计 P1-4：原来拿「开业首日」当基准（216 单是峰值），任何一天都显示「掉了」，
   //    且同页自己写着「首日为一次性高峰，勿作常态」。改成与「开业后除首日的平台日均」比。
   if(base.length>=2){
-    const _plateau=base.filter(d=>!od||d.date!==od);
+    // 基准＝开业后、且剔除「末日」的日均（否则末日自己算进基准，等于拿自己跟自己比）
+  let _plateau=base.filter(d=>(!od||d.date!==od) && d.date!==l.date);
+  if(!_plateau.length) _plateau=base.filter(d=>!od||d.date!==od);
     const _pTc=_plateau.length?_plateau.reduce((a,d)=>a+(d.tc||0),0)/_plateau.length:null;
     const _pSales=_plateau.reduce((a,d)=>a+(d.sales||0),0);
     const _pShare=_pSales?_plateau.reduce((a,d)=>a+(d.act_amt||0),0)/_pSales:null;
@@ -1944,7 +1946,7 @@ function renderDayInsight(r){
         judge="<b>活动退得比客流慢</b>——撤活动后要靠自然客流接棒，先别撤太急";
         act="下月活动预算按客流跌幅等比下调，逐周退";
       }
-      items.push(["退坡", `${judge}（占比 ${pct(a0,1)}→${pct(a1,1)}${dTc!=null?"，单数 "+_evTc:""}${_evAc?"，客单 "+_evAc:""}；已剔首日）`, act]);
+      items.push(["退坡", `${judge}（${md(f.date)}${_plateau.length>1?"~"+md(_plateau[_plateau.length-1].date):""} 日均 → ${md(l.date)}：占比 ${pct(a0,1)}→${pct(a1,1)}${dTc!=null?"，单数 "+_evTc:""}${_evAc?"，客单 "+_evAc:""}）`, act]);
     }
   }
 
