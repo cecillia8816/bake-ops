@@ -953,6 +953,10 @@ function renderPeerCmp(){
     const aAmt=ds.reduce((a,b)=>a+(b.act_amt||0),0);
     const _bd=r0.byDay||{}, _in=x=>!od||x.d>=od;
     const rc=(_bd.recharge||[]).filter(_in).reduce((a,b)=>a+(b.recharge||0),0);
+    const _ncbd=(r0.newcust&&r0.newcust.by_day)||{};
+    const ncSum=Object.keys(_ncbd).filter(d=>!od||d>=od).reduce((a,d)=>a+(_ncbd[d]||0),0);
+    const _tkd=(r0.byDay&&r0.byDay.ticketslot)||[];
+    const zeroSum=_tkd.filter(x=>!od||x.d>=od).reduce((a,x)=>a+(x.zero||0),0);
     const o2oAmt=(_bd.o2o||[]).filter(_in).reduce((a,b)=>a+(b.amt||0),0);
     const _mb={m_amt:0,g_amt:0,m_tc:0,g_tc:0};
     (_bd.member||[]).filter(_in).forEach(x=>{_mb.m_amt+=x.m_amt||0;_mb.g_amt+=x.g_amt||0;_mb.m_tc+=x.m_tc||0;_mb.g_tc+=x.g_tc||0;});
@@ -966,13 +970,13 @@ function renderPeerCmp(){
     return `<tr><td class="left-b">${esc(k)}${k===cur?'<span class="badge">当前</span>':''}</td>
       <td class="left-b">${esc(md(r0.open_date)||"—")}</td>
       <td>${n||"—"}</td>
-      <td class="sep-l">${n?fmtY0(sSum/n):"—"}</td><td>${n?fmtC(tSum/n):"—"}</td><td>${tSum?fmtAC(sSum/tSum):"—"}</td>
+<td class="sep-l">${n?fmtY0(sSum/n):"—"}</td><td>${n?fmtC(tSum/n):"—"}</td><td title="兑换券/赠品核销单数">${zeroSum||"—"}</td><td>${tSum?fmtAC(sSum/tSum):"—"}</td><td title="实收 ÷ 付费单（剔零元单）">${(tSum-zeroSum)>0?fmtAC(sSum/(tSum-zeroSum)):"—"}</td>
       <td>${fmtY0(B.afterSales)}</td>
       <td class="${cls(at)}">${at==null?"—":pct(at,1)}</td>
       <td>${fmtY0(rc)}</td>
       <td>${dAmt?(10*sSum/dAmt).toFixed(1)+"折":"—"}</td>
       <td class="${sSum?lossCls(lSum/sSum):""}">${sSum?pct(lSum/sSum,2):"—"}</td>
-      <td class="sep-l">${fmtY0(S.mEx)}</td><td>${pct(S.mShare,1)}</td>
+<td class="sep-l" title="正式开业后新增会员（人）">${ncSum||"—"}</td><td>${fmtY0(S.mEx)}</td><td>${pct(S.mShare,1)}</td>
       <td>${fmtY0(aAmt)}</td><td>${sSum?pct(aAmt/sSum,1):"—"}</td>
       <td>${fmtY0(o2oAmt)}</td><td>${sSum?pct(o2oAmt/sSum,1):"—"}</td></tr>`;
   };
@@ -995,18 +999,18 @@ function renderPeerCmp(){
   host.style.display="block";
   host.innerHTML=`<div class="subhd">双店对照（正式开业起 · 不随区间）</div>
    <table class="peer-tbl"><colgroup>
-     <col style="width:9%"><col style="width:5.5%"><col style="width:5%">
-     <col style="width:6.5%"><col style="width:5.5%"><col style="width:4.5%"><col style="width:6.5%">
-     <col style="width:6%"><col style="width:6%"><col style="width:5%"><col style="width:5%">
-     <col style="width:6.5%"><col style="width:5%"><col style="width:6%"><col style="width:5%"><col style="width:5.5%"><col style="width:5%"></colgroup>
+    <col style="width:6.8%"><col style="width:5%"><col style="width:4.8%">
+    <col style="width:8%"><col style="width:5%"><col style="width:4%"><col style="width:4.4%"><col style="width:5.6%">
+    <col style="width:4.8%"><col style="width:5.2%"><col style="width:4.6%"><col style="width:4%"><col style="width:4.2%">
+    <col style="width:3.6%"><col style="width:5%"><col style="width:4.2%"><col style="width:4.6%"><col style="width:4%"><col style="width:5%"><col style="width:4.2%"></colgroup>
    <thead>
-     <tr class="grp"><th colspan="3">门店信息</th><th class="sep-l" colspan="8">经营表现</th>
-       <th class="sep-l" colspan="6">客群与渠道</th></tr>
+     <tr class="grp"><th colspan="3">门店信息</th><th class="sep-l" colspan="10">经营表现</th>
+       <th class="sep-l" colspan="7">客群与渠道</th></tr>
      <tr><th class="left-b" style="text-align:left">门店</th><th class="left-b" style="text-align:left">正式开业</th><th>开业天数</th>
-       <th class="sep-l">日均实收</th><th>日均单数</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th>累计实收</th>
+       <th class="sep-l">日均实收</th><th>日均单数</th><th title="兑换券/赠品核销的单数（实付 0）">零元单</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th title="实收 ÷ 付费单（剔零元单）">付费客单价</th><th>累计实收</th>
        <th title="累计实收 ÷ 累计预算">累计达成率</th><th>充值收款</th>
        <th title="整店折扣＝全店实收 ÷ 全店原价 ×10（含会员价、活动折让等所有让价）；与⑥「活动折扣」只算活动单不同">整店折扣</th><th title="报损成本 ÷ 营业实收">报损率</th>
-       <th class="sep-l" title="会员实收（不含团餐）">会员实收</th><th title="分子＝会员实收；分母＝全部实收 − 团餐大单">会员%</th>
+       <th class="sep-l" title="正式开业后新增会员（人；银豹「会员新增统计」逐日）">新会员</th><th title="会员实收（不含团餐）">会员实收</th><th title="分子＝会员实收；分母＝全部实收 − 团餐大单">会员%</th>
        <th>活动实收</th><th title="活动单实收 ÷ 全店实收">活动%</th><th>O2O 实收</th><th title="O2O 实收 ÷ 全店实收">O2O%</th></tr></thead>
    <tbody>${keys.map(cell).join("")}${(()=>{
      const _r=D.stores[cur]||{}, _pr=_r.peer||{}, _rich=_r.peer_rich||{};
@@ -1046,12 +1050,12 @@ function renderPeerCmp(){
      _peerMemRng=_memRng;
      return `<tr class="peer-bench"><td class="left-b">老店对标（4 家均）</td><td class="left-b">成熟店</td><td title="成熟店不按开业天数计；对比区间 ${days} 天（与本店同日历日）">—</td>
        <td class="sep-l" title="同区间 ${days} 天 · 4 家老店单店日均；本店为其 ${dSales?Math.round(_ms/dSales*100):0}%">${fmtY0(dSales)}</td>
-       <td title="本店日均单数 ${fmtN0(_mtc)}，为老店 ${fmtN0(dTc)} 的 ${dTc?Math.round(_mtc/dTc*100):0}%">${fmtN0(dTc)}</td><td>${ac==null?"—":fmtAC(ac)}</td>
+       <td title="本店日均单数 ${fmtN0(_mtc)}，为老店 ${fmtN0(dTc)} 的 ${dTc?Math.round(_mtc/dTc*100):0}%">${fmtN0(dTc)}</td><td title="老店零元单未纳入取数">—</td><td>${ac==null?"—":fmtAC(ac)}</td><td title="老店付费单未纳入取数">—</td>
        <td>—</td><td>—</td>
        <td title="单店 ${days} 天合计充值本金（储值卡变动明细）">${fmtY0(rechSales/rn)}</td>
        <td title="同区间实收 ÷ 原价 加权（与上行同刻度：×10 写成折）">${discRate==null?"—":(10*discRate).toFixed(1)+"折"}</td>
        <td>${sSum?pct(lSum/sSum,2):"—"}</td>
-       <td class="sep-l" title="单店 ${days} 天合计会员实收（销售单据会员标记，与新品同源）">${fmtY0(memTot/rn)}</td>
+<td class="sep-l" title="老店新增会员未纳入取数">—</td>       <td class="sep-l" title="单店 ${days} 天合计会员实收（销售单据会员标记，与新品同源）">${fmtY0(memTot/rn)}</td>
        <td title="分子＝会员实收；分母＝全部实收 − 团餐（4 家加权；单店区间 ${_memRng}）">${memDen?pct(memTot/memDen,1):"—"}</td>
        <td title="单店 ${days} 天合计活动单实收（整单口径，与新品同源）">${fmtY0(actTot/rn)}</td>
        <td>${sSum?pct(actTot/sSum,1):"—"}</td>
