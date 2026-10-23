@@ -3609,6 +3609,7 @@ function renderMisc(r){
       const o=_distMap[k]||(_distMap[k]={amt:k,n:0,sum:0,gift:0}); o.n++; o.sum+=v.r; o.gift+=v.g; });
     const dist=Object.values(_distMap).sort((a,b)=>b.amt-a.amt)
       .map(o=>({amt:o.amt,n:o.n,sum:Math.round(o.sum*100)/100,gift:Math.round(o.gift*100)/100}));
+    const _rcPost=_rows.filter(x=>x.d>=(r.open_date||"")).reduce((x,y)=>x+(y.r||0),0);
     const _vs=_vals.map(v=>v.r).sort((a,b)=>a-b), _m=_vs.length;
     const _med=_m?(_m%2?_vs[(_m-1)/2]:(_vs[_m/2-1]+_vs[_m/2])/2):null;
     const _min=_m?_vs[0]:null, _max=_m?_vs[_m-1]:null;
@@ -3616,7 +3617,7 @@ function renderMisc(r){
     else {
       const sumN=dist.reduce((a,b)=>a+(b.n||0),0), sumS=dist.reduce((a,b)=>a+(b.sum||0),0);
       const kpi=`<div class="rc-kpi">
-        <span><b>${fmtY0(R)}</b><em>充值本金</em></span>
+        <span title="本区间 ${fmtY0(R)}；正式开业起 ${fmtY0(_rcPost)}（与「双店对照」同口径）"><b>${fmtY0(R)}</b><em>充值本金</em></span>
         <span><b>${RM||sumN}</b><em>充值人数</em></span>
         <span><b>${RM?fmtY0(R/RM):"—"}</b><em>人均</em></span>
         <span><b>${pct(RG/R,1)}</b><em>赠金占比</em></span></div>`;
