@@ -247,7 +247,9 @@ font-weight:700;text-align:center;line-height:18px}
 #prodWrap th.sep-l,#prodWrap td.sep-l{border-left:1px solid var(--line)}
 td.sj,th.sj{color:#5F6B7A;font-style:italic;font-size:11px;font-weight:400}
 /* 辅助列（零元单 / 付费客单价）：两张表统一成更浅的灰 + 斜体 + 小一号，和试营业行同一档 */
-#dayWrap td.sj,#dayWrap th.sj,.peer-tbl td.sj,.peer-tbl th.sj{color:#98A3B0;font-style:italic;font-weight:400;font-size:11px}
+#dayWrap td.sj,#dayWrap th.sj,.peer-tbl td.sj,.peer-tbl th.sj{color:#A9B4C1;font-style:italic;font-weight:400;font-size:10.5px}
+/* 辅助列表头：表头本身有 font-weight:700 的更高优先级规则，这里压回去，不加粗 */
+#dayWrap th.sj,.peer-tbl th.sj{font-weight:400 !important;color:#A9B4C1 !important}
 td.sji,th.sji{color:#5F6B7A;font-style:italic;font-weight:400}
 /* 报损构成速览：定宽防溢出 */
 @media(max-width:1080px){.grid3{grid-template-columns:1fr}}
