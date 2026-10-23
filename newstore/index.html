@@ -77,6 +77,13 @@ box-shadow:var(--shadow);min-width:0}
 /* 卡片脚注里的「说明」折叠块（2026-10-22 卷卷：悬浮一长条看不清，改成点开、逐条分行） */
 .caliber h3 .cal-sub{font-weight:400;font-size:11px;color:#7C8CA0;margin-left:8px}
 .caliber li{margin-bottom:5px;line-height:1.55}
+/* 卡片区间标签（2026-10-23 卷卷：有的卡写「本区间」有的写日期，不统一） */
+.wtag{display:inline-block;margin-left:8px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:600;
+  line-height:16px;vertical-align:middle;letter-spacing:.2px}
+.wtag.range{background:#EAF2FB;color:#3E6591;border:1px solid #D3E2F2}
+.wtag.all{background:#F1F3F0;color:#5C6B58;border:1px solid #DDE3D9}
+.wtag.month{background:#FBF1E6;color:#8A6134;border:1px solid #F0DFC8}
+.wtag.fixed{background:#EEF0F4;color:#505C6E;border:1px solid #DADFE8}
 .note details.nd{margin:2px 0 0}
 .note details.nd>summary{cursor:pointer;color:#4B5B6E;font-size:11px;font-weight:600;list-style:none;
   display:inline-block;margin-top:4px;padding:1px 9px;border:1px solid #D5E1EE;border-radius:10px;background:#F1F6FB}
@@ -703,7 +710,7 @@ svg{display:block;max-width:100%}
   <div class="grid2">
     <div class="chart-card">
       <h3>会员 · 篮子 · 线上 · 充值</h3>
-      <div class="pnote">· 本卡数字均为<b>所选区间</b>（见顶部日期）；会员/散客不含团餐，UPT 不含赠品。</div>
+      <div class="pnote">· 会员 / 散客不含团餐；UPT 不含赠品，勿与「单品明细」销量对账。</div>
       <div id="miscWrap"></div>
     </div>
     <div class="chart-card">
@@ -3159,6 +3166,9 @@ function render(key){
   // ⚠️ ⑥ 必须吃区间视图 w（审计 10-19：原传 r → 副题写"随区间实时计算"却一动不动）
   renderReport(w, key);
   externalizeNotes();
+  // 每张卡右上角挂区间标签（w＝所选区间；r.days＝全部销售日）
+  tagCards(w.first_date, w.last_date || w.window_end,
+           (r.days && r.days[0] || {}).date, (r.days && r.days[r.days.length - 1] || {}).date);
 }
 
 /* ---------- 开业分析（10-20 起 md 报告下线，结论直接看板内实算呈现） ----------
@@ -3172,6 +3182,44 @@ function rlines(){
   const a=[...arguments].filter(x=>x!=null && String(x).trim()!=="");
   return a.map(x=>'<div class="rli">'+x+'</div>').join("");
 }
+// ── 卡片区间标签：一次声明，全站统一（2026-10-23）──
+// range＝跟随所选区间；all＝全部销售日（不随顶部）；month＝BI 月粒度
+const _WIN_KIND = [
+  ["逐日明细", "all"], ["单品百搭度", "all"], ["常买组合", "all"], ["大类组合", "all"],
+  ["开业爬坡曲线", "all"],
+  ["优惠券带动", "month"],
+  ["累计实收 vs 累计预算", "range"], ["商品集中度", "range"], ["大类结构", "range"], ["小类结构", "range"], ["单品明细", "range"],
+  ["单品对标", "range"], ["时段结构", "range"], ["订单结构", "range"], ["会员 · 篮子", "range"],
+  ["充值概况", "range"], ["报损结构", "range"], ["单品报损明细", "range"],
+  ["折扣与活动", "range"], ["新店开业分析", "range"],
+];
+function tagCards(lo, hi, allLo, allHi){
+  document.querySelectorAll(".chart-card,.panel").forEach(card => {
+    const h = card.querySelector("h2,h3");
+    if (!h || h.querySelector(".wtag")) return;
+    const t = (h.textContent || "").trim();
+    // 双店对照：窗口是「正式开业起」，既不是所选区间也不是全部销售日
+    const sub = card.querySelector(".subhd");
+    if (sub && (sub.textContent || "").trim().startsWith("双店对照")) {
+      const sp0 = document.createElement("span");
+      sp0.className = "wtag fixed";
+      sp0.textContent = "正式开业起";
+      sp0.title = "正式开业日起、不随顶部区间";
+      h.appendChild(sp0);
+      return;
+    }
+    const hit = _WIN_KIND.find(([k]) => t.startsWith(k));
+    if (!hit) return;
+    const kind = hit[1];
+    const sp = document.createElement("span");
+    sp.className = "wtag " + kind;
+    if (kind === "range") { sp.textContent = md(lo) + " ~ " + md(hi); sp.title = "跟随顶部所选区间"; }
+    else if (kind === "all") { sp.textContent = "全部 " + md(allLo) + " ~ " + md(allHi); sp.title = "不随顶部区间"; }
+    else { sp.textContent = "BI 月"; sp.title = "银豹 BI 月粒度，不随所选区间"; }
+    h.appendChild(sp);
+  });
+}
+
 function renderReport(r, key){
   const peer = r.peer || {};
   const nDays = r.n_days || 1;
@@ -3593,7 +3641,7 @@ function renderMisc(r){
           + `</div>`
         : "";
       const _ttl = document.getElementById("rcTitle");
-      if (_ttl) _ttl.textContent = "充值概况（" + md(r.first_date) + " ~ " + md(r.last_date || r.window_end) + "）";
+      if (_ttl) _ttl.textContent = "充值概况（充值本金）";
       rcHost.innerHTML = kpi + rng + tbl + judge;
     }
   }
