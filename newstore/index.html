@@ -754,7 +754,7 @@ svg{display:block;max-width:100%}
 
   <div class="mkt-duo gz">
     <div class="chart-card"><div id="giftWrap"></div></div>
-    <div class="chart-card"><div class="subhd">零元单送掉了哪些品</div><div id="zeroWrap"></div></div>
+    <div class="chart-card"><div class="subhd">零元单：商品构成</div><div id="zeroWrap"></div></div>
   </div>
   <div class="mkt-duo cs">
     <div class="chart-card"><div id="catDiscWrap"></div></div>
@@ -2526,7 +2526,7 @@ function renderPromos(r){
   const gHost=document.getElementById("giftWrap");
   if(gHost){
     gHost.innerHTML = `
-   <div class="subhd">送出去的券：花了多少、拉来几个新客</div>
+   <div class="subhd">兑换券：成本与拉新</div>
    ${_grpG.length?`<table class="gift-tbl"><colgroup><col style="width:28%"><col style="width:12%"><col style="width:9%"><col style="width:7%">
        <col style="width:9%"><col style="width:9%"><col style="width:8%"><col style="width:10%"><col style="width:8%"></colgroup>
      <thead><tr><th class="left-b">活动</th><th class="left-b">类型</th><th title="该活动让掉的金额（＝成本）">折让成本</th><th>兑换单</th><th title="本月刚办卡会员的核销单 ÷ 该活动核销单（会员号去会员名单查开卡日）；查不到的按老客算，故为下限">新客占比</th>
@@ -2621,7 +2621,7 @@ function renderPromos(r){
                 + (_evenLow?`（「${esc(_evenLow.cat)}」毛利更低 ${pct(_gpOf(_evenLow.cat),1)}，但折让只占 ${pct(_sumDisc?_wOf[_evenLow.cat].disc/_sumDisc:0,1)}，不在此列）`:"")
               : `<br>· 折让已集中在毛利最高的大类，重点转向收窄深度`)
          : "";
-       return `<div class="subhd">折让花在哪些品类</div>
+       return `<div class="subhd">折让：品类分布</div>
          <table class="cat-disc"><colgroup><col style="width:14%"><col style="width:13%"><col style="width:10%">
            <col style="width:12%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:10%"></colgroup>
            <thead><tr><th class="left-b">大类</th><th title="该大类让掉的金额（悬浮里含其中兑换/赠品的部分）">折让</th><th>占折让</th>
@@ -2636,7 +2636,7 @@ function renderPromos(r){
          · <b>回本线 vs 折让产出</b>：回本线是需要值（1÷毛利率），折让产出是实测值。低于回本线＝这笔折让连毛利都没补回来；高于也只是必要条件（活动实收含本来就会买的部分），真判据看增量。${judge}</div>`;
      })()}`; }
   var sumHost=document.getElementById("promoSum");
-  if(sumHost){ sumHost.innerHTML = `   <div class="subhd">各类折扣各花了多少</div>
+  if(sumHost){ sumHost.innerHTML = `   <div class="subhd">折让：按折扣类型</div>
    <table class="fit-tbl"><thead><tr><th class="left-b">折扣类型</th><th>活动数</th><th title="该类型下的活动单数（一单多活动会重复计）">活动单数</th><th>折让</th><th>占折让</th><th title="该类型实收 ÷ 折让">折让产出</th></tr></thead><tbody>
    ${(()=>{
      const g={};
