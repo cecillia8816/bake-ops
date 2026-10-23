@@ -2517,7 +2517,7 @@ function renderPromos(r){
       <td title="折扣类人次合计（同一单多活动重复计）">${_sD.ord}*</td><td>—</td>
       <td>—</td><td>—</td><td>—</td><td>${(()=>{let o=0,n=0;_grpD.forEach(p=>{const x=_ncOf(p);o+=x.o;n+=x.n;});return o?pct(n/o,1):"—";})()}</td><td>—</td></tr>
    </tbody></table>
-   <div class="note">· 只放<b>折扣类</b>；兑换券与赠品在下表。小计为<b>人次合计</b>（含零元单），与去重不可比。<br>
+   <div class="note">· 只放<b>折扣类</b>；兑换券与赠品在下表。小计＝各活动单数相加，<b>一单命中多个活动会重复计</b>，与页脚整单去重不可比。<br>
      ${(()=>{const _g=(()=>{let o=0,n=0;(r.promos||[]).forEach(p=>{if(!/兑换券|赠品|赠送|入群礼|入会有礼/.test(p.name||""))return;const bd=p.nc_by_day||{};Object.keys(bd).forEach(d=>{if(d>=(r.first_date||"")&&d<=(r.last_date||r.window_end||"9999")){o+=bd[d].orders||0;n+=bd[d].new||0;}});});return{o,n};})();
       if(!_g.o || _g.o < 10 || !_g.n) return "";
       const _p=_g.n/_g.o;
