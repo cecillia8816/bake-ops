@@ -1763,7 +1763,6 @@ function renderDays(r){
       <td class="sep-l">${fmtY0(d.sales)}</td>
       <td class="${dod==null?"":(dod>=0.05?"up":(dod<=-0.05?"down":""))}" title="${pv?"对 "+md(pv.date)+"（周"+WK[new Date(pv.date+"T00:00:00").getDay()]+"）":"首日无前值"}">${dod==null?"—":(dod>=0?"+":"")+pct(dod,1)}</td>
       <td>${d.tc}</td>
-      <td class="sj" title="当天新办卡会员数（按开卡门店）">${_ncD[d.date]==null?"—":_ncD[d.date]}</td>
       <td class="sj" title="零元单＝兑换券/赠品核销的单数（实付 0，银豹交易含它、商品流水不含）">${_tkD[d.date]?_tkD[d.date].z:"—"}</td>
       <td>${fmtAC(d.ac)}</td>
       <td class="sj" title="付费客单价＝销售实收 ÷ 付费单（剔零元单后的客单价）">${(_tkD[d.date]&&_tkD[d.date].p)?fmtAC(d.sales/_tkD[d.date].p):"—"}</td>
@@ -1772,7 +1771,7 @@ function renderDays(r){
       <td>${_rc?fmtY0(_rc):"—"}</td>
       <td>${d.discount_rate==null?"—":(10*d.discount_rate).toFixed(1)+"折"}</td>
       <td class="${lossCls(d.sales?d.loss_full/d.sales:null)}">${d.sales?pct(d.loss_full/d.sales,2):"—"}</td>
-      <td class="sep-l">${fmtY0(_Sd.mEx)}</td>
+      <td class="sep-l" title="当天新办卡会员（人）">${_ncD[d.date]==null?"—":_ncD[d.date]}</td><td>${fmtY0(_Sd.mEx)}</td>
       <td>${pct(_Sd.mShare,1)}</td>
       <td>${fmtY0(d.act_amt)}</td>
       <td>${d.sales?pct(d.act_amt/d.sales,1):"—"}</td>
@@ -1807,7 +1806,6 @@ function renderDays(r){
       <td class="sep-l">${showAgg?fmtY0(s.sales):fmtY0(s.sales/days)}</td>
       <td>—</td>
       <td>${showAgg?fmtN(s.tc):fmtC(s.tc/days)}</td>
-      <td class="sj">${s.ncm==null?"—":(showAgg?fmtN(s.ncm):fmtC(s.ncm/days))}</td>
       <td class="sj">${showAgg?fmtN(s.zero):fmtC(s.zero/days)}</td>
       <td>${s.tc?fmtAC(s.sales/s.tc):"—"}</td>
       <td class="sj">${s.paid?fmtAC(s.sales/s.paid):"—"}</td>
@@ -1816,22 +1814,22 @@ function renderDays(r){
       <td>${showAgg?fmtY0(s.rech):fmtY0(s.rech/days)}</td>
       <td>${(showAgg&&grpDisc)?(10*s.sales/grpDisc).toFixed(1)+"折":"—"}</td>
       <td class="${(showAgg&&s.loss)?lossCls(s.loss/s.sales):""}">${(showAgg&&s.loss)?pct(s.loss/s.sales,2):"—"}</td>
-      <td class="sep-l">${showAgg?fmtY0(s.S.mEx):fmtY0(s.S.mEx/days)}</td>
+      <td class="sep-l">${s.ncm==null?"—":(showAgg?fmtN(s.ncm):fmtC(s.ncm/days))}</td><td>${showAgg?fmtY0(s.S.mEx):fmtY0(s.S.mEx/days)}</td>
       <td>${pct(s.S.mShare,1)}</td>
       <td>${showAgg?fmtY0(s.act):fmtY0(s.act/days)}</td>
       <td>${s.sales?pct(s.act/s.sales,1):"—"}</td>
       <td>${showAgg?fmtY0(s.o2o):fmtY0(s.o2o/days)}</td>
       <td>${s.sales?pct(s.o2o/s.sales,1):"—"}</td></tr>`;
   host.innerHTML=`<table><colgroup>
-      <col style="width:7%"><col style="width:3.2%"><col style="width:5%">
-      <col style="width:5%"><col style="width:4.1%"><col style="width:3.6%"><col style="width:3.6%"><col style="width:4.4%"><col style="width:3.8%"><col style="width:5.4%"><col style="width:5.1%"><col style="width:4.8%"><col style="width:4.9%"><col style="width:3.9%"><col style="width:4.1%">
-      <col style="width:5.4%"><col style="width:4%"><col style="width:4.9%"><col style="width:4%"><col style="width:4.9%"><col style="width:4%"></colgroup>
+      <col style="width:6.6%"><col style="width:3%"><col style="width:4.6%">
+      <col style="width:5%"><col style="width:4.2%"><col style="width:3.4%"><col style="width:3.4%"><col style="width:4.3%"><col style="width:5.2%"><col style="width:5.3%"><col style="width:4.6%"><col style="width:4.6%"><col style="width:4.3%"><col style="width:4%">
+      <col style="width:4%"><col style="width:5.5%"><col style="width:4.3%"><col style="width:5%"><col style="width:4%"><col style="width:5%"><col style="width:4%"></colgroup>
     <thead>
-      <tr class="col2"><th colspan="3">日历</th><th colspan="12" class="sep-l">经营表现</th><th colspan="6" class="sep-l">客群与渠道</th></tr>
+      <tr class="col2"><th colspan="3">日历</th><th colspan="11" class="sep-l">经营表现</th><th colspan="7" class="sep-l">客群与渠道</th></tr>
       <tr><th class="left-b">日期</th><th class="left-b">星期</th><th class="left-b">日型</th>
-        <th class="sep-l">销售实收</th><th>销售环比</th><th title="交易单数（含零元单）">单数</th><th class="sj" title="当天新办卡会员数（银豹「会员新增统计」逐日，按开卡门店）">新会员</th><th class="sj">零元单</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th class="sj">付费客单价</th><th>累计实收</th><th>累计达成率</th><th>充值收款</th>
+        <th class="sep-l">销售实收</th><th>销售环比</th><th title="交易单数（含零元单）">单数</th><th class="sj">零元单</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th class="sj">付费客单价</th><th>累计实收</th><th>累计达成率</th><th>充值收款</th>
         <th title="整店折扣＝全店实收 ÷ 全店原价 ×10（含所有让价）">整店折扣</th><th>报损率</th>
-        <th class="sep-l">会员实收</th><th>会员%</th><th>活动实收</th><th>活动%</th><th>O2O 实收</th><th>O2O%</th></tr>
+        <th class="sep-l" title="当天新办卡会员数（单位：人；银豹「会员新增统计」逐日，按开卡门店）">新会员</th><th>会员实收</th><th>会员%</th><th>活动实收</th><th>活动%</th><th>O2O 实收</th><th>O2O%</th></tr>
     </thead><tbody>
     ${rows.filter(x=>x.trial).map(x=>x.h).join("")}
     ${T.n?lineTot("trial-row subtotal","试营业 "+T.n+" 天 · 不计入",T,T.n,true,"—","—",tDisc):""}
