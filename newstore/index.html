@@ -229,10 +229,13 @@ font-weight:700;text-align:center;line-height:18px}
 .grid2.trend2 .cum-sum{margin:0;padding:2px 9px;font-size:11px;flex:0 0 auto}
 /* X 轴下方的图例与图表居中对齐 */
 .grid2.trend2 .legend-inline{justify-content:center;text-align:center}
-/* 两图锁定同一像素高度与内边距 → 横轴线严格同一水平线 */
-.grid2.trend2 #dailySvg,.grid2.trend2 #cumSvg{height:266px!important;display:block}
-@media(max-width:720px){.grid2.trend2 #dailySvg,.grid2.trend2 #cumSvg{height:226px!important}}
-.grid2.trend2>.chart-card>.pnote{min-height:62px}
+/* 两图锁定同一像素高度与内边距 → 横轴线严格同一水平线
+   2026-10-23 卷卷：删掉两卡的说明句、卡压紧 → 高度跟着从 266/226 收到 230/200，
+   ⚠️ 必须与 renderDaily/renderCum 里的 H 同步，否则 SVG 被拉扁（viewBox 与外框不等比）。*/
+.grid2.trend2 #dailySvg,.grid2.trend2 #cumSvg{height:230px!important;display:block}
+@media(max-width:720px){.grid2.trend2 #dailySvg,.grid2.trend2 #cumSvg{height:200px!important}}
+/* 超窄屏：图例里的长解释句会换行、把两张卡撑成一高一矮 → 让位（口径在悬浮与口径抽屉里都有） */
+@media(max-width:560px){.grid2.trend2 .legend-inline .mt{display:none}}
 @media(max-width:1080px){.grid2.trend2{grid-template-columns:1fr}}
 /* 活动表定宽 + 首列定宽：列宽不再被最长活动名吸走，整表落在容器内 */
 #promoWrap table{table-layout:fixed;min-width:0;width:100%}
@@ -619,14 +622,10 @@ svg{display:block;max-width:100%}
   <div class="grid2 trend2">
     <div class="chart-card">
       <div class="chart-hd"><h3>开业爬坡曲线（横轴＝日期）</h3></div>
-    <div class="pnote">· 点色分工作日/周末；砖红虚线＝保本日均。</div>
       <div id="dailyWrap"></div>
     </div>
     <div class="chart-card">
       <div class="chart-hd"><h3>累计实收 vs 累计预算</h3><div id="cumSum" class="cum-sum"></div></div>
-      <div class="pnote">
-        · 黑线＝累计实收，砖红线＝累计预算。<br>
-        · 两线间距＝累计缺口（合计，不是日均）；与 ① 的累计达成率同分母。</div>
       <div id="cumWrap"></div>
     </div>
   </div>
@@ -1221,6 +1220,15 @@ function trendGeom(){
   _trendGeo = { sp: sp, leftW: Math.round(L), rightW: Math.round(R) };
   return _trendGeo;
 }
+/* 横轴标签步长（2026-10-23 卷卷：两张图**必须同一节奏**——要么都逐日，要么都隔天）。
+   原来左图按 iw/46 自算、右图按 iw/56 自算，于是同一屏左图 10/17..10/22 逐日、
+   右图 10/15,10/17,10/19,10/21 跳日。改为**只看共用的 px/天**（trendGeom 的 sp）：
+   一天占不到 46px 就统一隔天，够就统一逐日，两卡永远一致。*/
+function xLblStep(sp){ return Math.max(1, Math.ceil(46 / Math.max(1, sp))); }
+/* 窄屏（≤1080）两卡会堆成一列，各算各的 px/天 → 节奏又会分叉（480px 实测：左隔天、右逐日）。
+   故窄屏下**左图算出的步长存下来给右图用**（左图天数多、per-day 更挤，取它是保守解）。
+   render() 里固定先 renderDaily 后 renderCum，顺序不能反。 */
+let _xStepShared = 1;
 function renderDaily(r){
   // 设计宽 = 容器实宽（上限 860）：viewBox 固定 860 时手机端会整体缩到 ~0.42 倍，
   // 9.5px 的轴标签实际只剩 4px（读不出来）→ 改为按容器宽重算，窄屏下字号≈1:1。
@@ -1228,7 +1236,7 @@ function renderDaily(r){
   const geo = trendGeom();
   const W = geo ? geo.leftW : Math.max(300, Math.min(860, Math.round(host0.clientWidth || 860)));
   const _narrow = window.innerWidth < 720;
-  const H = _narrow ? 226 : 266, PL=_narrow?40:52, PR=16, PT=16, PB=_narrow?48:52;
+  const H = _narrow ? 200 : 230, PL=_narrow?40:52, PR=16, PT=14, PB=_narrow?44:48;
   const baseY = PT + (H-PT-PB);
   const d=r.days; if(!d.length){ document.getElementById("dailyWrap").innerHTML='<div class="empty">暂无数据</div>'; return; }
   const ax = niceAxis(Math.max(...d.map(x=>x.sales)) * 1.18 || 1, 4);
@@ -1293,7 +1301,8 @@ function renderDaily(r){
   }
   // 横轴＝上日期(MM/DD) / 下星期(周日)，对齐周看板趋势图规格（卷卷 10-14）。
   // 原写法是「第N天 / MM-DD」且字号 9.5/8.5 偏大、顺序与全站相反。
-  const step = Math.max(1, Math.ceil(d.length / Math.max(1, Math.floor(iw / 46))));
+  const step = xLblStep(sp);
+  _xStepShared = step;
   const xl = d.map((p,i)=> (i % step === 0 || i === d.length-1)
       ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
          <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
@@ -1330,7 +1339,7 @@ function renderCum(r){
     host.innerHTML='<div class="empty">所选区间没有正式开业后的销售日（开业 '+(B.openDate||"—")+'）——切「开业后」或「全部」查看</div>'; return; }
   const W=geo ? geo.rightW : Math.max(300,Math.min(860,Math.round(host.clientWidth||600)));
   const _narrow = window.innerWidth < 720;
-  const H=_narrow?226:266, PL=_narrow?40:52, PR=16, PT=16, PB=_narrow?48:52;
+  const H=_narrow?200:230, PL=_narrow?40:52, PR=16, PT=14, PB=_narrow?44:48;
   const iw=W-PL-PR, ih=H-PT-PB;
   let s=0;
   const pts=ds.map(x=>{ s+=x.sales; const dom=+String(x.date).slice(8,10);
@@ -1348,7 +1357,7 @@ function renderCum(r){
   const lineS=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.s)}`).join(" ");
   const lineB=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.b)}`).join(" ");
   const dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.s)}" r="3.5" fill="${isWknd(p.d)?"#FFD27D":"#00A4DE"}" stroke="#000" stroke-width="1.5"/>`).join("");
-  const step=Math.max(1,Math.ceil(pts.length/Math.max(1,Math.floor(iw/56))));
+  const step=geo?xLblStep(sp):(_xStepShared||1);
   const xl=pts.map((p,i)=> (i%step===0||i===pts.length-1)
       ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.d.slice(5).replace("-","/")}</text>
          <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.d)?"#A9843F":"#6B7684"}">${weekDay(p.d)}</text>` : "").join("");
