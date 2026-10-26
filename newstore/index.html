@@ -87,11 +87,14 @@ box-shadow:var(--shadow);min-width:0}
 .storehd .wt.sel{padding:3px 12px;font-size:12px;line-height:18px;letter-spacing:.3px;
   position:relative;top:-1px}
 .wtag{display:inline-block;margin-left:8px;padding:0 7px;border-radius:9px;font-size:10px;font-weight:600;
-  line-height:16px;vertical-align:middle;letter-spacing:.2px}
+  line-height:16px;vertical-align:middle;letter-spacing:.2px;white-space:nowrap}
 .wtag.range{background:#EAF2FB;color:#3E6591;border:1px solid #D3E2F2}
 .wtag.all{background:#F1F3F0;color:#5C6B58;border:1px solid #DDE3D9}
 .wtag.month{background:#FBF1E6;color:#8A6134;border:1px solid #F0DFC8}
 .wtag.fixed{background:#EEF0F4;color:#505C6E;border:1px solid #DADFE8}
+/* ⚠️ 2026-10-26 卷卷：标题里的区间胶囊在手机上溢出卡片右缘。
+   根因：.panel>h2 是 white-space:nowrap 的长标题 + 胶囊，容器只有 ~324px。
+   → 手机档：标题与胶囊各自 nowrap，胶囊允许缩到下一行，且整体不撑破卡片。*/
 .note details.nd{margin:2px 0 0}
 .note details.nd>summary{cursor:pointer;color:#4B5B6E;font-size:11px;font-weight:600;list-style:none;
   display:inline-block;margin-top:4px;padding:1px 9px;border:1px solid #D5E1EE;border-radius:10px;background:#F1F6FB}
@@ -187,13 +190,19 @@ tr:hover td{background:var(--mist-soft)}
   #giftWrap table{min-width:700px !important}
   #miscWrap table{min-width:620px !important}
   #catDiscWrap table{min-width:700px !important}
-  #couponWrap table{min-width:950px !important}
-  /* 表头允许换行：横滑表里 nowrap+ellipsis 会把「累计达成率」压成两截 */
+  /* 2026-10-26：11 列→10 列（删「券品实收」），最小宽度同比收 8% */
+  #couponWrap table{min-width:870px !important}
   #dayWrap table{min-width:1330px !important}
   #lossProdWrap td.left-b{white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
-  #peerCmp th,#promoWrap th,#lossProdWrap th,#giftWrap th,#miscWrap th,#catDiscWrap th,#couponWrap th,
-  #peerCmp td,#promoWrap td,#lossProdWrap td,#giftWrap td,#miscWrap td,#catDiscWrap td{
+  /* ⚠️ 2026-10-26 卷卷整改：原来这条规则**同时作用于 th 和 td**，
+     把表头也变成可换行 → 第二层标题「累计达成率」「整店折扣」「新会员」、
+     「单均实收」「散客参与率」「出现天数」等在手机上折成两行。
+     现在：**表头一律 nowrap（单行），只有表体 td 放宽**。
+     表头要放下 → 靠加宽对应列 + 缩窄次要列，不靠折行。 */
+  #peerCmp td,#promoWrap td,#lossProdWrap td,#giftWrap td,#miscWrap td,#catDiscWrap td,#couponWrap td{
     white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
+  /* 表头单行 + 不被裁：给足 padding 外的宽度，靠列宽解决 */
+  :is(#peerCmp,#promoWrap,#lossProdWrap,#giftWrap,#miscWrap,#catDiscWrap,#couponWrap,#dayWrap,#prodWrap,#zeroWrap,#slotWrap,#segWrap,#catWrap,#bigWrap,#concWrap,#promoSum) thead th{white-space:nowrap !important;overflow:visible !important;text-overflow:clip !important}
 }
 /* 卡内竖向滚动（TOP30 等）：限高出滚动条，表头吸顶（卷卷 10-20） */
 .tbl-wrap.scroll-y{overflow:auto;max-height:560px}
@@ -218,6 +227,12 @@ font-weight:700;text-align:center;line-height:18px}
    现在等高 + 小类卡内滚动（18 行放不进 360px），底边一条线。 */
 .grid3>.chart-card>#catWrap{flex:1;min-height:0;overflow:visible}
 @media(max-width:1080px){.grid3>.chart-card{height:auto!important}}
+/* ⚠️ 2026-10-26 窄屏体检（320px iPhone SE）：小类结构表在 .grid3 卡里，
+   被上面那条 `.grid3>.chart-card>#catWrap{overflow:visible}`（等高三卡用）压掉了
+   手机档的 `#catWrap{overflow-x:auto}` → 自然宽 322px 撑破 320px 视口，
+   整页出现横向滚动条（scrollWidth 355）。这里在手机档把横滑能力还回来。
+   ⚠️ 必须放在这条规则**之后**（同优先级时后写的赢）。桌面端不受影响。 */
+@media(max-width:720px){.grid3>.chart-card>#catWrap{overflow-x:auto}}
 /* ⚠️ 让利与活动：活动表 10 列、券表 6 列，半栏（628px）放不下——
    实测半栏下数字列被截断成「¥5,075…」「RO…」（卷卷 10-16 指出"不要溢出/要能读全"）。
    本区块**一律上下堆叠**（两卡各拿满宽），与顾客洞察看板对同款 12 列表采用同一处理。
@@ -342,6 +357,12 @@ font-size:11px;color:var(--sub)}
 .prog-kv .kv>b.up{color:var(--up)}
 .prog-kv .kv>b.down{color:var(--down)}
 .prog-kv .kv>i{display:block;font-size:10.5px;color:#636D7B;font-style:normal;line-height:1.35}
+/* 语义片段整体不折断（2026-10-26 卷卷）：手机端卡宽 158px 时，
+   「本月还差 ¥40,268 · 还剩 6 天」会在词中间断成「还剩 6 / 天」、
+   「按近 7 日均推算 · 缺口 ¥21,203」会断成「缺口 / ¥21,203」——
+   加 .nb 让每个语义片段（数字+单位、标签+数值）整体不拆，
+   换行只发生在「·」分隔处。 */
+.prog-kv .kv>i .nb{white-space:nowrap;display:inline-block;vertical-align:baseline}
 .prog-ft{font-size:10.5px;color:var(--mute);line-height:1.45}
 .prog-ft b{color:var(--ink)}
 /* 单品明细：colgroup 定宽 + fixed（列宽不再被最长品名吸走，表格宽度被用满） */
@@ -503,6 +524,8 @@ tr.open-day td.left-b{font-weight:700;white-space:nowrap}
 .insight{margin-top:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#F7FAFD}
 .insight .ih{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--sub);margin-bottom:5px}
 .insight .ih em{font-style:normal;font-weight:400;color:var(--mute);margin-left:6px}
+/* 样本不足标记（2026-10-26 拍板 #7）：数据期<14 天或周末<2 个 → 建议降为观察，标题旁挂此标 */
+.insight .ih .thin-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:#FBF1E4;color:#9A6A2E;font-weight:400;letter-spacing:0;font-size:11px}
 .insight .il{display:flex;gap:8px;align-items:baseline;font-size:12px;line-height:1.6;color:#3D4753;padding:1px 0}
 .insight .il b{font-weight:700;color:#111827}
 .insight .act{color:#2F5D8A;font-weight:600;margin-left:2px}
@@ -576,23 +599,183 @@ svg{display:block;max-width:100%}
 .dtgroup .dtbar{flex:0 1 auto;min-width:0}
 @media(max-width:720px){
   .dtgroup .ctllbl{height:30px}
-  /* ① 日期标签与两个日期输入同一行；输入平分宽度（原来只有 107px，「2026/10/15」显示不全） */
+  /* ① 日期标签与两个日期输入同一行 */
   .ctl .dtgroup{flex:1 1 100%;flex-wrap:nowrap}
   .ctl .dtbar{flex:1 1 auto;width:auto;min-width:0;gap:6px;flex-wrap:wrap}
-  .ctl .dtbar input[type=date]{flex:1 1 110px;width:auto;min-width:110px;height:30px;font-size:12px;padding:2px 6px}
+  /* ①b 日期胶囊收窄（2026-10-26 卷卷）：原来 flex:1 1 110px 会把两个输入各撑到 156px，
+     而内容实际只占 109px（2026/10/15）→ 胶囊虚胖、右侧大片留白。
+     改为内容自适应：flex:0 0 auto + width:auto，浏览器按固有宽度（约 109px）排布，
+     日期完整显示不被裁，max-width:130px 兜底防止极端字体撑破。 */
+  .ctl .dtbar input[type=date]{flex:0 0 auto;width:auto;min-width:0;max-width:130px;height:30px;font-size:12px;padding:2px 6px}
   .ctl .dtquick{flex:1 1 100%;flex-wrap:wrap}
   .ctl .dtnote{flex:0 0 auto}
+  /* ①c 手机端去掉「近 3 天 / 近 7 天」快捷胶囊（2026-10-26 卷卷）：
+     只在手机档隐藏，桌面端保留原样；用 display:none 隐藏而非删 DOM，
+     JS 的 data-q 分支与高亮同步逻辑完全不受影响。 */
+  .ctl .dtquick button[data-q="d3"],.ctl .dtquick button[data-q="d7"]{display:none}
   /* ② 达成区 4 张卡：一行 2 张（原来 auto-fit minmax(178) 在 390 宽下只剩 1 列） */
   #progWrap .prog-kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   /* ③ 趋势卡标题不许省略号截断（区间标签会把「累计实收 vs 累计预算」挤掉半截） */
   .grid2.trend2 .chart-hd{flex-wrap:wrap}
   .grid2.trend2 .chart-hd h3{white-space:normal;overflow:visible;text-overflow:clip;max-width:100%}
   .grid2.trend2 .cum-sum{flex-wrap:wrap;justify-content:flex-start}
-  /* ④ 表格首列吸左（表宽 900~1330，容器只有 324）——标题与说明同吸左，不跟着滑走 */
-  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) :is(thead th,tbody td,tfoot td):first-child{position:sticky;left:0;z-index:3;background:#fff;box-shadow:1px 0 0 var(--line-strong)}
-  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) thead th:first-child{background:#EDF2F8;z-index:5}
-  :is(#prodWrap,#zeroWrap) :is(thead th,tbody td,tfoot td):nth-child(2){position:sticky;left:var(--c1,34px);z-index:3;background:#fff;box-shadow:1px 0 0 var(--line-strong)}
-  :is(#prodWrap,#zeroWrap) thead th:nth-child(2){background:#EDF2F8;z-index:5}
+  /* ④ 表格首列吸左（表宽 900~1330，容器只有 324）——标题与说明同吸左，不跟着滑走
+   *⚠️ 2026-10-26 卷卷整改（14 条截图）：
+   *  ① **合并单元格绝不能水平 sticky**。分组行（thead tr.grp / tr.col2 的 colspan=3/4/11）
+   *     与合计行（tfoot td colspan=3/4）一旦被固定，横向滑动时它占住整行宽度、
+   *     把右侧列顶出可视区 → 「滑动时其他列显示不全」「合计行错位」。
+   *     → 用 :not([colspan]) 把合并格排除出 sticky；分组行/合计格改为随内容一起滚。
+   *  ② **sticky 首格底色不能写死 #fff**：会覆盖 tr.tot / tr.open-day / tr.peer-bench
+   *     等填充行的底色 → 「整行填充不一致」（卷卷：要有填充就整行填）。
+   *     → 改为 background:inherit，并给行本身上色，sticky 格自然继承同一底色。
+   */
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) :is(thead th,tbody td,tfoot td):first-child:not([colspan]){position:sticky;left:0;z-index:3;background:inherit;box-shadow:1px 0 0 var(--line-strong)}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) thead th:first-child:not([colspan]){background:#F4F7FA;z-index:5}
+  /* peer-tbl 末行表头是 #FAFCFE（设计如此），sticky 首格要跟它一致 */
+  #peerCmp thead tr:last-child th:first-child:not([colspan]){background:#FAFCFE}
+  /* scroll-y 卡内竖滚表（prodWrap/zeroWrap）：整行表头都是 #EDF2F8
+     （.tbl-wrap.scroll-y thead th 的优先级更高），sticky 首格必须跟它一致，
+     否则首格颜色突兀、且「同行填充色不一致」。*/
+  .tbl-wrap.scroll-y thead th:first-child:not([colspan]),
+  .tbl-wrap.scroll-y thead th:nth-child(2):not([colspan]){background:#EDF2F8}
+  /* ④e 表头同行必须同色（卷卷：整行填充不要遗漏单元格）。
+     上面那条 `.tbl-wrap.scroll-y thead th:first-child` 特异性 (0,4,2)，
+     低于 `:is(#…) thead th:first-child:not([colspan])` 的 (1,2,2) → 首格被压成 #F4F7FA，
+     与同行其余格 #EDF2F8 不一致。这里用同等特异性 + 靠后顺序把它拉回一致。
+     ⚠️ 只有 prodWrap 是 scroll-y 卡（整行表头 #EDF2F8）；
+     zeroWrap 不是 scroll-y（整行表头 #F4F7FA），不能一起染成 #EDF2F8。 */
+  #prodWrap thead th:first-child:not([colspan]){background:#EDF2F8;z-index:5}
+  /* rpt-tbl（结论与建议）表头本底色是 #F6F9FC，sticky 首格也必须是 #F6F9FC */
+  #reportWrap thead th:first-child:not([colspan]){background:#F6F9FC;z-index:5}
+  :is(#prodWrap,#zeroWrap,#lossProdWrap) :is(thead th,tbody td):nth-child(2):not([colspan]){position:sticky;left:var(--c1,34px);z-index:3;background:inherit;box-shadow:1px 0 0 var(--line-strong)}
+  #prodWrap thead th:nth-child(2):not([colspan]){background:#EDF2F8;z-index:5}
+  /* zeroWrap 不是 scroll-y 卡，表头是 #F4F7FA（与同行其余格一致） */
+  #zeroWrap thead th:nth-child(2):not([colspan]){background:#F4F7FA;z-index:5}
+  /* lossProdWrap 不是 scroll-y 卡，表头是 #F4F7FA */
+  #lossProdWrap thead th:nth-child(2):not([colspan]){background:#F4F7FA;z-index:5}
+  /* ④b sticky 首格要挡住右侧滑过来的内容 → 必须有不透明底色。
+     用 inherit 让它跟随所在行（普通行白、合计行雾蓝、开业行浅蓝），
+     而「行」的底色由各表自己的 tr 规则决定（下面补齐 tbody/tr 的显式底色）。 */
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr{background:#fff}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.tot{background:var(--mist-soft)}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.tot.avg{background:#fff}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.open-day{background:#EFF4FA}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.peer-bench{background:#FAFBFD}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.bigrow{background:#F7F9FC}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.subtotal{background:#F6F9FC}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tfoot tr.tot{background:var(--mist-soft)}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tfoot tr.tot.avg{background:#fff}
+  :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tfoot tr.tot.open-day{background:#E4EEF9}
+  /* ④c 首列 sticky 但**表头第二行**也要随内容滚（分组行不固定 → 表头不再被遮挡） */
+  :is(#peerCmp,#dayWrap,#lossProdWrap) thead tr.col2 th,
+  :is(#peerCmp) thead tr.grp th{position:static;left:auto;z-index:auto}
+  /* ④d 分组行/合计行的合并格：底色跟随整行，不写死 */
+  :is(#peerCmp,#dayWrap,#lossProdWrap) thead tr.col2 th,
+  :is(#peerCmp) thead tr.grp th{background:var(--mist-soft)}
+  :is(#dayWrap,#prodWrap,#lossProdWrap) :is(tfoot td,tbody td)[colspan]{background:inherit}
+  /* ⑤ 板块标题（.sec）：手机上「商品结构」被挤成两行 → 标题不换行，说明另起一行 */
+  .sec{flex-wrap:wrap;row-gap:4px;white-space:nowrap}
+  .sec em{flex:0 0 auto}
+  .sec small{flex:1 1 100%;white-space:normal;line-height:1.4}
+  /* ⑥ 面板标题 + 区间胶囊：标题不折行；胶囊放不下就掉到下一行，不撑破卡片
+     ⚠️ h2 默认是 block（文字节点 + .wtag 混在一起），要让它能换行必须改成 flex 容器，
+        否则文字节点和胶囊会被当成一整块 nowrap → 溢出卡片右缘。*/
+  .panel>h2,.chart-card h2{white-space:nowrap;overflow:visible;text-overflow:clip;max-width:100%}
+  .panel>h2{display:flex;align-items:baseline;flex-wrap:wrap;row-gap:4px;gap:0}
+  .panel>h2 .wtag,.chart-card h3 .wtag{margin-left:8px;margin-top:0;display:inline-block;vertical-align:middle}
+  .chart-card h3{display:flex;align-items:baseline;flex-wrap:wrap;row-gap:4px;gap:0}
+  .chart-card h3 .wtag{margin-left:8px}
+  .panel>h2 .wtag,.chart-card h3 .wtag{white-space:nowrap}
+  /* ⑦ 优惠券带动：空态文案左对齐（原来居中，手机上读起来别扭） */
+  .empty{text-align:left}
+  #couponWrap .empty{text-align:left;padding:14px 4px}
+
+  /* ⑧ 手机端列宽重排（2026-10-26 卷卷 14 条截图）：
+     原则：**收窄文字宽列、把宽度让给被截断的数值列**。
+     ⚠️ <col> 的 width 是 inline style，必须 !important 才能被 CSS 覆盖。
+     ⚠️ 改列宽要同步调 table 的 min-width，否则百分比被压回去。 */
+  /* 逐日明细：日期列 8.4%→7%（手机上 119px 太宽，但「10/15 正式开业」徽标要放得下，不能再窄）；
+     销售环比 4.1%→5.4%（+212.2% 被省略号截断）；日型 4.4%→4.8%（「工作日/节假日」胶囊要放得下） */
+  #dayWrap col:nth-child(1){width:7% !important}
+  #dayWrap col:nth-child(3){width:4.8% !important}
+  #dayWrap col:nth-child(5){width:5.4% !important}
+  #dayWrap table{min-width:1330px !important}
+  /* 单品对标（门店信息表，20 列）：首列「门店」7.8%→6.4%（手机 94px）；
+     正式开业 5%→5.4%；开业天数 4.8%→5.4%；日均实收 8%→7.4%；
+     累计达成率/整店折扣/新会员 三个表头 4-5 字原来太窄 → 各加宽到 5.6%/5.4%/5% */
+  #peerCmp col:nth-child(1){width:6.4% !important}
+  #peerCmp col:nth-child(2){width:5.4% !important}
+  #peerCmp col:nth-child(3){width:5.4% !important}
+  #peerCmp col:nth-child(4){width:7.4% !important}
+  #peerCmp col:nth-child(10){width:5.8% !important}
+  #peerCmp col:nth-child(12){width:5.6% !important}
+  #peerCmp col:nth-child(14){width:5.2% !important}
+  #peerCmp table{min-width:1180px !important}
+  /* 单品明细：16 列。
+     ⚠️ 原比例：单品 13% / 小类 7.5% / 大类 4.5% / 活动名 19% —— 手机上「单品」220px、「小类」187px 过宽，
+     而「大类」只有 49px（要放「现制常温西点」这种长词）→ 收窄文字宽列、把宽度让给数值列。
+     新比例合计 100%：# 3 / 单品 12.5 / 大类 7.5 / 小类 7 / 均单价 5 / 销量 4 / 销售实收 5 /
+     销售占比 4.5 / SABC 4.5 / 销售天数 4.5 / 日均销量 5.2 / 日均实收 5.2 /
+     活动件数 5 / 活动件折扣 5.6 / 件均毛利 4.5 / 活动名 14 */
+  #prodWrap col:nth-child(1){width:3% !important}
+  #prodWrap col:nth-child(2){width:13% !important}
+  #prodWrap col:nth-child(3){width:7.5% !important}
+  #prodWrap col:nth-child(4){width:7% !important}
+  #prodWrap col:nth-child(5){width:5% !important}
+  #prodWrap col:nth-child(6){width:4% !important}
+  #prodWrap col:nth-child(7){width:5% !important}
+  #prodWrap col:nth-child(8){width:4.5% !important}
+  #prodWrap col:nth-child(9){width:4.5% !important}
+  #prodWrap col:nth-child(10){width:4.5% !important}
+  #prodWrap col:nth-child(11){width:5.2% !important}
+  #prodWrap col:nth-child(12){width:5.2% !important}
+  #prodWrap col:nth-child(13){width:5% !important}
+  #prodWrap col:nth-child(14){width:5.6% !important}
+  #prodWrap col:nth-child(15){width:4.5% !important}
+  #prodWrap col:nth-child(16){width:14% !important}
+  /* 单品报损明细：12 列。单品名 20%→15%（手机 180px 过宽）；
+     「报损（原因）」6 字表头要单行 → 8%→10%；信号列 10%→12%（「该改订货/陈列」要放得下）；
+     大类 6%→7%、小类 10%→9% */
+  #lossProdWrap col:nth-child(2){width:15% !important}
+  #lossProdWrap col:nth-child(3){width:7% !important}
+  #lossProdWrap col:nth-child(4){width:9% !important}
+  #lossProdWrap col:nth-child(9){width:10% !important}
+  #lossProdWrap col:nth-child(12){width:12% !important}
+  /* 零元单：商品名 27%→23%（手机 149px 过宽，右侧读不到）；小类 21%→18%（「现制常温西点」要放得下）；
+     大类 11%→14%；单数/占零元单/赠送率 保持 */
+  #zeroWrap col:nth-child(2){width:23% !important}
+  #zeroWrap col:nth-child(3){width:14% !important}
+  #zeroWrap col:nth-child(4){width:21% !important}
+  #zeroWrap col:nth-child(5){width:10% !important}
+  #zeroWrap col:nth-child(6){width:12% !important}
+  #zeroWrap col:nth-child(7){width:10% !important}
+  /* 折扣类活动（promo-tbl，13 列）：活动名列 21.5%→17%（手机 231px 过宽）；
+     参与率 7%→8%、会员占比 7%→8.5%、散客占比 6%→7.5%（2026-10-26 改构成口径后同为 4 字）、出现天数 4.5%→6%
+     （这三个表头 4-5 字，原来太窄 → 表头折行）；单均实收 5.5%→6% */
+  #promoWrap col:nth-child(1){width:17% !important}
+  #promoWrap col:nth-child(2){width:9% !important}
+  #promoWrap col:nth-child(7){width:6% !important}
+  #promoWrap col:nth-child(8){width:6% !important}
+  #promoWrap col:nth-child(9){width:8% !important}
+  #promoWrap col:nth-child(10){width:8.5% !important}
+  #promoWrap col:nth-child(11){width:7.5% !important}
+  #promoWrap col:nth-child(12){width:5.5% !important}
+  #promoWrap col:nth-child(13){width:6% !important}
+  /* 折让：品类分布（cat-disc，8 列）：大类 14%→15%；折让产出（大类）表头 6 字 → 15%→18%；
+     件均毛利 13%→14%；活动件数 10%→11% */
+  #catDiscWrap col:nth-child(1){width:15% !important}
+  #catDiscWrap col:nth-child(6){width:18% !important}
+  #catDiscWrap col:nth-child(7){width:14% !important}
+  #catDiscWrap col:nth-child(8){width:11% !important}
+  /* 折让：按折扣类型（fit-tbl，6 列，无 colgroup → 用 th 宽度）：
+     折扣类型（胶囊文字）20%；活动数/活动单数/折让/占折让 各 15%；折让产出 20% */
+  #promoSum table{min-width:520px !important}
+  #promoSum th:nth-child(1){width:20% !important}
+  #promoSum th:nth-child(2){width:14% !important}
+  #promoSum th:nth-child(3){width:16% !important}
+  #promoSum th:nth-child(4){width:15% !important}
+  #promoSum th:nth-child(5){width:14% !important}
+  #promoSum th:nth-child(6){width:21% !important}
   /* 小标题/说明不再用 sticky（flex 子项不生效），改由 externalizeNotes 物理搬到滚动容器外 */
 }
 </style></head>
@@ -763,7 +946,7 @@ svg{display:block;max-width:100%}
     <div id="lossWrap"></div>
   </div>
   <div class="panel">
-    <h2>单品报损明细（谁在报、为什么报）</h2>
+    <h2>单品报损明细</h2>
     <div class="pnote">
     · <b>丢弃</b>＝备货/动销问题 → 改订货、陈列。<br>
     · <b>试吃</b>＝投放，不是浪费。<br>
@@ -1113,9 +1296,22 @@ function renderPeerCmp(){
 
 const tip = document.createElement("div"); tip.className="chart-tip"; document.body.appendChild(tip);
 function showTip(e,html){ tip.innerHTML=html; tip.style.display="block"; moveTip(e); }
-function moveTip(e){ const w=tip.offsetWidth,h=tip.offsetHeight;
-  let x=e.clientX+14, y=e.clientY-h-12; if(y<0) y=e.clientY+16;
-  if(x+w>innerWidth-8) x=innerWidth-w-8; tip.style.left=x+"px"; tip.style.top=y+"px"; }
+/* ⚠️ 2026-10-26 卷卷：点到图表**左右边缘**的圆点时，悬浮卡溢出页面。
+   旧逻辑只夹右边界（x+w>innerWidth-8），左侧不管 → 点最左圆点时卡片左边被切掉。
+   现在四边都夹：左右贴边留 8px、上下也留边，并保证卡始终完整落在视口内。*/
+function moveTip(e){
+  const w=tip.offsetWidth,h=tip.offsetHeight, M=8;
+  const vw=document.documentElement.clientWidth||window.innerWidth;
+  const vh=document.documentElement.clientHeight||window.innerHeight;
+  // 优先放鼠标右下方；右边放不下就翻到左边；仍然放不下（贴边）就夹在视口内
+  let x=e.clientX+14;
+  if(x+w>vw-M) x=e.clientX-w-14;      // 翻到左侧
+  if(x<M) x=M;                          // 左侧兜底
+  if(x+w>vw-M) x=Math.max(M, vw-M-w);   // 卡片本身比视口还宽时也贴边
+  let y=e.clientY-h-12;
+  if(y<M) y=e.clientY+18;               // 上方放不下 → 放下方
+  if(y+h>vh-M) y=Math.max(M, vh-M-h);   // 下方也放不下 → 贴底
+  tip.style.left=x+"px"; tip.style.top=y+"px"; }
 function hideTip(){ tip.style.display="none"; }
 /* 结构化悬浮卡：标题行 + 标签/数值分列（对齐周看板 chart-tip 规格）。
    rows=[[标签,值,语义类?], ...]；ft 为底部小字。旧实现是纯 <br> 堆叠 → 挤成一坨、日期占半行。 */
@@ -1776,9 +1972,9 @@ function renderProg(r){
      <div class="kv"><span>本月目标</span><b>${fmtY0(B.monthTarget)}</b>
         <i>按开业 ${B.monthDays} 天折算</i></div>
      <div class="kv"><span>余期日均</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
-        <i>本月还差 ${fmtY0(gap)} · 还剩 ${left} 天</i></div>
+        <i><span class="nb">本月还差 ${fmtY0(gap)}</span> <span class="nb">· 还剩 ${left} 天</span></i></div>
      <div class="kv"><span>月累计预测</span><b style="${proj==null?'color:#98A3B0':''}">${proj==null?"—":fmtY0(proj)}</b>
-        <i title="取最近 7 个销售日的日均（已剔开业首日高峰），故比上方「日均实收」的 N 天少 1 天">${proj==null?('开业 '+B.accrued+' 天 &lt;7，样本不足不推算'):('按近 7 日均推算 · 缺口 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0"))}</i></div>
+        <i title="取最近 7 个销售日的日均（已剔开业首日高峰），故比上方「日均实收」的 N 天少 1 天">${proj==null?('<span class="nb">开业 '+B.accrued+' 天 &lt;7</span> <span class="nb">· 样本不足不推算</span>'):('<span class="nb">按近 7 日均推算</span> <span class="nb">· 缺口 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0")+'</span>')}</i></div>
    </div>
    <div class="prog-ft">
      · 日均预算＝月${ramp?"保本":"预算"}÷${mi.dim} 天，已计 ${B.accrued} 天 → 累计预算 ${fmtY0(bPeriod)}。<br>
@@ -1938,12 +2134,23 @@ function renderDayInsight(r){
   const actAmt=base.reduce((a,d)=>a+(d.act_amt||0),0);
   const salesAmt=base.reduce((a,d)=>a+(d.sales||0),0);
   const items=[];
+  // 2026-10-26（卷卷拍板 #7）：动作建议样本门槛 **不设硬闸**，只标注。
+  // 开业不足 14 天、或覆盖的周末不足 2 个 → 建议照出，但一律说成观察句，不用祈使句下指令。
+  const _nWeekend=(()=>{const s=new Set(); base.forEach(d=>{const w=new Date(d.date+"T00:00:00").getDay(); if(w===0||w===6) s.add(d.date);}); return s.size;})();
+  const _postDays=(r.open_date && l && l.date)?Math.round((new Date(l.date+"T00:00:00")-new Date(r.open_date+"T00:00:00"))/864e5)+1:0;
+  const _thin= _postDays<14 || _nWeekend<2;
+  const _thinTag = _thin?`<span class="thin-tag" title="数据期 ${_postDays} 天（开业后）· ${_nWeekend} 个周末日；样本不足，以下为观察，不是定论">观察·待验证</span>`:"";
+  // 动作句在样本不足时一律降为观察句（祈使句＝指令，数据不够不能下）
+  const act2 = (a) => (!_thin || /^观察/.test(String(a))) ? a : "观察（暂不调整，待数据足后再定）：" + a;
+  // 动作渲染：观察句不加「→」箭头（避免「→ 观察」读起来像结论被推翻），其余保持「→ 指令」
+  const _actHtml = (a) => /^\s*观察/.test(a) ? a : "→ " + act2(a);
   // 2026-10-22：券核销单已能对会员档案（会员号 × 开卡日）→「拉新 vs 回馈」可判，两处共用
   const _bdays=new Set(base.map(x=>x.date));
+  // 2026-10-26（拍板 #6）：拉新口径只认结构化 nature，不再按活动名正则猜
   const _giftNc=()=>{ let o=0,n=0;
     const _lo=r.first_date||"", _hi=r.last_date||r.window_end||"9999";
     (r.promos||[]).forEach(p=>{
-      if(!/兑换券|赠品|赠送|入群礼|入会有礼/.test(p.name||"")) return;
+      if(!(p.nature==="gift"||p.nature==="recharge")) return;
       const bd=p.nc_by_day||{};
       Object.keys(bd).forEach(d=>{ if(_bdays.has(d)){ o+=bd[d].orders||0; n+=ncNewIn(bd[d], _lo, _hi); } });
     });
@@ -2086,10 +2293,12 @@ function renderDayInsight(r){
     let judge, act;
     const _gn=_giftNc();
     if(gap>=10){ judge=`<b>活动多被会员使用</b>——会员单 ${Math.round(mr)}% 享过活动价、散客只 ${Math.round(gr)}%`
-      + (_gn.o?`（会员含当月新开卡${_nc?" "+_nc+" 人":""}；兑换/赠品券的核销单里 <b>${pct(_gn.n/_gn.o,0)}</b> 是本月新开卡领的）`: (_nc?`（会员含当月新开卡 ${_nc} 人）`:""));
+      + (_gn.o?`（会员含当月新开卡${_nc?" "+_nc+" 人":""}；兑换/赠品券的核销单里 <b>${pct(_gn.n/_gn.o,0)}</b> 是本区间新开卡领的）`: (_nc?`（会员含当月新开卡 ${_nc} 人）`:""));
+      // 2026-10-26 卷卷拍板 #5：原句「仅新开卡首单可用」是规则建议，但流水里没有「会员在本店首次成交」标记，
+      //   支撑不了；改成观察性提示，等补标记后再定。阈值仍看新客占比（≥70%＝券基本只被新客用）。
       act=(_gn.o&&_gn.n/_gn.o>=0.7)
-        ? "券已基本只被新客用 → 规则写成「仅新开卡首单可用」，省下的额度挪向散客首单"
-        : "券改成「仅新开卡首单可用」，预算从会员挪向散客"; }
+        ? `观察：兑换/赠品券核销单里约 ${pct(_gn.n/_gn.o,0)} 是本区间新开卡会员领的，券可能已基本只被新客用——目前流水<b>没有「会员在本店首次成交」标记</b>，无法验证，先不收紧规则，补标记后再定是否改成「仅新开卡首单可用」`
+        : "观察：兑换/赠品券由谁领需要「会员在本店首次成交」标记才能分清，补标记后再定是否收紧"; }
     else if(gap<=-10){ judge=`<b>活动更打动散客</b>——散客单 ${Math.round(gr)}% 享过活动价，但散客留存最弱，活动后要接二次到店`;
       act="散客券加「二次到店」条件（首单后 N 天内再用），别只做一次性拉新"; }
     else { judge="<b>会员与散客对活动同样敏感</b>——活动没偏袒某一侧，等于普降";
@@ -2126,8 +2335,8 @@ function renderDayInsight(r){
   const _segCore=["m_act","m_nat","g_act","g_nat"].reduce((a,k)=>a+((segAgg[k]||{}).amt||0),0);
   const newMemPct=_segCore?(((segAgg.m_act||{}).amt||0)+((segAgg.m_nat||{}).amt||0))/_segCore:null;
   const _nc2=(r.newcust&&r.newcust.n)||null;
-  host.innerHTML = `<div class="ih">开业活动影响</div>`
-    + items.map(([k,v,a])=>`<div class="il"><span class="ik">${k}</span><span>${v}${a?`<span class="act">→ ${a}</span>`:""}</span></div>`).join("")
+  host.innerHTML = `<div class="ih">开业活动影响${_thinTag}</div>`
+    + items.map(([k,v,a])=>`<div class="il"><span class="ik">${k}</span><span>${v}${a?`<span class="act">${_actHtml(a)}</span>`:""}</span></div>`).join("")
     + `<div class="note" style="margin:6px 0 0" title="会员＝销售单带会员标记，含当月新开卡；拉新与回馈按「券核销单 × 会员开卡日」区分">· <b>会员</b>＝带会员标记的单，<b>含当月新开卡</b>${_nc2?"（"+_nc2+" 人）":""}。<br>
        · 新店会员实收占比 ${newMemPct==null?"—":pct(newMemPct,1)}${oldMemPct!=null?" vs 老店 "+pct(oldMemPct,1):""}：会员多是开业办卡的结果，不是存量套利。</div>`;
   host.style.display = "block";
@@ -2495,22 +2704,26 @@ function renderPromos(r){
   const nDedup=((r.days)||[]).reduce((a,b)=>a+(b.act_amt||0),0);
   const nShow=nDedup>0?nDedup:nTot;
   const allOrd=r.promo_all_orders||0;
-  // 会员/散客参与率＝**渗透率**：该活动的会员单 ÷ 本区间会员单（不是"该活动单里会员占几成"）。
-  // ⚠️ 2026-10-19 审计：原实现全区间用 ÷426（各活动会员单之和，会重复计）、子区间用 ÷该活动单数，
-  //    同一列出现 26.1% / 81.0% 两种意思。分母统一用 ④ 的会员单数（member_daily），两处口径一致。
+  // 2026-10-26 卷卷拍板（第四版 A 案）：会员/散客两列改**构成口径**——该客群单 ÷ 该活动单，
+  //   两列相加正好 100%，回答"这活动打中的是会员还是散客"。
+  //   原来两列是**渗透率**（÷ 本区间会员单 / 散客单，分母不同），19.0%+21.7% vs 总参与率 20.8%，
+  //   读者会误加。渗透率下沉到悬浮里保留（它回答"客群被活动覆盖多少"，不是构成）。
   const _SP=memberSplit(r);
   const mTot=_SP.mTcEx, gTot=_SP.gTcEx;   // 不含团餐（与会员卡同口径）
-  // 三列参与率各有分母：一次写清，避免同一列名两种意思（2026-10-19/10-21 审计）
-  if(_den) _den.innerHTML="参与率分母 —— 付费单 <b>"+(allOrd||"—")+"</b> · 会员单 <b>"+(mTot||"—")+"</b> · 散客单 <b>"+(gTot||"—")+"</b>";
-  const mRate=p=> (mTot && p.m_orders!=null) ? p.m_orders/mTot : null;
-  const gRate=p=> (gTot && p.g_orders!=null) ? p.g_orders/gTot : null;
+  // 分母写清：参与率用付费单；会员/散客构成用该活动单（各自悬浮里再给渗透率分母）
+  if(_den) _den.innerHTML="参与率分母＝付费单 <b>"+(allOrd||"—")+"</b> · 会员单 <b>"+(mTot||"—")+"</b> · 散客单 <b>"+(gTot||"—")+"</b>";
+  const _segN=p=>((p.m_orders!=null)&&(p.g_orders!=null))?(p.m_orders+p.g_orders):null;  // 该活动会员+散客单
+  const mRate=p=>{ const n=_segN(p); return (n&&p.m_orders!=null)?p.m_orders/n:null; };    // 构成：会员单占该活动单
+  const gRate=p=>{ const n=_segN(p); return (n&&p.g_orders!=null)?p.g_orders/n:null; };    // 构成：散客单占该活动单
+  const mPen =p=> (mTot && p.m_orders!=null) ? p.m_orders/mTot : null;                     // 渗透：会员单 ÷ 会员单总量
+  const gPen =p=> (gTot && p.g_orders!=null) ? p.g_orders/gTot : null;                     // 渗透：散客单 ÷ 散客单总量
   // 活动单 / 非活动单 的客单价（订单结构口径，不含团餐）：回答"活动有没有把客单拉高"
   const _sAmt=k=>(r.segs||[]).filter(x=>x.seg===k).reduce((a,b)=>a+b.amt,0);
   const _sOrd=k=>(r.segs||[]).filter(x=>x.seg===k).reduce((a,b)=>a+b.orders,0);
   const _actA=_sAmt("m_act")+_sAmt("g_act"), _actO=_sOrd("m_act")+_sOrd("g_act");
   const _natA=_sAmt("m_nat")+_sAmt("g_nat"), _natO=_sOrd("m_nat")+_sOrd("g_nat");
   const actAc=_actO?_actA/_actO:null, natAc=_natO?_natA/_natO:null;
-  // ⚠️ 列数＝11（活动/实收/折让/折让产出/折让占比/单数/单均实收/参与率/会员参与率/散客参与率/出现天数）。
+  // ⚠️ 列数＝13。2026-10-26：第 10/11 列由「会员参与率/散客参与率」（渗透）改为「会员占比/散客占比」（构成）。
   //    改列后必须数一遍 tfoot 的单元格数与 colgroup 的 col 数是否仍一致。
   //    10-19 卷卷：加「单均实收」（活动 AC）——看这个活动来的单是大单还是小额券单。
   // 取值器：统一处理 null（不可比的一律排最后）
@@ -2545,16 +2758,15 @@ function renderPromos(r){
   const _zhe = p => (p.gf === 2 || p.net == null) ? null : ((p.net + (p.disc || 0)) > 0 ? 10 * p.net / (p.net + (p.disc || 0)) : null);
   // 2026-10-21 卷卷：赠送/兑换类与折扣类分开评——折扣会把"送出去的"排到最差位置，带偏判断。
   // 2026-10-23 改口径：**用结构化 nature 字段**（_ns_promo_kind），不再靠「<2 折」+ 名字片段猜。
-  //   旧写法 `_zhe<2 || /兑换券|赠品|赠送/` 漏了「（充值有礼）迪拜巧克力软曲奇券」「低糖米面包券」
-  //   （名字里没有那三个词、折扣率也不是 <2 折），于是充值礼券被排进折扣效率榜（Codex P1-3）。
+  // 2026-10-26 卷卷拍板 #6：**彻底废掉猜测**——nature 缺失就明说「未分类」，不再启发式兜底。
+  //   实测：兜底正则会把「（入会有礼）8.8折券」当成赠送（真吃 8.8 折，是折扣），
+  //   又抓不到「买三送一」「消费满38元赠送」等真赠送。两套口径并存＝同一页两个答案。
   const _NAT_GIFT = { gift: 1, recharge: 1 };
-  const _isGift = p => {
-    if (p.nature) return !!_NAT_GIFT[p.nature];
-    const zh = _zhe(p);                     // 兜底：老数据/未收录活动才退回启发式
-    return (zh != null && zh < 2) || /兑换券|赠品|赠送|充值有礼|免单/.test(p.name || "");
-  };
+  const _isGift = p => !!_NAT_GIFT[p.nature];
+  // 2026-10-26（拍板 #6）：页脚「券的新客占比」只认结构化 nature（曾按名字正则 → 把「8.8折券」算进券）
+  const _isGiveawayNc = p => !!_NAT_GIFT[p.nature];
   const _NAT_TXT = { discount: "打折/满减", package: "套餐", exchange: "换购", gift: "赠送/兑换", recharge: "充值礼", unknown: "未分类" };
-  const _natTxt = p => _NAT_TXT[p.nature] || p.kind || "未分类";
+  const _natTxt = p => _NAT_TXT[p.nature] || "未分类";
   const _grpD = _rows.filter(p=>!_isGift(p));
   const _grpG = _rows.filter(p=>_isGift(p));
   const _sumOf = arr => arr.reduce((a,p)=>({net:a.net+((p.gf===2)?0:(p.net||0)), disc:a.disc+(p.disc||0), ord:a.ord+(p.orders||0)}), {net:0,disc:0,ord:0});
@@ -2572,6 +2784,10 @@ function renderPromos(r){
     });
     return { o, n, m, k };
   };
+  // 标记：已判定；未分类＝nature 缺失（_ns_promo_kind 没收录），闸门 _ns_check_promokind 会报，不许静默
+  const _kindTag = (p, cls) => p.nature
+    ? `<span class="kindtag ${cls}" title="银豹后台折扣名称：${esc(p.kind||"—")} ｜ 结构化性质：${esc(_natTxt(p))}${p.psrc?" ｜ 来源："+esc(p.psrc):""}">${esc(_natTxt(p))}</span>`
+    : `<span class="kindtag kt-k5" title="_ns_promo_kind 未收录该活动，nature 为空——请补规则，勿用折扣率/名字猜">未分类</span>`;
   const _vp=(r.tickets&&r.tickets.voucher_paid)||{orders:0,amt:0};
   host.innerHTML = `<div class="subhd">折扣类活动</div>
     <table class="promo-tbl"><colgroup><col style="width:21.5%"><col style="width:9.5%"><col style="width:7.5%"><col style="width:7%">
@@ -2579,9 +2795,9 @@ function renderPromos(r){
       <col style="width:7%"><col style="width:6%"><col style="width:5.5%"><col style="width:4.5%"></colgroup>
     <thead><tr>${TH("name","活动","left-b")}${TH("kind","折扣类型","left-b","折扣类型＝银豹后台「折扣名称」（打折与特价/搭赠送出/套餐/换购商品/满额返现…）")}${TH("net","活动实收")}${TH("disc","折让")}${TH("roas","折让产出","","每 1 元折让换回多少实收＝活动实收 ÷ 折让。此行＝该活动自己的实收（一单多活动会重复计入）")}
       ${TH("zhe","活动折扣","","该活动整单平均打到几折＝实收 ÷（实收＋折让）；兑换券/赠品天然接近 0 折（让价深度＝100%−折扣，不再单列）")}${TH("orders","单数")}${TH("avg","单均实收")}${TH("part","参与率")}
-      ${TH("m","会员参与率","sj","＝ 该活动会员单 ÷ 本区间会员单（会员标记单数，已剔团餐、含零元单）；是渗透率，不是「活动单里会员占几成」")}${TH("g","散客参与率","sj","＝ 该活动散客单 ÷ 本区间散客单（同上）")}${TH("nc","新客占比","sj","＝ 该活动核销单里，本区间刚办卡会员占多少（会员号去会员名单查开卡日）；查不到的按老客算。与左右两列的渗透率不是一回事")}${TH("days","出现天数")}</tr></thead><tbody>
+      ${TH("m","会员占比","sj","构成口径 ＝ 该活动会员单 ÷（该活动会员单＋散客单），与右列相加＝100%。在悬浮里另有渗透率：该活动会员单 ÷ 本区间会员单")}${TH("g","散客占比","sj","构成口径 ＝ 该活动散客单 ÷（该活动会员单＋散客单），与左列相加＝100%。在悬浮里另有渗透率：该活动散客单 ÷ 本区间散客单")}${TH("nc","新客占比","sj","＝ 该活动核销单里，本区间刚办卡会员占多少（会员号去会员名单查开卡日）；查不到的按老客算。与左右两列的分母不同（那是会员/散客构成）")}${TH("days","出现天数")}</tr></thead><tbody>
     ${_grpD.map(p=>{ const mr=mRate(p), gr=gRate(p), nc=_ncOf(p); const zh=_zhe(p); return `<tr><td class="left-b" title="${esc(p.name)}">${esc(p.name)}${mark(p)}</td>
-      <td class="left-b"><span class="kindtag ${(()=>{const K=["打折与特价","搭赠送出","套餐","换购商品","满额返现","未分类"];const i=K.indexOf(p.kind||"未分类");return "kt-k"+(i<0?5:i);})()}" title="银豹后台折扣名称：${esc(p.kind||"未分类")}${p.nature?" ｜ 结构化性质："+esc(_natTxt(p)):""}">${esc(p.kind||_natTxt(p))}</span></td>
+      <td class="left-b">${_kindTag(p, (()=>{const K=["打折与特价","搭赠送出","套餐","换购商品","满额返现","未分类"];const i=K.indexOf(p.kind||"未分类");return "kt-k"+(i<0?5:i);})())}</td>
       <td>${p.gf===2?'<span class="no-promo" title="判定为买赠，但活动单实收无法回溯（卡券/预售单不在商品销售流水）">无法回溯</span>':fmtY0(p.net)}</td>
       <td>${fmtY0(p.disc)}</td>
       <td title="${p.roas==null?"—":"每 1 元折让换回 ¥"+p.roas.toFixed(2)+" 实收（实收 "+fmtY0(p.net)+" ÷ 折让 "+fmtY0(p.disc)+"）"}">${(p.gf===2||p.roas==null)?"—":p.roas.toFixed(2)}</td>
@@ -2589,25 +2805,25 @@ function renderPromos(r){
       <td>${p.orders}</td>
       <td title="活动实收 ${p.net==null?"—":fmtY0(p.net)} ÷ 该活动 ${p.orders} 单（整单口径）">${(p.gf===2||!p.orders)?"—":fmtY(p.net/p.orders)}</td>
       <td${p.part_rate==null?"":` title="${p.orders} ÷ 本区间付费单 ${allOrd}（人次口径：同一单多活动会重复计入合计）"`}>${p.part_rate==null?"—":pct(Math.min(p.part_rate,1),1)}</td>
-      <td class="sj" title="会员参与率 ＝ 该活动会员单 ${p.m_orders==null?"—":p.m_orders} ÷ 本区间会员单 ${mTot}（会员标记单数，已剔团餐、含零元单）">${mr==null?"—":pct(mr,1)}</td>
-      <td class="sj" title="散客参与率 ＝ 该活动散客单 ${p.g_orders==null?"—":p.g_orders} ÷ 本区间散客单 ${gTot}（已剔团餐、含零元单）">${gr==null?"—":pct(gr,1)}</td>
+      <td class="sj" title="会员占比 ＝ 该活动会员单 ${p.m_orders==null?"—":p.m_orders} ÷ 该活动 ${_segN(p)||"—"} 单（会员＋散客，已剔团餐、含零元单）｜渗透率：会员单 ${p.m_orders==null?"—":p.m_orders} ÷ 本区间会员单 ${mTot}＝${mPen(p)==null?"—":pct(mPen(p),1)}">${mr==null?"—":pct(mr,1)}</td>
+      <td class="sj" title="散客占比 ＝ 该活动散客单 ${p.g_orders==null?"—":p.g_orders} ÷ 该活动 ${_segN(p)||"—"} 单（同上）｜渗透率：散客单 ${p.g_orders==null?"—":p.g_orders} ÷ 本区间散客单 ${gTot}＝${gPen(p)==null?"—":pct(gPen(p),1)}">${gr==null?"—":pct(gr,1)}</td>
       <td class="sj" title="${nc.o?("该活动核销 "+nc.o+" 单，其中本区间开卡会员 "+nc.n+" 单（带会员号 "+nc.m+"、能对档 "+nc.k+"）"):"本期折扣明细无该券核销单"}">${nc.o?pct(nc.n/nc.o,1):"—"}</td><td>${p.days}</td></tr>`;}).join("")}
     <tr class="tot"><td class="left-b">小计（折扣类）</td><td class="left-b">—</td><td>${fmtY0(_sD.net)}</td><td>${fmtY0(_sD.disc)}</td>
       <td title="折让产出＝该行活动实收 ÷ 折让（本表逐行按活动算，一单多活动会重复计；合计看页脚整单去重值）">${_sD.disc?(_sD.net/_sD.disc).toFixed(2):"—"}</td>
       <td title="折扣类实收 ÷ 原价">${(_sD.net+_sD.disc)?(10*_sD.net/(_sD.net+_sD.disc)).toFixed(1)+"折":"—"}</td>
       <td title="折扣类人次合计（同一单多活动重复计）">${_sD.ord}*</td><td>—</td>
-      <td>—</td><td>—</td><td>—</td><td>${(()=>{let o=0,n=0;_grpD.forEach(p=>{const x=_ncOf(p);o+=x.o;n+=x.n;});return o?pct(n/o,1):"—";})()}</td><td>—</td></tr>
+      <td>—</td><td class="sj" title="小计不汇总构成（一单多活动会重复计；逐行相加≠100% 的加总没有意义，看单行）">—</td><td class="sj" title="同上">—</td><td>${(()=>{let o=0,n=0;_grpD.forEach(p=>{const x=_ncOf(p);o+=x.o;n+=x.n;});return o?pct(n/o,1):"—";})()}</td><td>—</td></tr>
    </tbody></table>
    <div class="note">· 只放<b>折扣/套餐/换购类</b>（按结构化性质 nature 分组，不再按折扣率猜）；<b>赠送、兑换券、充值礼在下表</b>。小计＝各活动单数相加，<b>一单命中多个活动会重复计</b>，与页脚整单去重不可比。<br>
-     ${(()=>{const _g=(()=>{let o=0,n=0;(r.promos||[]).forEach(p=>{if(!/兑换券|赠品|赠送|入群礼|入会有礼|充值有礼/.test(p.name||""))return;const bd=p.nc_by_day||{};Object.keys(bd).forEach(d=>{if(d>=(r.first_date||"")&&d<=(r.last_date||r.window_end||"9999")){o+=bd[d].orders||0;n+=bd[d].new||0;}});});return{o,n};})();
+     ${(()=>{const _g=(()=>{let o=0,n=0;(r.promos||[]).forEach(p=>{if(!_isGiveawayNc(p))return;const bd=p.nc_by_day||{};Object.keys(bd).forEach(d=>{if(d>=(r.first_date||"")&&d<=(r.last_date||r.window_end||"9999")){o+=bd[d].orders||0;n+=bd[d].new||0;}});});return{o,n};})();
       if(!_g.o || _g.o < 10 || !_g.n) return "";
       const _p=_g.n/_g.o;
-      return `· <b>券的新客占比 ${pct(_p,1)}</b>（含兑换券/入会礼/入群礼/充值礼的核销单，本区间开卡会员口径）${_p>=0.85?"——开业期这批券几乎只被新开卡会员用；但这不等于「券在拉新」（券本就是办卡时发的），要判拉新得看跨店老会员那一侧":`——其中 ${pct(1-_p,0)} 仍是本区间之前就办卡的会员在领，拉新与回馈混着`}<br>`;})()}
+      return `· <b>券的新客占比 ${pct(_p,1)}</b>（含赠送/兑换/充值礼类活动的核销单，按结构化性质归类，本区间开卡会员口径）${_p>=0.85?"——开业期这批券几乎只被新开卡会员用；但这不等于「券在拉新」（券本就是办卡时发的），要判拉新得看跨店老会员那一侧":`——其中 ${pct(1-_p,0)} 仍是本区间之前就办卡的会员在领，拉新与回馈混着`}<br>`;})()}
      · <b>折让产出（整单去重）</b>：活动单实收 ${fmtY0(nShow)} ÷ 折让 ${fmtY0(dTot)} ＝ <b>${dTot?(nShow/dTot).toFixed(2):"—"}</b>，整体活动单 ${(nShow+dTot)?(10*nShow/(nShow+dTot)).toFixed(1)+"折":"—"}。逐行/小计是<b>人次口径</b>，与整单去重不可比。<br>
      · <b>活动折扣</b>＝该活动整单实收 ÷（实收＋折让）×10；让价深度＝100%−活动折扣，不另设列。<br>
-     · <b>新客占比</b>＝该活动核销单里本区间开卡会员的占比，是<b>构成</b>口径；左右三列参与率是<b>渗透率</b>，二者不可加。<br>
+     · <b>新客占比</b>＝该活动核销单里本区间开卡会员的占比，是<b>构成</b>口径（分母＝该活动核销单）；左右两列「会员占比 / 散客占比」也是构成（分母＝该活动会员单＋散客单，两者相加＝100%），三列分母不同、不可相加。左右两列的<b>渗透率</b>（该客群单 ÷ 本区间该客群全部单）在悬浮里。<br>
      · <b>折让产出＝实收 ÷ 折让</b>（1 元折让换回多少实收）。本表逐行＝该活动<b>整单</b>实收 ÷ 该活动商品折让，整单实收含客人同单顺带买的别的商品，所以会比「折让：品类分布」的按商品口径偏高，两个数不要直接比；逐行相加也 ≠ 页脚整单去重值（一单多活动会重复计）。<br>
-     · *单数为活动人次合计（含零元兑换单），三列参与率对小计无意义。</div>
+     · *单数为活动人次合计（含零元兑换单），参与率/占比列对小计无意义。</div>
 `;
   // 兑换 / 赠品类单独一张表，放到「零元单」左边（2026-10-21 卷卷：提上来并排）
   const gHost=document.getElementById("giftWrap");
@@ -2617,15 +2833,15 @@ function renderPromos(r){
    ${_grpG.length?`<table class="gift-tbl"><colgroup><col style="width:28%"><col style="width:12%"><col style="width:9%"><col style="width:7%">
        <col style="width:9%"><col style="width:9%"><col style="width:8%"><col style="width:10%"><col style="width:8%"></colgroup>
      <thead><tr><th class="left-b">活动</th><th class="left-b">类型</th><th title="该活动让掉的金额（＝成本）">折让成本</th><th>兑换单</th><th title="本区间刚办卡会员的核销单 ÷ 该活动核销单（会员号去会员名单查开卡日）；查不到的按老客算，故为下限">新客占比</th>
-       <th>单均成本</th><th title="整单口径：实收 ÷（实收＋折让）×10">活动折扣</th><th class="sj" title="＝ 该活动会员单 ÷ 本区间会员单（会员标记单数，已剔团餐、含零元单）">会员参与率</th><th>出现天数</th></tr></thead><tbody>
-     ${[..._grpG].sort((a,b)=>(b.disc||0)-(a.disc||0)).map(p=>{const zh=_zhe(p); const mr=mRate(p); const nc=_ncOf(p);
+       <th>单均成本</th><th title="整单口径：实收 ÷（实收＋折让）×10">活动折扣</th><th class="sj" title="＝ 该活动会员单 ÷ 本区间会员单（会员标记单数，已剔团餐、含零元单）。⚠️ 本列是渗透率；折扣类表同名列已改构成口径，不可横比">会员渗透率</th><th>出现天数</th></tr></thead><tbody>
+     ${[..._grpG].sort((a,b)=>(b.disc||0)-(a.disc||0)).map(p=>{const zh=_zhe(p); const mr=mPen(p); const nc=_ncOf(p);
        return `<tr><td class="left-b" title="${esc(p.name)}">${esc(p.name)}${mark(p)}</td>
-       <td class="left-b"><span class="kindtag kt-k1" title="银豹后台折扣名称：${esc(p.kind||"—")}${p.psrc?" ｜ 来源："+esc(p.psrc):""}">${esc(_natTxt(p))}</span></td>
+       <td class="left-b">${_kindTag(p, "kt-k1")}</td>
        <td>${fmtY0(p.disc)}</td><td>${p.orders}</td>
        <td class="${nc.o&&nc.n/nc.o>=0.5?"up":""}" title="${nc.o?("本区间刚办卡会员核销 "+nc.n+" 单 ÷ 核销 "+nc.o+" 单（其中 "+nc.m+" 单带会员号，"+nc.k+" 单查得到开卡日；查不到的按老客算）"):"本期折扣明细无该券核销单，无法判新客"}">${nc.o?pct(nc.n/nc.o,1):"—"}</td>
        <td title="单均成本＝折让 ${fmtY0(p.disc)} ÷ ${p.orders} 单">${p.orders?fmtY(p.disc/p.orders):"—"}</td>
        <td title="实收 ${fmtY0(p.net)} ÷ 原价 ${fmtY0((p.net||0)+(p.disc||0))}">${zh==null?"—":zh.toFixed(1)+"折"}</td>
-       <td class="sj" title="会员参与率 ＝ 该活动会员单 ${p.m_orders==null?"—":p.m_orders} ÷ 本区间会员单 ${mTot}（会员标记单数，已剔团餐、含零元单）">${mr==null?"—":pct(mr,1)}</td>
+       <td class="sj" title="会员渗透率 ＝ 该活动会员单 ${p.m_orders==null?"—":p.m_orders} ÷ 本区间会员单 ${mTot}（会员标记单数，已剔团餐、含零元单）；渗透率＝会员被该活动覆盖的比例，不是构成">${mr==null?"—":pct(mr,1)}</td>
        <td>${p.days}</td></tr>`;}).join("")}
      <tr class="tot"><td class="left-b">小计（赠送类）</td><td class="left-b">—</td><td>${fmtY0(_sG.disc)}</td><td>${_sG.ord}</td>
        <td>${(()=>{let o=0,n=0;_grpG.forEach(p=>{const x=_ncOf(p);o+=x.o;n+=x.n;});return o?pct(n/o,1):"—";})()}</td>
@@ -2762,26 +2978,25 @@ function renderCoupons(r){
   const t=r.coupon_total||{};
   const _tDisc=cs.reduce((a,b)=>a+(b.disc_amt||0),0);
   const _tQty=cs.reduce((a,b)=>a+(b.linked_qty||0),0);
-  const _own=c=>Math.max(0,(c.txn_amt||0)-(c.linked_amt||0));   // 券品实收＝整单−额外
-  host.innerHTML = `<table><colgroup><col style="width:21%"><col style="width:7%">
-      <col style="width:8.5%"><col style="width:8%"><col style="width:8.5%"><col style="width:8.5%"><col style="width:9%">
-      <col style="width:8%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:7%"></colgroup>
+  // 2026-10-26 卷卷拍板：删「券品实收」列（≈整单实收，易被读成"券带来的销售"）、「投入产出」改名，
+  //   保留「券带动」（BI 原生字段）。券品实收＝整单−额外的口径不再展示，只在悬浮里作补充。
+  host.innerHTML = `<table><colgroup><col style="width:23.5%"><col style="width:7.5%">
+      <col style="width:9%"><col style="width:8.5%"><col style="width:9%"><col style="width:9%"><col style="width:9.5%">
+      <col style="width:8%"><col style="width:8%"><col style="width:8%"></colgroup>
     <thead><tr><th>优惠券</th><th>核销订单</th>
       <th title="该券让掉的金额（成本，来自银豹折扣明细）——它是「让掉的」，不是实收的一部分">券成本</th>
       <th title="券成本 ÷ 核销订单">每单成本</th>
-      <th title="用券那件商品本身的实收（兑换券＝0）">券品实收</th>
-      <th title="额外买走的金额＝整单实收 − 券品实收（不含券品）">券带动（额外）</th>
-      <th title="用券订单的整单实收 ＝ 券品实收 ＋ 券带动（不含券成本）">整单实收</th>
-      <th title="整单实收 ÷ 券成本：让掉 1 元换回多少实收，&gt;1 才覆盖得住">投入产出</th>
+      <th title="额外买走的金额＝整单实收 − 用券那件本身的实收（不含券品）。是「顾客顺带多买的」，不是全部销售">券带动（额外）</th>
+      <th title="用券订单的整单实收（含用券那件本身，不含券成本）。⚠️ 顾客持券买面包时整单几乎都在这里，不等于「券带来的销售」">整单实收</th>
+      <th title="整单实收 ÷ 券成本：让掉 1 元，这单换回多少实收（含用券那件本身），&gt;1 才覆盖得住让价">整单产出（整单实收÷券成本）</th>
       <th>连带订单</th><th title="连带订单里额外买走的件数">连带件数</th><th>连带率</th></tr></thead><tbody>
     ${cs.map(c=>{ const roi=(c.disc_amt>0)?(c.txn_amt/c.disc_amt):null;
       return `<tr><td title="${esc(c.name)}">${esc(c.name)}</td>
       <td>${c.redeem_orders}</td>
       <td>${c.disc_amt?fmtY0(c.disc_amt):"—"}</td>
       <td>${(c.disc_amt&&c.redeem_orders)?fmtY(c.disc_amt/c.redeem_orders):"—"}</td>
-      <td>${fmtY0(_own(c))}</td>
       <td>${fmtY0(c.linked_amt)}</td>
-      <td>${fmtY0(c.txn_amt)}</td>
+      <td title="其中用券那件本身 ${fmtY0(Math.max(0,(c.txn_amt||0)-(c.linked_amt||0)))}">${fmtY0(c.txn_amt)}</td>
       <td class="${roi!=null&&roi<1?"down":""}" title="${roi==null?"该券无折让记录":("整单实收 "+fmtY0(c.txn_amt)+" ÷ 券成本 "+fmtY0(c.disc_amt)+"＝"+roi.toFixed(2))}">${roi==null?"—":roi.toFixed(2)}</td>
       <td>${c.linked_orders}</td>
       <td>${c.linked_qty?fmtN0(c.linked_qty):"—"}</td>
@@ -2789,7 +3004,6 @@ function renderCoupons(r){
     <tr class="tot"><td>合计</td><td>${t.redeem_orders||0}</td>
       <td>${_tDisc?fmtY0(_tDisc):"—"}</td>
       <td>${(_tDisc&&t.redeem_orders)?fmtY(_tDisc/t.redeem_orders):"—"}</td>
-      <td>${fmtY0(Math.max(0,(t.txn_amt||0)-(t.linked_amt||0)))}</td>
       <td>${fmtY0(t.linked_amt||0)}</td>
       <td>${fmtY0(t.txn_amt||0)}</td>
       <td>${_tDisc?((t.txn_amt||0)/_tDisc).toFixed(2):"—"}</td>
@@ -2797,10 +3011,11 @@ function renderCoupons(r){
       <td>${(t.redeem_orders)?pct(Math.min(1,(t.linked_orders||0)/t.redeem_orders),1):"-"}</td></tr>
    </tbody></table>
    <div class="note">
-   · <b>三个数是"拆开又加回"的关系</b>：<b>券品实收</b>（用券那件本身）＋<b>券带动</b>（额外买的，不含券品）＝<b>整单实收</b>；<br>
-   · <b>券成本是另外让掉的</b>（折让），<u>不在整单实收里</u>——所以「投入产出＝整单实收 ÷ 券成本」读作"让掉 1 元换回多少实收"。<br>
+   · <b>券带动</b>是「顾客用券时顺带多买的」金额（整单实收 − 用券那件本身），<b>不含</b>券品本身；<br>
+   · <b>整单实收</b>是用券订单的全部实收——顾客持券买面包时整单几乎都在这里，<u>读作"券带来的销售"会大幅高估</u>。用券那件本身有多少，看「整单实收」的悬浮；<br>
+   · <b>券成本是另外让掉的</b>（折让），<u>不在整单实收里</u>——所以「整单产出＝整单实收 ÷ 券成本」读作"让掉 1 元，这单换回多少实收（含用券那件本身）"。<br>
    · ⚠️ 团购/团餐类券多在平台侧核销、不产生连带，连带 ¥0 是真实值。<br>
-   · <b>券成本</b>＝该券让掉的金额（银豹折扣明细）；<b>投入产出</b>＝整单交易额 ÷ 券成本，&gt;1 才覆盖得住让价，&lt;1 标红。<br>
+   · <b>券成本</b>＝该券让掉的金额（银豹折扣明细）；<b>整单产出</b>＝整单实收 ÷ 券成本，&gt;1 才覆盖得住让价，&lt;1 标红。<br>
    · 本表为 BI 月粒度，区间不足整月时取该月全月值。</div>`;
 }
 
@@ -3285,10 +3500,11 @@ function render(key){
   stickyFirstCols();      // 手机端首列吸左：序号列宽度每次重绘都要重测（换店/换区间列宽会变）
 }
 
-/* 手机端「固定首列」：序号列宽不写死（单品明细 39px、零元单 29px），
-   每次渲染后实测写进容器变量 --c1，第二列才能贴着第一列吸左。 */
+/* 手机端「固定首列」：序号列宽不写死（单品明细 39px、零元单 29px、报损明细 27px），
+   每次渲染后实测写进容器变量 --c1，第二列才能贴着第一列吸左。
+   ⚠️ 2026-10-26：补上 lossProdWrap（卷卷：报损明细的产品列没固定住）。 */
 function stickyFirstCols(){
-  ["prodWrap", "zeroWrap"].forEach(id => {
+  ["prodWrap", "zeroWrap", "lossProdWrap"].forEach(id => {
     const host = document.getElementById(id);
     if (!host) return;
     const t = host.querySelector("table");
@@ -3685,10 +3901,11 @@ function renderMisc(r){
     });
     return s;
   })();
+  // 2026-10-26（拍板 #6）：只认结构化 nature（赠送/兑换/充值礼），不再按活动名正则猜
   const _ncG = (() => { let o = 0, n = 0;
     const _lo = r.first_date || "", _hi = r.last_date || r.window_end || "9999";
     (r.promos || []).forEach(p => {
-      if (!/兑换券|赠品|赠送|入群礼|入会有礼/.test(p.name || "")) return;
+      if (!(p.nature === "gift" || p.nature === "recharge")) return;
       const bd = p.nc_by_day || {};
       Object.keys(bd).forEach(d => { if (d >= _lo && d <= _hi) { o += bd[d].orders || 0; n += ncNewIn(bd[d], _lo, _hi); } });
     });
