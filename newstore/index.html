@@ -123,6 +123,9 @@ box-shadow:var(--shadow);min-width:0}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 /* 报损结构 KPI：原因数不定（丢弃/试吃/报损）+ 合计 = 通常 4 张 → 沿用 4 栏，自适应更少原因时也整齐 */
 .loss-kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:8px}
+/* 2026-10-26 卷卷：合计卡靠**填充色**与原因卡区分（浅莫兰迪蓝灰底 + 同色描边），不用金 */
+.loss-kpis .kpi.kpi-total{background:#EDF2F8;border-color:#C9D6E3}
+.loss-kpis .kpi.kpi-total .k-name{color:#3A5673}
 @media screen and (max-width:1080px){.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important}}
 @media screen and (max-width:900px){.kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))!important;gap:10px}}
 .kpi{position:relative;overflow:hidden;background:#FFF;border:1px solid var(--line);
@@ -2435,20 +2438,30 @@ function renderLoss(r){
   const host=document.getElementById("lossWrap"), rs=r.loss_reasons||[];
   if(!rs.length){ host.innerHTML='<div class="empty">暂无数据</div>'; return; }
   const REASON_ACT={"丢弃":"该改订货/陈列","试吃":"推广投入·正常","报损":"查流程/品质"};
-  // 「丢弃」是唯一真正要压的 → 用 warnc（琥珀）标出；试吃/报损用常规色
+  // 2026-10-26 卷卷：**报损卡的分母统一为「营业实收」**。
+  //   原来原因卡＝该原因÷报损成本、合计卡＝报损总额÷实收，两种分母并排 → 读者会误以为原因卡之和＝报损率。
+  //   现在原因卡主值＝该原因报损成本 ÷ 营业实收（＝报损率本身），**3 张原因卡相加＝全部报损率**；
+  //   合计卡加填充色与原因卡区分。原因类目是浮动的（旧版一度是 4 类），按 rs 实际张数表述。
+  const _den=r.sum_sales||0;
+  const _rt=r.loss_reasons_total||rs.reduce((a,x)=>a+(x.amt||0),0);
+  const _lrOf=x=>(_den&&x.amt)?(x.amt/_den):null;   // 小数；pct() 内部再 ×100
+  const _nC=rs.length;
   const cards=rs.map(x=>{
     const cls = x.reason==="丢弃" ? "warnc" : "";
-    return `<div class="kpi"><div class="k-name">${esc(x.reason)}（占报损）</div>
-      <div class="k-val ${cls}">${pct(x.share,1)}</div>
-      <div class="k-meta"><span>${fmtY0(x.amt)} · ${esc(REASON_ACT[x.reason]||"")}</span></div></div>`;
+    const share = _rt ? (x.amt||0)/_rt : null;
+    return `<div class="kpi"><div class="k-name">${esc(x.reason)}</div>
+      <div class="k-val ${cls}" title="该原因报损成本 ${fmtY0(x.amt)} ÷ 营业实收 ${fmtY0(_den)} ＝ 该原因占实收${share==null?"":"；占报损成本 "+pct(share,1)}">${_den?pct(_lrOf(x),2):"—"}</div>
+      <div class="k-meta"><span>${fmtY0(x.amt)} ÷ ${fmtY0(_den)} · 占报损 ${share==null?"—":pct(share,1)}</span></div></div>`;
   }).join("");
   host.innerHTML=`<div class="kpis loss-kpis">${cards}
-    <div class="kpi"><div class="k-name">全部报损（占营业实收）</div>
+    <div class="kpi kpi-total" title="合计卡：＝上方各原因卡相加；底色做了区分">
+      <div class="k-name">全部报损（占营业实收）</div>
       <div class="k-val warnc">${pct(r.loss_rate,2)}</div>
-      <!-- 10-26 卷卷：主值改成比率、副字给分子÷分母（金额与分母都是千分位）。 -->
-      <div class="k-meta"><span>${fmtY0(r.loss_reasons_total)} ÷ ${fmtY0(r.sum_sales)}</span></div></div>
+      <div class="k-meta"><span>${fmtY0(_rt)} ÷ ${fmtY0(_den)}</span></div></div>
    </div>
-   <div class="note">· 报损率分子<b>含无销售天报损</b>（与财务口径一致）；明细见下卡。</div>`;
+   <div class="note">· <b>分母统一为营业实收</b>：${_nC} 张原因卡主值＝该原因报损成本 ÷ 营业实收，<b>${_nC} 张相加＝全部报损率</b>（可能有 ±0.01% 的取整差）。<br>
+   · 副字里的「占报损 X」＝该原因占报损成本的比重（另一种看法，不是与主值同分母的数）。<br>
+   · 报损率分子<b>含无销售天报损</b>（与财务口径一致）；明细见下卡。</div>`;
 }
 
 /* ---------- 商品集中度 / SABC 结构 ---------- */
