@@ -734,14 +734,17 @@ svg{display:block;max-width:100%}
      ⚠️ 原比例：单品 13% / 小类 7.5% / 大类 4.5% / 活动名 19% —— 手机上「单品」220px、「小类」187px 过宽，
      而「大类」只有 49px（要放「现制常温西点」这种长词）→ 收窄文字宽列、把宽度让给数值列。
      2026-10-26 再收（卷卷图4/图5「1-2 列列宽过宽，固定后留给其他列的空间没有了」）：
-       # 3%→2.4%（序号列只放 1-2 位数字）、单品 13%→8%（品名最多 10 字，8% 够放）
-       → 吸左两列合计从 208px 降到 143px，其余 14 列每列多出约 5px。
+       # 3%→2.4%（序号列只放 1-2 位数字）、单品 13%→11%+折行（8% 曾裁长品名，闸门抓 9 格）
+       → 吸左两列合计从 208px 降到约 175px，其余列每列多出约 2-3px。
      新比例合计 92.4%（余下 7.6% 由浏览器按比例分给各列）：
        # 2.4 / 单品 8 / 大类 7.5 / 小类 7 / 均单价 5 / 销量 4 / 销售实收 5 /
      销售占比 4.5 / SABC 4.5 / 销售天数 4.5 / 日均销量 5.2 / 日均实收 5.2 /
      活动件数 5 / 活动件折扣 5.6 / 件均毛利 4.5 / 活动名 14 */
   #prodWrap col:nth-child(1){width:2.4% !important}
-  #prodWrap col:nth-child(2){width:8% !important}
+  #prodWrap col:nth-child(2){width:11% !important}
+  /* 品名列：8% 曾裁字（最长品名 15+ 字要 168px，闸门抓 9 格）→ 11% + 长名折行，
+     吸左两列 175px（比 13% 时代的 208px 窄），且不裁字。 */
+  #prodWrap td:nth-child(2){white-space:normal;word-break:break-all}
   #prodWrap col:nth-child(3){width:7.5% !important}
   #prodWrap col:nth-child(4){width:7% !important}
   #prodWrap col:nth-child(5){width:5% !important}
@@ -815,7 +818,7 @@ svg{display:block;max-width:100%}
         （卷卷图6 猜的"透明度"根因，实测 100% 正确）。
         手机端统一换成不透明等效色（rgba(167,190,224,.20) 叠白底 = #EDF2F8，视觉等价）。
      C) SABC 分档结构表：一行内填充色不一致（档列是带底色的胶囊、其余 3 格纯白）。
-        → 整行铺该档淡色、胶囊底色同色（用的就是胶囊现有的合成色，字的对比度完全不变）。*/
+        → 曾试整行铺淡色，卷卷 10-26 拍板「填充不要」→ 已撤，保持白底+档位胶囊。*/
   .tot-lbl{position:sticky;left:0;z-index:4}
   /* ⚠️ #dayWrap td / #prodWrap td 有 overflow:hidden（长文本省略号用）→ 会把标签浮层裁掉，
      必须给合计/小计行的首格单独放开，否则「合计 · 正式开业后 11 天」只显示前半截。 */
@@ -832,18 +835,7 @@ svg{display:block;max-width:100%}
   :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tr.tot:not(.avg) td{background:inherit}
   :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tbody tr.tot:not(.avg){background:#EDF2F8}
   :is(#peerCmp,#dayWrap,#prodWrap,#slotWrap,#segWrap,#liftWrap,#miscWrap,#lossProdWrap,#promoWrap,#giftWrap,#zeroWrap,#catDiscWrap,#promoSum,#lossWrap,#concWrap,#bigWrap,#catWrap,#reportWrap,#cmpWrap,#productsWrap,#daytypeWrap,#couponWrap) tfoot tr.tot:not(.avg){background:#EDF2F8}
-  /* ⚠️ tr 也要上色：通用「首列 sticky」规则里 background:inherit（优先级相同、位置更早）
-     → 档列首格会继承 tr 的白底，必须给 tr 本身上色，四格才一致。 */
-  #concWrap tr.sg-S{background:#E3EDE8}
-  #concWrap tr.sg-A{background:#E5ECF6}
-  #concWrap tr.sg-B{background:#EEE7E0}
-  #concWrap tr.sg-C{background:#F4E3E5}
-  #concWrap tr.sg-S td{background:#E3EDE8}
-  #concWrap tr.sg-A td{background:#E5ECF6}
-  #concWrap tr.sg-B td{background:#EEE7E0}
-  #concWrap tr.sg-C td{background:#F4E3E5}
-  #concWrap tr.sg-S .sabc,#concWrap tr.sg-A .sabc,
-  #concWrap tr.sg-B .sabc,#concWrap tr.sg-C .sabc{background:inherit}
+  /* SABC 分档表：卷卷 10-26 拍板「整行填充不要」→ 白底 + 档位胶囊（与桌面一致），不铺行色。 */
 
   /* ⑩ 手机端列宽再收：卷卷图4/图5「1-2 列列宽过宽，固定后留给其他列的空间没有了」。
      序号列（#）只放 1-2 位数字、单品列只放品名 → 再压一档，把宽度让给其余数值列。
