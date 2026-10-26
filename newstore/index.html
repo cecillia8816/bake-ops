@@ -1093,7 +1093,7 @@ function fmtN(v){ return (Math.round(v*100)/100).toLocaleString("en-US",{maximum
 function fmtN0(v){ return Math.round(v).toLocaleString("en-US"); }
 function fmtN1(v){ return (Math.round(v*10+1e-9)/10).toLocaleString("en-US",{minimumFractionDigits:1,maximumFractionDigits:1}); }
 /* 单数（笔数）一律整数显示：日均也会带小数，四舍五入 */
-function fmtC(v){ return v==null ? "—" : String(Math.round(v)); }
+function fmtC(v){ return v==null ? "—" : Math.round(v).toLocaleString("en-US"); }  // 单数也千分位（卷卷 10-26）
 function pct(v,d){ return v==null ? "—" : (v*100).toFixed(d==null?1:d).replace("-","−") + "%"; }
 function esc(s){ return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -2443,12 +2443,10 @@ function renderLoss(r){
       <div class="k-meta"><span>${fmtY0(x.amt)} · ${esc(REASON_ACT[x.reason]||"")}</span></div></div>`;
   }).join("");
   host.innerHTML=`<div class="kpis loss-kpis">${cards}
-    <div class="kpi"><div class="k-name">合计（报损成本）</div>
-      <div class="k-val warnc">${fmtY0(r.loss_reasons_total)}</div>
-      <!-- ⚠️ 这是「金额」卡 → 副文字给「该金额占营业实收的比例」，不能写成
-           「报损率 10.03% ÷ 营业实收」（那会让读者以为还要再除一次；卷卷 10-16 指出）。
-           也不写成「＝ X ÷ Y」（那是比率卡的写法，金额卡上语义不符）。 -->
-      <div class="k-meta"><span>占营业实收 ${pct(r.loss_rate,2)}（${fmtY0(r.sum_sales)}）</span></div></div>
+    <div class="kpi"><div class="k-name">全部报损（占营业实收）</div>
+      <div class="k-val warnc">${pct(r.loss_rate,2)}</div>
+      <!-- 10-26 卷卷：主值改成比率、副字给分子÷分母（金额与分母都是千分位）。 -->
+      <div class="k-meta"><span>${fmtY0(r.loss_reasons_total)} ÷ ${fmtY0(r.sum_sales)}</span></div></div>
    </div>
    <div class="note">· 报损率分子<b>含无销售天报损</b>（与财务口径一致）；明细见下卡。</div>`;
 }
