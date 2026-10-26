@@ -194,6 +194,13 @@ tr:hover td{background:var(--mist-soft)}
   #couponWrap table{min-width:870px !important}
   #dayWrap table{min-width:1330px !important}
   #lossProdWrap td.left-b{white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
+  /* 2026-10-26 修复：480 下唯一被压的表头。**两行分组表头**（第一行 4 个 colspan 组名）→ CSS nth-child 必须写在第二行 tr:last-child 上；
+     选择器是第 11 个（前面 3 个合并格 + 7 个列）。10.5px 需 82px、列只有 73px → 字号 9.5 + 字距 -.2 + padding 2px，实测 73px 放下。
+     下文旧注释：
+     不改表头文字/标记（那会破坏「表头文本 == th 文本」的既有闸门）：
+     手机档把这一列的表头字号 10.5→10**按比例缩窄**，实测 82→78px 仍差；故再收字距。
+     ⚠️ table-layout:fixed + 百分比列宽下改 col 宽度不生效，已实测（col 14 改 9% 后仍是 73px）。 */
+  #lossProdWrap thead tr:last-child th:nth-child(11){font-size:9.5px !important;letter-spacing:-.2px !important;padding-left:2px !important;padding-right:2px !important}
   /* ⚠️ 2026-10-26 卷卷整改：原来这条规则**同时作用于 th 和 td**，
      把表头也变成可换行 → 第二层标题「累计达成率」「整店折扣」「新会员」、
      「单均实收」「散客参与率」「出现天数」等在手机上折成两行。
@@ -2139,11 +2146,9 @@ function renderDayInsight(r){
   const _nWeekend=(()=>{const s=new Set(); base.forEach(d=>{const w=new Date(d.date+"T00:00:00").getDay(); if(w===0||w===6) s.add(d.date);}); return s.size;})();
   const _postDays=(r.open_date && l && l.date)?Math.round((new Date(l.date+"T00:00:00")-new Date(r.open_date+"T00:00:00"))/864e5)+1:0;
   const _thin= _postDays<14 || _nWeekend<2;
-  const _thinTag = _thin?`<span class="thin-tag" title="数据期 ${_postDays} 天（开业后）· ${_nWeekend} 个周末日；样本不足，以下为观察，不是定论">观察·待验证</span>`:"";
-  // 动作句在样本不足时一律降为观察句（祈使句＝指令，数据不够不能下）
-  const act2 = (a) => (!_thin || /^观察/.test(String(a))) ? a : "观察（暂不调整，待数据足后再定）：" + a;
-  // 动作渲染：观察句不加「→」箭头（避免「→ 观察」读起来像结论被推翻），其余保持「→ 指令」
-  const _actHtml = (a) => /^\s*观察/.test(a) ? a : "→ " + act2(a);
+  const _thinTag = _thin?`<span class="thin-tag" title="数据期 ${_postDays} 天（开业后）· ${_nWeekend} 个周末日；样本不足，下列事实代表性有限">观察·待验证</span>`:"";
+  // 2026-10-26 卷卷：「只摆事实，让营运团队自己去想招」——**本卡不再输出任何动作建议**。
+  //   下面的 act 变量一律不用（保留计算无副作用），渲染只出判断/证据。
   // 2026-10-22：券核销单已能对会员档案（会员号 × 开卡日）→「拉新 vs 回馈」可判，两处共用
   const _bdays=new Set(base.map(x=>x.date));
   // 2026-10-26（拍板 #6）：拉新口径只认结构化 nature，不再按活动名正则猜
@@ -2214,24 +2219,19 @@ function renderDayInsight(r){
     const _evTc=_pTc?`${Math.round(_pTc)}→${l.tc}`:"", _evAc=(ac0&&ac1)?fmtY0(ac0)+"→"+fmtY0(ac1):"";
     if(a0!=null && a1!=null){
       const drop=(a0-a1)/a0*100;
-      let judge, act;
+      let judge;
       if(drop>=40 && dTc!=null && dTc<=-20){
         judge="<b>活动一撤，走的是被活动拉来的低频客</b>——单数腰斩、客单反升，留下的是本来就买得动的人";
-        act="开业深折券设 7~14 天有效期，逼出二次到店；同一张券别再做第二波";
       } else if(drop>=40 && dTc!=null && dTc>-20){
         judge="<b>活动占比腰斩，但客流没塌</b>——说明活动只是补贴了本来就会买的人";
-        act="下一波把预算从「全场折扣」挪到「新品试吃 / 搭配套餐」，不再普降";
       } else if(drop<20 && dTc!=null && dTc<=-20){
         judge="<b>活动占比没降、客流却掉了</b>——问题不在活动退坡，在自然客流与商品转化";
-        act="先查缺货与动线，别用加活动掩盖";
       } else if(drop<20){
         judge="<b>活动占比稳得住</b>——活动已变成日常手段，不是一次性开业烟花";
-        act="把活动预算改成常态会员权益，按月固定，不再靠单次大促";
       } else {
-        judge="<b>活动退得比客流慢</b>——撤活动后要靠自然客流接棒，先别撤太急";
-        act="下月活动预算按客流跌幅等比下调，逐周退";
+        judge="<b>活动退得比客流慢</b>——撤活动后要靠自然客流接棒";
       }
-      items.push(["退坡", `${judge}（${md(f.date)}${_plateau.length>1?"~"+md(_plateau[_plateau.length-1].date):""} 日均 → ${md(l.date)}：占比 ${pct(a0,1)}→${pct(a1,1)}${dTc!=null?"，单数 "+_evTc:""}${_evAc?"，客单 "+_evAc:""}）`, act]);
+      items.push(["退坡", `${judge}（${md(f.date)}${_plateau.length>1?"~"+md(_plateau[_plateau.length-1].date):""} 日均 → ${md(l.date)}：占比 ${pct(a0,1)}→${pct(a1,1)}${dTc!=null?"，单数 "+_evTc:""}${_evAc?"，客单 "+_evAc:""}）`]);
     }
   }
 
@@ -2239,22 +2239,6 @@ function renderDayInsight(r){
   // 恒等式：R ＝ 活动实收 ÷ 折让 ＝ 活动实收占比 a ÷ 折让占实收 (1−d)/d ；且 R ＝ 付/让
   //   → 活动单平均实付比例 ＝ R/(1+R)，打几折 ＝ 10×R/(1+R)
   //   → R ＝ 1 等价于「活动单平均打 5 折（付一半、让一半）」，与折扣率 d 的关系见口径抽屉。
-  // 大类件均价（2026-10-21 卷卷纠错：面包才是低单价品 ¥8.6，西点 15.8、简餐 17.5）
-  //   → 动作按数据挑"便宜大类 / 贵大类"，不写死「集中到面包」
-  const _cats=(r.big_cats||[]).filter(c=>(c.qty||0)>0 && (c.amt||0)>0)
-    .map(c=>({n:c.cat, u:(c.amt||0)/(c.qty||0), a:(c.amt||0), q:(c.qty||0)}));
-  const _amtAll=_cats.reduce((a,b)=>a+b.a,0);
-  const _qtyAll=_cats.reduce((a,b)=>a+b.q,0);
-  // 不按"主食/非主食"贴标签（简餐才是主食）：按**件数占比**分——高件数＝常买品，低件数＝低频品
-  const _bigCats=_cats.filter(c=>_amtAll && c.a/_amtAll>=0.08)
-    .map(c=>Object.assign({},c,{qs:_qtyAll?c.q/(_qtyAll):0}))
-    .sort((a,b)=>b.qs-a.qs);                       // 件数占比从高到低
-  const _hot=_bigCats[0]||null;                    // 最常被买的那一类
-  const _cold=[..._bigCats].sort((a,b)=>a.qs-b.qs)[0]||null;   // 最不常被买的
-  // 句子里不报数：括号里的「占比/件均价」分不清是活动口径还是整体口径，判断已由排序决定
-  const _catAct = (_hot && _cold && _hot.n!==_cold.n)
-    ? `维持力度，但折让要从「${_hot.n}」这类常买品挪到「${_cold.n}」这类低频品——常买品不打折也卖得动，让了是白让；低频品才需要折扣去拉`
-    : "维持力度，把折让留给要靠折扣才卖得动的品";
   let discSum=0, discOk=true;
   base.forEach(d=>{ const dr=d.discount_rate; if(!dr||dr<=0||dr>1){ discOk=false; return; } discSum += (d.sales||0)/dr - (d.sales||0); });
   if(discOk && discSum>0 && actAmt>0){
@@ -2264,18 +2248,11 @@ function renderDayInsight(r){
     // 2026-10-22 审计 P1-2：原来拿「老店活动率（同窗口）」除「老店原价（固定窗口）」得老店折数区间，
     // 两套窗口拼在一个公式里（4.7~6.7 折 / 1.35 都不可靠）。同窗口折扣明细取不到 → 不横向比，改按自身深度分档。
     // 2026-10-22：档位与文案必须一一对应（原阈值 5.5 却写「5 折以下」，5.1 折时自相矛盾）
-    let judge, act;
-    if(zhe<5.0){
-      judge="<b>活动单平均 "+zhe.toFixed(1)+" 折——已低于 5 折</b>，先把深度收回来";
-      act="5 折档只留 1~2 个引流品，其余活动不低于 6 折";
-    } else if(zhe<6.5){
-      judge="<b>活动单平均 "+zhe.toFixed(1)+" 折——落在 5~6.5 折的深折区</b>，别再加力度";
-      act="新活动不低于 6 折；深折只给新品试吃，不给常态引流品";
-    } else {
-      judge="<b>活动单平均 "+zhe.toFixed(1)+" 折——折扣偏轻</b>，可换更深的定向券";
-      act=_catAct;
-    }
-    items.push(["效率", `${judge}（折让产出 ${roas.toFixed(2)}，1.0≈5 折；老店不可比）`, act]);
+    let judge;
+    if(zhe<5.0){ judge="<b>活动单平均 "+zhe.toFixed(1)+" 折——已低于 5 折</b>，让价深度偏大"; }
+    else if(zhe<6.5){ judge="<b>活动单平均 "+zhe.toFixed(1)+" 折——落在 5~6.5 折的深折区</b>"; }
+    else { judge="<b>活动单平均 "+zhe.toFixed(1)+" 折——折扣偏轻</b>"; }
+    items.push(["效率", `${judge}（折让产出 ${roas.toFixed(2)}，1.0≈5 折；老店不可比）`]);
   }
 
   // ④ 对象：活动打中的是会员还是散客（逐日 byDay.seg 汇总，与 ④ 订单结构同源）
@@ -2294,16 +2271,13 @@ function renderDayInsight(r){
     const _gn=_giftNc();
     if(gap>=10){ judge=`<b>活动多被会员使用</b>——会员单 ${Math.round(mr)}% 享过活动价、散客只 ${Math.round(gr)}%`
       + (_gn.o?`（会员含当月新开卡${_nc?" "+_nc+" 人":""}；兑换/赠品券的核销单里 <b>${pct(_gn.n/_gn.o,0)}</b> 是本区间新开卡领的）`: (_nc?`（会员含当月新开卡 ${_nc} 人）`:""));
-      // 2026-10-26 卷卷拍板 #5：原句「仅新开卡首单可用」是规则建议，但流水里没有「会员在本店首次成交」标记，
-      //   支撑不了；改成观察性提示，等补标记后再定。阈值仍看新客占比（≥70%＝券基本只被新客用）。
-      act=(_gn.o&&_gn.n/_gn.o>=0.7)
-        ? `观察：兑换/赠品券核销单里约 ${pct(_gn.n/_gn.o,0)} 是本区间新开卡会员领的，券可能已基本只被新客用——目前流水<b>没有「会员在本店首次成交」标记</b>，无法验证，先不收紧规则，补标记后再定是否改成「仅新开卡首单可用」`
-        : "观察：兑换/赠品券由谁领需要「会员在本店首次成交」标记才能分清，补标记后再定是否收紧"; }
-    else if(gap<=-10){ judge=`<b>活动更打动散客</b>——散客单 ${Math.round(gr)}% 享过活动价，但散客留存最弱，活动后要接二次到店`;
-      act="散客券加「二次到店」条件（首单后 N 天内再用），别只做一次性拉新"; }
-    else { judge="<b>会员与散客对活动同样敏感</b>——活动没偏袒某一侧，等于普降";
-      act="按客群分券：会员给频次券、散客给首单券，别再全场普降"; }
-    items.push(["对象", judge, act]);
+      // 2026-10-26 卷卷：只摆事实——不再给「仅新开卡首单可用」这类规则建议。
+      //   括号里已报过兑换/赠品券的新客占比，这里只补一句「分不清」的口径边界（证据不足＝事实的一部分）。
+      judge += (_gn.o&&_gn.n/_gn.o>=0.7)
+        ? `——但流水<b>没有「会员在本店首次成交」标记</b>，分不清是新客首单还是老客回头` : ""; }
+    else if(gap<=-10){ judge=`<b>活动更打动散客</b>——散客单 ${Math.round(gr)}% 享过活动价，但散客留存最弱`; }
+    else { judge="<b>会员与散客对活动同样敏感</b>——活动没偏袒某一侧，等于普降"; }
+    items.push(["对象", judge]);
   }
 
   // ⑤ 钩子：零元兑换占比（拉新的代价，别把「人气」当「生意」）
@@ -2315,14 +2289,11 @@ function renderDayInsight(r){
     const _gn=_giftNc();
     // 证据一律放同一个括号里：零元单量 + 其中多少是本月新开卡
     const _ev = `（零元 ${zSum} 单，占单量 ${pct(zs,1)}${(_gn.o&&_gn.n/_gn.o>=0.5)?`；其中 ${pct(_gn.n/_gn.o,0)} 是本月新开卡`:""}）`;
-    let judge, act;
-    if(zs>=0.25){ judge="<b>兑换钩子偏重</b>——近三成单不收钱，实收与客单被稀释；但多数是新客领的，按<b>拉新成本</b>算、不按白送算";
-      act="零元兑换限每人每月 1 次，且必须搭配正价品才可用"; }
-    else if(zs>=0.15){ judge="<b>兑换是主要钩子</b>——拉新入口，不是白送";
-      act="保持，兑换品可以往毛利更高的引流品上调，主推款尽量少参与兑换"; }
-    else { judge="<b>兑换占比不高</b>——客流主要靠买，活动的拉新成色更实";
-      act="可再加一档小额兑换做拉新，成本控制在实收 3% 以内"; }
-    items.push(["钩子", `${judge}${_ev}`, act]);
+    let judge;
+    if(zs>=0.25){ judge="<b>兑换钩子偏重</b>——近三成单不收钱，实收与客单被稀释；但多数是新客领的，按<b>拉新成本</b>算、不按白送算"; }
+    else if(zs>=0.15){ judge="<b>兑换是主要钩子</b>——拉新入口，不是白送"; }
+    else { judge="<b>兑换占比不高</b>——客流主要靠买，活动的拉新成色更实"; }
+    items.push(["钩子", `${judge}${_ev}`]);
   }
 
   // 会员口径注脚：会员＝销售单带会员标记，含当月新开卡 → 不能把"会员用券"读成"老客在薅"
@@ -2336,7 +2307,7 @@ function renderDayInsight(r){
   const newMemPct=_segCore?(((segAgg.m_act||{}).amt||0)+((segAgg.m_nat||{}).amt||0))/_segCore:null;
   const _nc2=(r.newcust&&r.newcust.n)||null;
   host.innerHTML = `<div class="ih">开业活动影响${_thinTag}</div>`
-    + items.map(([k,v,a])=>`<div class="il"><span class="ik">${k}</span><span>${v}${a?`<span class="act">${_actHtml(a)}</span>`:""}</span></div>`).join("")
+    + items.map(([k,v])=>`<div class="il"><span class="ik">${k}</span><span>${v}</span></div>`).join("")
     + `<div class="note" style="margin:6px 0 0" title="会员＝销售单带会员标记，含当月新开卡；拉新与回馈按「券核销单 × 会员开卡日」区分">· <b>会员</b>＝带会员标记的单，<b>含当月新开卡</b>${_nc2?"（"+_nc2+" 人）":""}。<br>
        · 新店会员实收占比 ${newMemPct==null?"—":pct(newMemPct,1)}${oldMemPct!=null?" vs 老店 "+pct(oldMemPct,1):""}：会员多是开业办卡的结果，不是存量套利。</div>`;
   host.style.display = "block";
@@ -3984,7 +3955,8 @@ function renderMisc(r){
         return h.length?h[h.length-1]:dist[_idx-1]; })();
       const judge=(_main&&_topG&&RM)
         ? `<div class="note">· <b>充值几乎都停在 ${fmtY0(_main.amt)} 档</b>——人均 ${fmtY0(R/RM)}、中位 ${_med!=null?fmtY0(_med):"—"}，${fmtY0(_topG.amt)} 档只有 ${_topG.n} 人；礼包档位没把人往上推。`
-          + (_up?`<span class="act">→ 把 ${fmtY0(_up.amt)} 档（${_up.n} 人、占 ${pct((_up.n||0)/_totN,1)}）赠金率从 ${pct(_up.gift/_up.sum,1)} 提到 ${pct(_topG.gift/_topG.sum,1)}，${fmtY0(_main.amt)} 档别动——跨档差才够</span>`:"")
+          // 2026-10-26 卷卷「只摆事实」：原「→ 把…档赠金率提到…」是动作建议，这里只报档位事实
+          + (_up?`上档 ${fmtY0(_up.amt)} 档 ${_up.n} 人（占 ${pct((_up.n||0)/_totN,1)}）、赠金率 ${pct(_up.gift/_up.sum,1)}；${fmtY0(_topG.amt)} 档赠金率 ${pct(_topG.gift/_topG.sum,1)}。`:"")
           + `</div>`
         : "";
       const _ttl = document.getElementById("rcTitle");
