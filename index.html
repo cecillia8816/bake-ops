@@ -943,6 +943,7 @@ function storeTag(n){ const sel=(state&&state.stores?state.stores:new Set()); co
 function normName(s){return String(s||'').replace(/（SZ共用）|\(SZ共用\)|（5月新品）|\(5月新品\)/g,'').replace(/（/g,'(').replace(/）/g,')').replace(/ /g,'');}
 function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 const SUP_ORDER=['Vesta','新迪嘉禾','奥昆','克莉丝蔓','魔客','普利欧','渔利','门店自制','豪麦','合奇','剑肇','玛可巴利','金励志','长盛发','融品威'];
+const DUAL_DIFF = {"拿破仑起酥蛋糕": 1, "黑巧彩针甜甜圈": 1, "榴莲千层蛋糕": 1, "提拉米苏": 1, "迪拜巧克力软曲奇（黑芝麻味）": 1, "亚当芝士": 1, "全麦核桃吐司（5片装）": 1, "生气松松": 1, "香浓松松": 1, "海苔松松": 1, "香浓松松(D)": 1};   // 10-27 同名不同品（两城三键不一致）：按城拆行
 const SUP_COLORS=['#D48D95','#A7BEE0','#A09CC1','#C6D5EA','#BCD0CF','#DFB197','#F5D5D8','#B6D6C7','#9DBEC3','#C8BCB0','#A5B08D','#B98A76','#C9A96C','#7C93A7','#B8A99A'];
 const SUP_EN={'Vesta':'Vesta','新迪嘉禾':'Newland Foods','奥昆':'Aokun','克莉丝蔓':'KLSM','魔客':'Moke','普利欧':'Perlo','渔利':'Yuli','门店自制':'In-house','豪麦':'Haomai','合奇':'Heqi','剑肇':'Jianzhao','玛可巴利':'MKBL','金励志':'JLZ','长盛发':'CSF','融品威':'RPW'};
 const supColor=s=>{ if(!s||s==='__OTHER__') return null; const i=SUP_ORDER.indexOf(s); if(i<0) return null; return SUP_COLORS[i]||'#94a3b8'; };
@@ -950,8 +951,8 @@ const supEn=s=>(DATA.sup_en&&DATA.sup_en[s])||SUP_EN[s]||s;
 const _supOfCache={_built:false};
 function _buildSupOfCache(){ if(_supOfCache._built) return; _supOfCache._built=true; for(const s in (DATA.sup_prods||{})){ (DATA.sup_prods[s]||[]).forEach(n=>{ if(!DATA.prod_city_sup||!DATA.prod_city_sup[n]) _supOfCache[n]=s; }); } }
 function prodSupByName(name){ _buildSupOfCache(); const m=DATA.prod_city_sup&&DATA.prod_city_sup[name]; if(!m) return _supOfCache[name]||null; if(state.city!=='ALL'&&state.city!=='NONE') return m[state.city]||null; return m.SZ||m.SH||null; }
-function supName(name){ return prodSupByName(name) || prodSupByName(normName(name)) || null; }
-function prodCitySfx(n){ if(state.city==='SZ'||state.city==='SH') return ''; if(selCityCount()<=1) return '';   /* 10-27 所选门店同属一城：-SZ/-SH 无区分意义 */
+function supName(name){ return prodSupByName(name) || prodSupByName(dBase(name)) || prodSupByName(normName(dBase(name))) || null; }
+function prodCitySfx(n){ if(/ -S[ZH]$/.test(n)) return ''; if(state.city==='SZ'||state.city==='SH') return ''; if(selCityCount()<=1) return '';   /* 10-27 所选门店同属一城：-SZ/-SH 无区分意义 */
   // 10-27 用户拍板：城市尾巴只看「实际销售城市」——单城→-SZ/-SH，双城都有售→不挂尾巴；不再依赖供应商映射，代售品同样适用
   const cs=prodCityIdx()[n]||{}, sellSZ=!!cs.SZ, sellSH=!!cs.SH;
   if(sellSZ&&!sellSH) return '-SZ'; if(sellSH&&!sellSZ) return '-SH';
@@ -965,8 +966,12 @@ function cityLockSfx(n){ if(state.city!=='ALL'&&state.city!=='NONE') return '';
     return (m.SZ===m.SH&&f.SZ===f.SH&&sp.SZ===sp.SH)?'':'-SZ'; }
   return ''; }
 function prodDisp(n){ const t=storeTag(n); return n+prodCitySfx(n)+(t===n?'':t.slice(n.length)); }
+// 10-27 A案：同名不同品（两地供应商/供应形式/供应品不一致）按城拆行——数据行名直接带 ' -SZ'/' -SH'，下游按名聚合即天然分开
+function dName(n,c){ return (DUAL_DIFF[n]&&(c==='SZ'||c==='SH')) ? n+' -'+c : n; }
+function dBase(n){ return String(n||'').replace(/ -S[ZH]$/,''); }
+function dRows(rows){ (rows||[]).forEach(r=>{ if(DUAL_DIFF[r.name]) r.name=dName(r.name, r.city||cityOf(r.store)); }); return rows; }
 function dtMD(s){ if(s&&/^\d{4}-\d{2}-\d{2}$/.test(s)) return Number(s.slice(5,7))+'/'+Number(s.slice(8,10)); return s||'-'; }
-function supDot(name){ const sup=supName(name); if(!sup) return ''; const big=(DATA.sup_prod_big&&DATA.sup_prod_big[name])||(DATA.sup_prod_big&&DATA.sup_prod_big[normName(name)]); if(big==='饮品'||big==='OEM') return ''; const c=supColor(sup); if(!c) return ''; return '<span class="sup-dot" title="'+escHtml(sup)+'" data-sup="'+escHtml(sup)+'" style="background:'+c+'"></span>'; }
+function supDot(name){ const sup=supName(name); if(!sup) return ''; const big=(DATA.sup_prod_big&&DATA.sup_prod_big[name])||(DATA.sup_prod_big&&DATA.sup_prod_big[dBase(name)])||(DATA.sup_prod_big&&DATA.sup_prod_big[normName(name)]); if(big==='饮品'||big==='OEM') return ''; const c=supColor(sup); if(!c) return ''; return '<span class="sup-dot" title="'+escHtml(sup)+'" data-sup="'+escHtml(sup)+'" style="background:'+c+'"></span>'; }
 function sortSups(arr){ const idx=s=>{ const i=SUP_ORDER.indexOf(s); return i<0?99:i; }; return [...arr].sort((a,b)=>idx(a)-idx(b)); }
 function supLegendHtml(set){ return sortSups([...set]).filter(s=>SUP_ORDER.indexOf(s)>=0).map(s=>'<span class="sl"><i style="background:'+supColor(s)+'"></i>'+escHtml(s)+'</span>').join(''); }
 function supDotsOf(root){ return [...root.querySelectorAll('.sup-dot')].map(d=>d.getAttribute('data-sup')).filter(Boolean); }
@@ -2314,7 +2319,7 @@ function prodRows(){
       return {seq:state.seq, city:cityOf(o.store), store:o.store, name:o.name, '小类':cat,
         big_cat:(DATA.cat_map||{})[cat]||'其他', '金额':o.金额, '销量':o.销量};
     });
-    __prodRowsCache={_day:state.day, rows}; return rows;
+    dRows(rows); __prodRowsCache={_day:state.day, rows}; return rows;
   }
   if(state.mode==='range'){   // 区间模式（09-29）：product_daily 按日窗口聚合产品金额/销量
     const k='R|'+state.rangeStart+'|'+state.rangeEnd;
@@ -2332,7 +2337,7 @@ function prodRows(){
         return {seq:repSeq, city:cityOf(o.store), store:o.store, name:o.name, '小类':cat,
           big_cat:(DATA.cat_map||{})[cat]||'其他', '金额':o.金额, '销量':o.销量};
       });
-      __prodRowsCache={_range:k, rows};
+      dRows(rows); __prodRowsCache={_range:k, rows};
     }
     return __prodRowsCache.rows;
   }
@@ -2346,9 +2351,9 @@ function prodRows(){
       rows.push({seq:repSeq, city:cityOf(p.store), store:p.store, name:p.name, '小类':cat,
         big_cat:(DATA.cat_map||{})[cat]||'其他', '金额':p['金额'], '销量':p['销量']});
     });
-    __prodRowsCache={_ym:state.ym, rows}; return rows;
+    dRows(rows); __prodRowsCache={_ym:state.ym, rows}; return rows;
   }
-  return DATA.product_cat||[];
+  return dRows(DATA.product_cat||[]);
 }
 // 营销行：周/月用 marketing；日档用 marketing_daily 按(店,折扣名)聚合
 function mktRows(){
@@ -2641,7 +2646,7 @@ function prodDetailHtml(view, totalSales, name, showSub, sabcOverride, rankStart
   const head=showSub? (firstMap? NEW_DETAIL_HEAD : MEAL_DETAIL_HEAD) : PROD_DETAIL_HEAD;
   const h=head.map(([lab,key])=>`<th>${lab}${sortIndicator(name,key)}</th>`).join('');
   const rows=view.map(x=>{ const tag=sabc[x.name], tcls=tag?tag.charAt(0):'off';
-    if(firstMap) return `<tr><td>${x.__r}</td><td>${supDot(x.name)}<span class="prod-name">${prodDisp(x.name)}</span></td><td>${pmap[x.name]||'-'}</td><td>${firstMap[x.name]||'-'}</td><td>${fmt(x['销量'])}</td><td>${fmt(x['金额'])}</td><td>${pct(x['金额']/totalSales)}</td><td><span class="sabc" data-cls="${tcls}">${tag||'-'}</span></td></tr>`;
+    if(firstMap) return `<tr><td>${x.__r}</td><td>${supDot(x.name)}<span class="prod-name">${prodDisp(x.name)}</span></td><td>${pmap[x.name]||'-'}</td><td>${firstMap[x.name]||firstMap[dBase(x.name)]||'-'}</td><td>${fmt(x['销量'])}</td><td>${fmt(x['金额'])}</td><td>${pct(x['金额']/totalSales)}</td><td><span class="sabc" data-cls="${tcls}">${tag||'-'}</span></td></tr>`;
     if(showSub) return `<tr><td>${x.__r}</td><td>${supDot(x.name)}<span class="prod-name">${prodDisp(x.name)}</span></td><td>${pmap[x.name]||'-'}</td><td>${fmt(x['销量'])}</td><td>${fmt(x['金额'])}</td><td>${pct(x['金额']/totalSales)}</td><td><span class="sabc" data-cls="${tcls}">${tag||'-'}</span></td></tr>`;
     return `<tr><td>${supDot(x.name)}<span class="prod-name">${prodDisp(x.name)}</span></td><td>${fmt(x['销量'])}</td><td>${fmt(x['金额'])}</td><td>${pct(x['金额']/totalSales)}</td><td><span class="sabc" data-cls="${tcls}">${tag||'-'}</span></td></tr>`;
   }).join('');
@@ -2855,7 +2860,7 @@ function renderNew(){
   const newSet=new Set(list), agg={};
   prodRows().forEach(p=>{
     if(!seqs.includes(p.seq) || !cityOk(p.city) || !set.has(p.store)) return;
-    if(!newSet.has(p.name) || _exp.has(p.name)) return;
+    if(!newSet.has(dBase(p.name)) || _exp.has(dBase(p.name))) return;
     const o=agg[p.name]||(agg[p.name]={name:p.name, 金额:0, 销量:0});
     o['金额']+=(p['金额']||0)*prodFactor(p.seq,state.ym); o['销量']+=(p['销量']||0)*prodFactor(p.seq,state.ym);
   });
@@ -4530,7 +4535,7 @@ function prodDetailOf(name, cityLock){
   let amt=0,qty=0;
   const storeSet=new Set();
   prodRows().forEach(p=>{
-    if(p.name!==name) return;
+    if(dBase(p.name)!==dBase(name)) return;
     if(cityLock && p.city!==cityLock) return;
     if(!seqs.includes(p.seq) || !cityOk(p.city) || !set.has(p.store)) return;
     amt+=(p['金额']||0)*prodFactor(p.seq,state.ym);
@@ -4630,9 +4635,9 @@ function openProdDetail(name){
   // 公平口径：无尾巴产品实际只在一个城市有售（当前周期→所选门店全年→全门店全年 逐级探测）→ 整条弹窗锁该城——只在上海有售就只跟上海产品比（用户 09-04）
   if(!_lock&&(state.city==='ALL'||state.city==='NONE')){
     const _pc=new Set();
-    prodRows().forEach(p=>{ if(p.name!==name||!state.stores.has(p.store)||(p['金额']||0)<=0) return; _pc.add(p.city); });
-    if(!_pc.size)(DATA.product_daily||[]).forEach(p=>{ if(p.name!==name||!state.stores.has(p.store)||(p['金额']||0)<=0) return; _pc.add(cityOf(p.store)); });
-    if(!_pc.size)(DATA.product_daily||[]).forEach(p=>{ if(p.name!==name||(p['金额']||0)<=0) return; _pc.add(cityOf(p.store)); });
+    prodRows().forEach(p=>{ if(dBase(p.name)!==dBase(name)||!state.stores.has(p.store)||(p['金额']||0)<=0) return; _pc.add(p.city); });
+    if(!_pc.size)(DATA.product_daily||[]).forEach(p=>{ if(dBase(p.name)!==dBase(name)||!state.stores.has(p.store)||(p['金额']||0)<=0) return; _pc.add(cityOf(p.store)); });
+    if(!_pc.size)(DATA.product_daily||[]).forEach(p=>{ if(dBase(p.name)!==dBase(name)||(p['金额']||0)<=0) return; _pc.add(cityOf(p.store)); });
     if(_pc.size===1) _lock=[..._pc][0];
   }
   const s=prodDetailOf(name,_lock);
@@ -4647,12 +4652,12 @@ function openProdDetail(name){
   const supCell=sup?'<span class="sup-dot" style="background:'+(supColor(sup)||'#94a3b8')+'"></span>'+escHtml(sup):'<span class="pd-val mute">-</span>';
   const _wd=state.mode==='week'?new Set(weekDataDays(state.seq)):null;
   const _dset=new Set();
-  (DATA.product_daily||[]).forEach(p=>{ if(p.name!==name||!state.stores.has(p.store)) return; if(_lock&&cityOf(p.store)!==_lock) return; if((p['金额']||0)<=0) return; const dt=p.date||''; if(state.mode==='day'){ if(dt!==state.day) return; } else if(state.mode==='range'){ if(dt<state.rangeStart||dt>state.rangeEnd) return; } else if(state.mode==='month'){ if(!dt.startsWith(state.ym)) return; } else if(state.mode==='week'){ if(!_wd||!_wd.has(dt)) return; } _dset.add(dt); });
+  (DATA.product_daily||[]).forEach(p=>{ if(dBase(p.name)!==dBase(name)||!state.stores.has(p.store)) return; if(_lock&&cityOf(p.store)!==_lock) return; if((p['金额']||0)<=0) return; const dt=p.date||''; if(state.mode==='day'){ if(dt!==state.day) return; } else if(state.mode==='range'){ if(dt<state.rangeStart||dt>state.rangeEnd) return; } else if(state.mode==='month'){ if(!dt.startsWith(state.ym)) return; } else if(state.mode==='week'){ if(!_wd||!_wd.has(dt)) return; } _dset.add(dt); });
   const _dl=[..._dset].sort();
   const _pseq=periodSeqs();
   const _bakCats=new Set(['面包','西点','中点','简餐']);
   let _all=0,_bak=0,_pb=''; const _cats={}; const _catMap={};
-  prodRows().forEach(p=>{ if(_lock&&p.city!==_lock) return; if(!_pseq.includes(p.seq)||!cityOk(p.city)||!state.stores.has(p.store)) return; const a=(p['金额']||0)*prodFactor(p.seq,state.ym); _all+=a; if(p.name===name) _pb=p.big_cat||''; const bc=p.big_cat||'其他'; if(_bakCats.has(bc)) _bak+=a; _cats[bc]=(_cats[bc]||0)+a; (_catMap[bc]=_catMap[bc]||{})[p.name]=((_catMap[bc][p.name]||0)+a); });
+  prodRows().forEach(p=>{ if(_lock&&p.city!==_lock) return; if(!_pseq.includes(p.seq)||!cityOk(p.city)||!state.stores.has(p.store)) return; const a=(p['金额']||0)*prodFactor(p.seq,state.ym); _all+=a; if(dBase(p.name)===dBase(name)) _pb=p.big_cat||''; const bc=p.big_cat||'其他'; if(_bakCats.has(bc)) _bak+=a; _cats[bc]=(_cats[bc]||0)+a; (_catMap[bc]=_catMap[bc]||{})[p.name]=((_catMap[bc][p.name]||0)+a); });
   if(!_pb) _pb=big;
   let _rank='-';
   { const _cm=_catMap[_pb]; if(_cm){ const _arr=Object.entries(_cm).sort((a,b)=>b[1]-a[1]); const _ri=_arr.findIndex(x=>x[0]===name); if(_ri>=0&&_arr[_ri][1]>0) _rank='第'+(_ri+1)+'/'+_arr.length+' 名'; } }
@@ -4699,7 +4704,7 @@ function openProdDetail(name){
   const cardsHtml='<div class="pd-section"><h4>销售概况（'+_ps+'）</h4><div class="pd-cards" style="grid-template-columns:repeat(5,minmax(0,1fr))">'+_cardWk(_g1.concat(_g2))+'</div>'+_dayNote+'</div>';
   // 年度累计（2026 全年，所选门店；全选带尾巴时锁尾巴城）
   let _yAmt=0,_yQty=0;
-  (DATA.product_month||[]).forEach(p=>{ if(p.name!==name||!state.stores.has(p.store)) return; if(_lock&&cityOf(p.store)!==_lock) return; _yAmt+=(p['金额']||0); _yQty+=(p['销量']||0); });
+  (DATA.product_month||[]).forEach(p=>{ if(dBase(p.name)!==dBase(name)||!state.stores.has(p.store)) return; if(_lock&&cityOf(p.store)!==_lock) return; _yAmt+=(p['金额']||0); _yQty+=(p['销量']||0); });
   // 年度占比（用户 09-04：累计金额下加两行比例；分母=2026全年×所选门店×锁城，与 _yAmt 严格同口径）
   const _yLab=_isBak?'占烘焙销售':(_pb==='OEM'?'占OEM销售':(_pb==='饮品'?'占饮品销售':'占所属大类'));
   let _yAll=0,_yDen=0;
@@ -4791,7 +4796,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   const seqs=periodSeqs();
   const agg={};
   prodRows().forEach(p=>{
-    if(p.name!==name) return;
+    if(dBase(p.name)!==dBase(name)) return;
     if(cityLock && p.city!==cityLock) return;
     if(!seqs.includes(p.seq)||!cityOk(p.city)||!state.stores.has(p.store)) return;
     const f=prodFactor(p.seq,state.ym);
@@ -4810,7 +4815,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
     const bc=p.big_cat||'其他';
     if(_bakCats.has(bc)) _bakB[st]=(_bakB[st]||0)+a;
     (_catB[st]=_catB[st]||{})[bc]=((_catB[st][bc]||0)+a);
-    if(p.name===name) _pb=bc;
+    if(dBase(p.name)===dBase(name)) _pb=bc;
   });
   if(!_pb) _pb=bigFallback||'';
   const _isBak=_bakCats.has(_pb);
@@ -4831,7 +4836,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   const _wd=state.mode==='week'?new Set(weekDataDays(state.seq)):null;
   const dag={};
   (DATA.product_daily||[]).forEach(p=>{
-    if(p.name!==name||!state.stores.has(p.store)||(p['金额']||0)<=0) return;
+    if(dBase(p.name)!==dBase(name)||!state.stores.has(p.store)||(p['金额']||0)<=0) return;
     if(cityLock&&cityOf(p.store)!==cityLock) return;
     const dt=p.date||'';
     if(state.mode==='day'){ if(dt!==state.day) return; }
@@ -4951,7 +4956,7 @@ function renderProdTrend30(name, cityLock){
     if(!state.stores.has(p.store)) return; if(cityLock&&cityOf(p.store)!==cityLock) return;
     const d=p.date||''; if(!d||d<days[0]||d>latest) return;
     const a=p['金额']||0; dayTot[d]=(dayTot[d]||0)+a;
-    if(p.name===name){ const o=per[d]||(per[d]={amt:0,qty:0}); o.amt+=a; o.qty+=(p['销量']||0); }
+    if(dBase(p.name)===dBase(name)){ const o=per[d]||(per[d]={amt:0,qty:0}); o.amt+=a; o.qty+=(p['销量']||0); }
     (dayList[d]=dayList[d]||[]).push({n:p.name,a:a});
   });
   const series=days.map(d=>{
