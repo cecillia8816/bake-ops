@@ -341,6 +341,9 @@ th{white-space:normal;word-break:normal}
 .pd-mini-tbl tr.pd-subtot td{font-weight:700;border-top:1px solid var(--line);border-bottom:none}   /* 10-12 卷卷:小计行不填充(重点归合计行),仅加粗 */
 .pd-mini-tbl tr.pd-subtot.pd-subtop td{border-top:2px solid var(--line-strong)}   /* 10-12 卷卷:单店区 与 小计/合计区 之间的分割线(1.5px 在 collapse 下会渲染成 1px,故用 2px) */
 .pd-mini-tbl tr.pd-subtot td:first-child{background:#fff;z-index:2}
+.pd-mini-tbl tr.pd-tot td{border-bottom:none}
+.pd-mini-tbl tr.pd-tot + tr.pd-avgrow td,.pd-mini-tbl tr.pd-tot + tr.pd-avgrow td:first-child{background:#F8FAFC;border-bottom:2px solid var(--line-strong)}
+.pd-mini-tbl tr.pd-subtot + tr.pd-avgrow td,.pd-mini-tbl tr.pd-subtot + tr.pd-avgrow td:first-child{background:#fff;border-bottom:1px solid var(--line)}
 .pd-mini-tbl th:nth-child(5),.pd-mini-tbl td:nth-child(5){text-align:center}
 #prodDetailModal .sup-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
 

@@ -769,7 +769,10 @@ svg{width:100%;height:auto;display:block}
 .pd-note>div{position:relative;padding-left:11px;margin-top:3px}
 .pd-note>div::before{content:'';position:absolute;left:1px;top:7px;width:3px;height:3px;border-radius:50%;background:#C2CBD8}
 .pd-mini-tbl tr.pd-tot td:first-child{background:#F8FAFC;z-index:2}   /* 10-12:填充行含冻结首格 */
-.pd-mini-tbl tr.pd-subtot td:first-child{background:#fff;z-index:2}   /* 10-12:小计行首格(冻结列)保持白底 */
+.pd-mini-tbl tr.pd-subtot td:first-child{background:#fff;z-index:2}
+.pd-mini-tbl tr.pd-tot td{border-bottom:none}
+.pd-mini-tbl tr.pd-tot + tr.pd-avgrow td,.pd-mini-tbl tr.pd-tot + tr.pd-avgrow td:first-child{background:#F8FAFC;border-bottom:2px solid var(--line-strong)}
+.pd-mini-tbl tr.pd-subtot + tr.pd-avgrow td,.pd-mini-tbl tr.pd-subtot + tr.pd-avgrow td:first-child{background:#fff;border-bottom:1px solid var(--line)}   /* 10-12:小计行首格(冻结列)保持白底 */
 @media(max-width:720px){
   .ctl-search{width:100%;margin-top:4px}
   .ctl-search .search-box{max-width:100%}
