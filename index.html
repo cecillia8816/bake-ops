@@ -3750,8 +3750,8 @@ function renderO2ODrill(){
     +(_mob? '' : (view.length>mid ? prodDetailHtml(view.slice(mid), totalSales, 'o2o', true, sabcO, mid, subO, true) : '<div style="flex:1"></div>'))
     +'</div></div>'
     +(isWaimai
-      ? '<div class="note"><div class="li"><b>#：</b><span>该商品在本渠道内的实际销售排名（按金额降序）。</span></div><div class="li"><b>占比：</b><span>该商品金额 ÷ 可归品销售额（= 所选门店商品明细合计；比门店实收少约 1%，未归品/无商品行销售不计入）。</span></div><div class="li"><b>覆盖：</b><span>仅覆盖折扣/优惠单（全价单除外，残差约 2~6%）；小程序＝下单来源（自提/外卖）。</span></div><div class="li"><b>SABC：</b><span>该商品在所选门店全部产品中的分级（按总销售额，与品类/TOP 表一致），不是本渠道内的排名；外卖/小程序商品名与产品表时有差异，未匹配到的商品显示「-」，仅供参考。</span></div></div>'
-      : '<div class="note"><div class="li"><b>#：</b><span>该商品在本渠道内的实际销售排名（按金额降序）。</span></div><div class="li"><b>占比：</b><span>该商品金额 ÷ 可归品销售额（= 所选门店商品明细合计；比门店实收少约 1%，未归品/无商品行销售不计入）。</span></div><div class="li"><b>覆盖：</b><span>仅覆盖折扣/优惠单（全价单除外，残差约 2~6%）。</span></div><div class="li"><b>SABC：</b><span>该商品在所选门店全部产品中的分级（按总销售额，与品类/TOP 表一致），不是本渠道内的排名。</span></div></div>');
+      ? '<div class="note"><div class="li"><b>#：</b><span>该商品在本渠道内的实际销售排名（按金额降序）。</span></div><div class="li"><b>占比：</b><span>该商品金额 ÷ 可归品销售额（= 所选门店商品明细合计；比门店实收少约 1%，未归品/无商品行销售不计入）。</span></div><div class="li"><b>覆盖：</b><span>仅覆盖折扣/优惠单（全价单不在明细内；门店整体 O2O 见单品明细行内悬浮）；小程序＝下单来源（自提/外卖）。</span></div><div class="li"><b>SABC：</b><span>该商品在所选门店全部产品中的分级（按总销售额，与品类/TOP 表一致），不是本渠道内的排名；外卖/小程序商品名与产品表时有差异，未匹配到的商品显示「-」，仅供参考。</span></div></div>'
+      : '<div class="note"><div class="li"><b>#：</b><span>该商品在本渠道内的实际销售排名（按金额降序）。</span></div><div class="li"><b>占比：</b><span>该商品金额 ÷ 可归品销售额（= 所选门店商品明细合计；比门店实收少约 1%，未归品/无商品行销售不计入）。</span></div><div class="li"><b>覆盖：</b><span>仅覆盖折扣/优惠单（全价单不在明细内；门店整体 O2O 见单品明细行内悬浮）。</span></div><div class="li"><b>SABC：</b><span>该商品在所选门店全部产品中的分级（按总销售额，与品类/TOP 表一致），不是本渠道内的排名。</span></div></div>');
   fillSupLegend(host);
   host.querySelectorAll('.prodtbl2').forEach(t=>bindSortEl(t, MEAL_DETAIL_HEAD, 'o2o', renderO2O));
   const b=document.getElementById('o2oBack'); if(b) b.onclick=()=>{ o2oDrill.ch=null; o2oDrill.sub=null; renderO2O(); };
@@ -4875,6 +4875,8 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
     if(!cityOk(cityOf(p.store))) return;
     _o2oB[p.store]=(_o2oB[p.store]||0)+(p['金额']||0);
   });
+  const _chO2O={};   /* 10-27 门店整体 O2O（渠道口径：外卖+团购，含全价单） */
+  (DATA.channels||[]).forEach(r=>{ if(r.channel!=='外卖'&&r.channel!=='团购') return; if(!_o2oSet.has(r.date)) return; if(!state.stores.has(r.store)) return; if(cityLock&&cityOf(r.store)!==cityLock) return; if(!cityOk(cityOf(r.store))) return; _chO2O[r.store]=(_chO2O[r.store]||0)+(r.amt||0); });
   // 日均口径：全年日粒度明细 ∩ 所选周期，按店聚合有销售天数/销量/金额
   const _wd=state.mode==='week'?new Set(weekDataDays(state.seq)):null;
   const dag={};
@@ -4915,7 +4917,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
     return '<tr><td>'+escHtml(o.store)+'</td><td>'+(o.qty?'¥'+fmt(Math.round(o.amt/o.qty),0):'-')+'</td><td>'+fmt(o.qty,0)+'</td><td>¥'+fmt(Math.round(o.amt),0)+'</td><td>'+pct(o.amt/(s.amt||1),1)+'</td>'
       +'<td>'+(_denOf(o.store)?pct(o.amt/_denOf(o.store),1):'-')+'</td>'
       +'<td>'+(_allB[o.store]?pct(o.amt/_allB[o.store],1):'-')+'</td>'
-      +'<td>'+(o.amt?pct((_o2oB[o.store]||0)/o.amt,1):'-')+'</td>'
+      +'<td'+((_chO2O[o.store]&&_allB[o.store])?' title="该店整体 O2O（外卖+团购，渠道口径，含全价单）：'+pct(_chO2O[o.store]/_allB[o.store],1)+'　¥'+fmt(Math.round(_chO2O[o.store]),0)+'"':'')+'>'+(o.amt?pct((_o2oB[o.store]||0)/o.amt,1):'-')+'</td>'
       +'<td>'+_sgOf(o.store)+'</td>'+(_isDay?'':'<td>'+(days||'-')+'</td><td>'+(days?fmt(d.qty/days,1):'-')+'</td><td>'+(days?'¥'+fmt(Math.round(d.amt/days),0):'-')+'</td>')+lastCell(o.store)+'</tr>';
   }).join('');
   // 合计行（用户 09-04）：销量/金额/占该产品=本表加总；右侧日均=加总÷产品在本周期有销售的去重天数
