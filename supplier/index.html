@@ -330,7 +330,8 @@ th{white-space:normal;word-break:normal}
 .pd-mini-tbl td{padding:3px 6px;text-align:right;border-bottom:1px solid #F0F4F9;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pd-mini-tbl td:first-child{text-align:left}
 /* SABC 列后浅分隔线：左=所选周期总量，右=日均（全年日粒度明细口径） */
-.pd-mini-tbl:not(.supsum) th:nth-child(9),.pd-mini-tbl:not(.supsum) td:nth-child(9){border-right:1px solid #E2EAF2}   /* 10-12:门店表分隔线随列移到 SABC 右侧(第9列);限定非 supsum＝顺带修掉出品SKU表「占烘焙销售」右侧那条串线 */
+.pd-mini-tbl:not(.supsum) th:nth-child(9),.pd-mini-tbl:not(.supsum) td:nth-child(9){border-right:1px solid #E2EAF2}
+.pd-mini-tbl.pd-daytbl:not(.supsum) th:nth-child(9),.pd-mini-tbl.pd-daytbl:not(.supsum) td:nth-child(9){border-right:none}   /* 10-12:门店表分隔线随列移到 SABC 右侧(第9列);限定非 supsum＝顺带修掉出品SKU表「占烘焙销售」右侧那条串线 */
 .pd-mini-tbl tr.pd-tot td{font-weight:700;background:#F8FAFC;border-top:1px solid var(--line);border-bottom:2px solid var(--line-strong)}   /* 10-12 卷卷:重点给合计行——填充+粗下框线收口(1.5px 在 collapse 下渲染成 1px,故用 2px) */
 .pd-mini-tbl tr.pd-tot.pd-totsolo td{border-top:2px solid var(--line-strong)}   /* 10-12 卷卷:只有一城(无小计行)时,合计行上下框线都加粗 */
 .pd-mini-tbl .pd-warn{color:#D92D20;font-weight:600}
@@ -2308,6 +2309,7 @@ function mergeAvgRows(root){
   });
 }
 function prodModalStores(name,s,cityLock,sabcVal){
+  const _isDay=(state.mode==='day');   /* 10-27 日视图：去掉销售天数/日均三列 */
   const seqs=periodSeqs();
   const agg={};
   prodRows().forEach(p=>{
@@ -2375,7 +2377,7 @@ function prodModalStores(name,s,cityLock,sabcVal){
       +'<td>'+(_denOf(o.store)?pct(o.amt/_denOf(o.store),1):'-')+'</td>'   /* 10-12 与周看板统一:占烘焙销售=该店该产品金额÷该店对应口径总额 */
       +'<td>'+(_allB[o.store]?pct(o.amt/_allB[o.store],1):'-')+'</td>'
       +'<td>'+(o.amt?pct((_o2oB[o.store]||0)/o.amt,1):'-')+'</td>'
-      +'<td>'+_sgOf(o.store)+'</td><td>'+(days||'-')+'</td><td>'+(days?fmt(d.qty/days,1):'-')+'</td><td>'+(days?'¥'+fmt(Math.round(d.amt/days),0):'-')+'</td>'+lastCell(d)+'</tr>';
+      +'<td>'+_sgOf(o.store)+'</td>'+(_isDay?'':'<td>'+(days||'-')+'</td><td>'+(days?fmt(d.qty/days,1):'-')+'</td><td>'+(days?'¥'+fmt(Math.round(d.amt/days),0):'-')+'</td>')+lastCell(d)+'</tr>';
   }).join('');
   // 合计行：销量/金额/占该产品=本表加总；右侧单店日均=合计÷在售门店÷有销售天数（10-12 卷卷:与出品SKU明细统一为平均口径，不再只÷天数）
   const _uDays=new Set();
@@ -2396,7 +2398,7 @@ function prodModalStores(name,s,cityLock,sabcVal){
   const _totLabel=_bothCity?'两地合计':'合计';   // 10-12 卷卷：两城都在时叫「两地合计」；单城筛选/单城产品仍叫「合计」
   const totRow='<tr class="pd-tot'+(_bothCity?'':' pd-totsolo')+'"><td>'+_totLabel+'</td><td>'+(_tq?'¥'+fmt(Math.round(_ta/_tq),0):'-')+'</td><td>'+fmt(_tq,0)+'</td><td>¥'+fmt(Math.round(_ta),0)+'</td><td>'+pct(_ta/(s.amt||1),1)+'</td>'
     +'<td>'+(_denAll?pct(_ta/_denAll,1):'-')+'</td><td>'+(_allSum?pct(_ta/_allSum,1):'-')+'</td><td>'+(_ta?pct(_o2oAll/_ta,1):'-')+'</td>'
-    +'<td>'+_sgTot+'</td><td>'+(_ud||'-')+'</td><td>'+(_an0?fmt(_sq0,1):'-')+'</td><td>'+(_an0?'¥'+fmt(Math.round(_sa0),0):'-')+'</td>'+(_lastAll?'<td'+(_idle(_lastAll)>14?' class="pd-warn"':'')+'>'+dtMD(_lastAll)+'</td>':'<td>-</td>')+'</tr>';
+    +'<td>'+_sgTot+'</td>'+(_isDay?'':'<td>'+(_ud||'-')+'</td><td>'+(_an0?fmt(_sq0,1):'-')+'</td><td>'+(_an0?'¥'+fmt(Math.round(_sa0),0):'-')+'</td>')+(_lastAll?'<td'+(_idle(_lastAll)>14?' class="pd-warn"':'')+'>'+dtMD(_lastAll)+'</td>':'<td>-</td>')+'</tr>';
   const _totAvg=_avgRow('（平均）',_tq,_ta,arr.filter(function(o){return o.amt>0;}));
   let subRows='';
   if(_bothCity){
@@ -2411,16 +2413,16 @@ function prodModalStores(name,s,cityLock,sabcVal){
       let _an=0,_sq=0,_sa=0; sts.forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; _an++; _sq+=d.qty/d.days.size; _sa+=d.amt/d.days.size; });
       return '<tr class="pd-subtot'+(top?' pd-subtop':'')+'"><td>'+escHtml(label)+'</td><td>'+(q?'¥'+fmt(Math.round(am/q),0):'-')+'</td><td>'+fmt(q,0)+'</td><td>¥'+fmt(Math.round(am),0)+'</td><td>'+pct(am/(s.amt||1),1)+'</td>'
         +'<td>'+(_denAll?pct(am/_denAll,1):'-')+'</td><td>'+(_allSum?pct(am/_allSum,1):'-')+'</td><td>'+(am?pct(_ctyO2O[cty]/am,1):'-')+'</td>'
-        +'<td>'+sabcBadge(_csab[name]||'-')+'</td><td>'+(nd||'-')+'</td><td>'+(_an?fmt(_sq,1):'-')+'</td><td>'+(_an?'¥'+fmt(Math.round(_sa),0):'-')+'</td>'
+        +'<td>'+sabcBadge(_csab[name]||'-')+'</td>'+(_isDay?'':'<td>'+(nd||'-')+'</td><td>'+(_an?fmt(_sq,1):'-')+'</td><td>'+(_an?'¥'+fmt(Math.round(_sa),0):'-')+'</td>')
         +'<td'+(last&&_idle(last)>14?' class="pd-warn"':'')+'>'+(last?dtMD(last):'-')+'</td></tr>'+_avgRow('（平均）',q,am,sts);
     };
     subRows=mkSub('深圳小计',_szSt,'SZ',true)+mkSub('上海小计',_shSt,'SH',false);
   }
   return '<div style="overflow-x:auto">'
     /* 10-12 卷卷:与周看板列一致——占该产品后补 占烘焙销售/占总销售/O2O% 三列 */
-    +'<table class="pd-mini-tbl"><tr><th>门店</th><th>平均单价</th><th>销量</th><th>销售额</th><th>占该产品</th><th>'+_shareLab+'</th><th>占总销售</th><th>O2O%</th><th>SABC</th><th>销售天数</th><th>日均销量</th><th>日均销售</th><th>最后销售日</th></tr>'
+    +'<table class="pd-mini-tbl'+(_isDay?' pd-daytbl':'')+'"><tr><th>门店</th><th>平均单价</th><th>销量</th><th>销售额</th><th>占该产品</th><th>'+_shareLab+'</th><th>占总销售</th><th>O2O%</th><th>SABC</th>'+(_isDay?'':'<th>销售天数</th><th>日均销量</th><th>日均销售</th>')+'<th>最后销售日</th></tr>'
     +rows+subRows+totRow+_totAvg+'</table></div>'
-    +pdNote(['浅线左侧＝周期累计（平均单价＝销售额÷销量；占比/O2O%/SABC 为比率或分级）；右侧：单店行＝该店销量(额)÷该店销售天数，小计/合计＝各店日均按列相加（不等于总销量÷覆盖天数），（平均）行＝小计/合计÷在售门店数',
+    +pdNote(['日视图：只选中单日，销售天数/日均三列不显示；左侧＝当日累计（平均单价＝销售额÷销量；占比/O2O%/SABC 为比率或分级）；（平均）行＝小计/合计÷在售门店数',
       _shareLab+'、占总销售＝该店该产品销售额÷该店同口径周期总额（与上方销售概况卡一致）；小计/合计行的占比分母＝全部所选门店',
       'O2O%＝O2O 销售额÷同范围销售额（行按店、小计按城、合计按全部所选门店）；明细仅含折扣/优惠单，残差约 2~6%',
       'SABC＝该产品在该店全部产品中的分级；小计行按该城，合计行按全部所选门店',
