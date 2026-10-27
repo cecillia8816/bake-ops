@@ -4699,7 +4699,7 @@ function openProdDetail(name,showBoth){
       _srt.forEach(([n,v])=>{ _cum+=v/_tot; const _cl=_cum<=0.5?'S':(_cum<=0.75?'A':(_cum<=0.9?'B':'C')); _cnt[_cl]++; if(n===name) _ysabc=_cl+_cnt[_cl]; }); } }
   let _status='-';
   if(_dl.length){ const _ld=latestDayStr(); const _idle=_ld?Math.round((new Date(_ld)-new Date(_dl[_dl.length-1]))/86400000):0; _status=_idle>14?'<span class="warn">疑似下市（停售'+_idle+'天）</span>':'<span class="ok">在售</span>'; }
-  title.textContent=prodDisp(name)+(_sfxCity?' -'+_sfxCity:'');
+  title.textContent=prodDisp(name)+((_sfxCity&&!showBoth)?' -'+_sfxCity:'');   /* 10-27 看两地时不带城市尾巴 */
   const _noSup=(big==='OEM'||big==='饮品');
   let cityVal='-';
   if(_lock) cityVal=_lock==='SH'?'上海':'深圳';

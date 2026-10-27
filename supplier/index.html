@@ -2172,10 +2172,11 @@ function openProdDetail(name, cityLockIn, showBoth){
   let _status='-';
   if(_dl.length){ const _ld=latestDayStr(); const _idle=_ld?Math.round((new Date(_ld)-new Date(_dl[_dl.length-1]))/86400000):0; _status=_idle>14?'<span class="warn">疑似下市（停售'+_idle+'天）</span>':'<span class="ok">在售</span>'; }
   const _tg=storeTag(name), _tag=_tg===name?'':_tg.slice(name.length);
-  title.textContent=name+(_lock?('-'+_lock):prodCitySfx(name))+_tag;
+  title.textContent=name+(showBoth?'':(_lock?('-'+_lock):prodCitySfx(name)))+_tag;   /* 10-27 看两地时不带城市尾巴 */
   const _noSup=(big==='OEM'||big==='饮品');
   let cityVal='-';
-  if(_lock) cityVal=_lock==='SH'?'上海':'深圳';
+  if(showBoth) cityVal='深圳+上海';
+  else if(_lock) cityVal=_lock==='SH'?'上海':'深圳';
   else if(state.city==='SZ'||state.city==='SH') cityVal=state.city==='SZ'?'深圳':'上海';
   else if(state.city==='ALL'||state.city==='NONE'){ const sfx=prodCitySfx(name); if(sfx==='-SZ') cityVal='深圳'; else if(sfx==='-SH') cityVal='上海'; else cityVal='深圳+上海'; }
   const infoRows=_noSup?[['所属城市',escHtml(cityVal)],['状态',_status],['大类',escHtml(big)],['小类',escHtml(sub||'-')],['大类排名',escHtml(_rank)]]:[['所属城市',escHtml(cityVal)],['供应商',supCell],['供应形式',escHtml(form||'-')],['供应产品',escHtml(supply)],['大类',escHtml(big)],['小类',escHtml(sub||'-')],['大类排名',escHtml(_rank)],['状态',_status]];
