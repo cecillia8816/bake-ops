@@ -2223,6 +2223,7 @@ function openProdDetail(name, cityLockIn, showBoth){
   const _bk=window.__pdBack;
   body.innerHTML=(_bk?('<div class="pd-back" id="pdBackLink">'+esc(_bk.label)+'</div>'):'')
     +scopeHtml+_bothLink+infoHtml+cardsHtml+storeHtml+structHtml+t30Html+yearHtml+trendHtml;
+  mergeAvgRows(body);
   (function(){ var el=document.getElementById('pdBothLink'); if(el) el.addEventListener('click',function(){ openProdDetail(name, showBoth?window.__pdCity:null, !showBoth); }); })();
   (function(){ var el=document.getElementById('pdBackLink'); if(el) el.addEventListener('click',function(){ var f=window.__pdBack&&window.__pdBack.run; window.__pdBack=null; if(f) f(); }); })();
   modal.style.display='';
@@ -2293,6 +2294,19 @@ function pdDonutBox(items, cLab, cVal, fmtFn, headName, totRow){
   return '<div class="pd-donut-box"><svg class="pd-donut" viewBox="0 0 '+W+' '+H+'">'+paths+'<text x="'+cx+'" y="'+(cy-2)+'" text-anchor="middle" font-size="10" fill="#667085">'+cLab+'</text><text x="'+cx+'" y="'+(cy+14)+'" text-anchor="middle" font-size="13" font-weight="800" fill="#101828">'+cVal+'</text></svg><div class="pd-leg"><div class="pd-leg-grid">'+head+'<div class="pd-leg-div"></div>'+leg+tot+'</div></div></div>';
 }
 // ---- 弹窗辅助：门店销售明细（SABC 后浅线分隔：左总量/右日均） ----
+// 10-27：把「（平均）」行并进上一行同列（主值下方小字），实现单行内两行显示
+function mergeAvgRows(root){
+  if(!root) return;
+  [...root.querySelectorAll('tr.pd-avgrow')].forEach(function(ar){
+    const prev=ar.previousElementSibling; if(!prev) return;
+    [...ar.children].forEach(function(td,i){
+      const t=td.innerHTML.trim(); if(!t) return;
+      const p=prev.children[i]; if(!p) return;
+      p.innerHTML += '<i style="display:block;font-size:10px;font-style:italic;color:#98a2b3">'+t+'</i>';
+    });
+    ar.remove();
+  });
+}
 function prodModalStores(name,s,cityLock,sabcVal){
   const seqs=periodSeqs();
   const agg={};
