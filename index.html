@@ -4910,7 +4910,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   const _hasRed=Object.values(dag).some(d=>d.last&&_idle(d.last)>14);   // 有红字才显示红字注释（用户 09-04）
   const _avgRow=(label,q,am,sts)=>{ let n=0,sq=0,sa=0; (sts||[]).forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; n++; sq+=d.qty/d.days.size; sa+=d.amt/d.days.size; });
     const sn=(sts||[]).length;
-    return '<tr class="pd-avgrow" style="color:#98a2b3;font-style:italic;font-size:11px"><td>'+label+'</td><td></td>'
+    return '<tr class="pd-avgrow" style="color:#98a2b3;font-style:italic;font-size:10px"><td>'+label+'</td><td></td>'
       +'<td>'+(sn?fmt(q/sn,0):'')+'</td><td>'+(sn?'¥'+fmt(Math.round(am/sn),0):'')+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'
       +'<td>'+(n?fmt(sq/n,1):'')+'</td><td>'+(n?'¥'+fmt(Math.round(sa/n),0):'')+'</td><td></td></tr>'; };
   const totRow='<tr class="pd-tot'+(_bothCity?'':' pd-totsolo')+'"><td>'+_totLabel+'</td><td>'+(_tq?'¥'+fmt(Math.round(_ta/_tq),0):'-')+'</td><td>'+fmt(_tq,0)+'</td><td>¥'+fmt(Math.round(_ta),0)+'</td><td>'+pct(_ta/(s.amt||1),1)+'</td>'
