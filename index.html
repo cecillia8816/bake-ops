@@ -741,6 +741,8 @@ svg{width:100%;height:auto;display:block}
 .pd-leg-amt{text-align:right;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 .pd-leg-pct{text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
 .pd-mini-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.pd-mini-tbl tr.pd-subtot td,.pd-mini-tbl tr.pd-tot td{padding-bottom:0}
+.pd-mini-tbl tr.pd-avgrow td{padding-top:0;padding-bottom:3px;line-height:1.15}
 .pd-mini-tbl th{font-weight:700;color:var(--sub);text-align:right;padding:3px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
 .pd-mini-tbl th:first-child{text-align:left}
 .pd-mini-tbl td{padding:3px 6px;text-align:right;border-bottom:1px solid #F0F4F9;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -4908,9 +4910,9 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   const _hasRed=Object.values(dag).some(d=>d.last&&_idle(d.last)>14);   // 有红字才显示红字注释（用户 09-04）
   const _avgRow=(label,q,am,sts)=>{ let n=0,sq=0,sa=0; (sts||[]).forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; n++; sq+=d.qty/d.days.size; sa+=d.amt/d.days.size; });
     const sn=(sts||[]).length;
-    return '<tr style="color:#98a2b3;font-style:italic;font-size:11px"><td>'+label+'</td><td>-</td>'
-      +'<td>'+(sn?fmt(q/sn,0):'-')+'</td><td>'+(sn?'¥'+fmt(Math.round(am/sn),0):'-')+'</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>'
-      +'<td>'+(n?fmt(sq/n,1):'-')+'</td><td>'+(n?'¥'+fmt(Math.round(sa/n),0):'-')+'</td><td>-</td></tr>'; };
+    return '<tr class="pd-avgrow" style="color:#98a2b3;font-style:italic;font-size:11px"><td>'+label+'</td><td></td>'
+      +'<td>'+(sn?fmt(q/sn,0):'')+'</td><td>'+(sn?'¥'+fmt(Math.round(am/sn),0):'')+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'
+      +'<td>'+(n?fmt(sq/n,1):'')+'</td><td>'+(n?'¥'+fmt(Math.round(sa/n),0):'')+'</td><td></td></tr>'; };
   const totRow='<tr class="pd-tot'+(_bothCity?'':' pd-totsolo')+'"><td>'+_totLabel+'</td><td>'+(_tq?'¥'+fmt(Math.round(_ta/_tq),0):'-')+'</td><td>'+fmt(_tq,0)+'</td><td>¥'+fmt(Math.round(_ta),0)+'</td><td>'+pct(_ta/(s.amt||1),1)+'</td>'
     +'<td>'+(_denAll?pct(_ta/_denAll,1):'-')+'</td>'
     +'<td>'+(_allSum?pct(_ta/_allSum,1):'-')+'</td>'

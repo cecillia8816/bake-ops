@@ -322,6 +322,8 @@ th{white-space:normal;word-break:normal}
 .pd-leg-amt{text-align:right;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 .pd-leg-pct{text-align:right;color:var(--mute);font-variant-numeric:tabular-nums}
 .pd-mini-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.pd-mini-tbl tr.pd-subtot td,.pd-mini-tbl tr.pd-tot td{padding-bottom:0}
+.pd-mini-tbl tr.pd-avgrow td{padding-top:0;padding-bottom:3px;line-height:1.15}
 .pd-mini-tbl th{font-weight:700;color:var(--mute);text-align:right;padding:3px 6px;border-bottom:1px solid var(--line);white-space:nowrap}
 .pd-mini-tbl th{background:#fff}   /* 10-13:弹窗表头不整条填充,与周看板一致(全局 th 规则带 #F4F7FA 底,主表保留) */
 .pd-mini-tbl th:first-child{text-align:left}
@@ -2368,9 +2370,9 @@ function prodModalStores(name,s,cityLock,sabcVal){
   const _szSt=arr.filter(o=>o.amt>0&&cityOf(o.store)==='SZ'), _shSt=arr.filter(o=>o.amt>0&&cityOf(o.store)==='SH');
   const _avgRow=(label,q,am,sts)=>{ let n=0,sq=0,sa=0; (sts||[]).forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; n++; sq+=d.qty/d.days.size; sa+=d.amt/d.days.size; });
     const sn=(sts||[]).length;
-    return '<tr style="color:#98a2b3;font-style:italic;font-size:11px"><td>'+label+'</td><td>-</td>'
-      +'<td>'+(sn?fmt(q/sn,0):'-')+'</td><td>'+(sn?'¥'+fmt(Math.round(am/sn),0):'-')+'</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>'
-      +'<td>'+(n?fmt(sq/n,1):'-')+'</td><td>'+(n?'¥'+fmt(Math.round(sa/n),0):'-')+'</td><td>-</td></tr>'; };
+    return '<tr class="pd-avgrow" style="color:#98a2b3;font-style:italic;font-size:11px"><td>'+label+'</td><td></td>'
+      +'<td>'+(sn?fmt(q/sn,0):'')+'</td><td>'+(sn?'¥'+fmt(Math.round(am/sn),0):'')+'</td><td></td><td></td><td></td><td></td><td></td><td></td>'
+      +'<td>'+(n?fmt(sq/n,1):'')+'</td><td>'+(n?'¥'+fmt(Math.round(sa/n),0):'')+'</td><td></td></tr>'; };
 
   const _bothCity=!!(_szSt.length&&_shSt.length);
   const _totLabel=_bothCity?'两地合计':'合计';   // 10-12 卷卷：两城都在时叫「两地合计」；单城筛选/单城产品仍叫「合计」
