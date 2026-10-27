@@ -2322,7 +2322,7 @@ function renderDayInsight(r){
       } else {
         judge="<b>活动退得比客流慢</b>——撤活动后要靠自然客流接棒";
       }
-      items.push(["退坡", `${judge}（${md(f.date)}${_plateau.length>1?"~"+md(_plateau[_plateau.length-1].date):""} 日均 → ${md(l.date)}：占比 ${pct(a0,1)}→${pct(a1,1)}${dTc!=null?"，单数 "+_evTc:""}${_evAc?"，客单 "+_evAc:""}）`]);
+      items.push(["退坡", `${judge}（${md(_plateau[0].date)}${_plateau.length>1?"~"+md(_plateau[_plateau.length-1].date):""} 日均 → ${md(l.date)}：占比 ${pct(a0,1)}→${pct(a1,1)}${dTc!=null?"，单数 "+_evTc:""}${_evAc?"，客单 "+_evAc:""}）`]);
     }
   }
 
