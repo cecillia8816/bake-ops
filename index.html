@@ -951,8 +951,14 @@ const _supOfCache={_built:false};
 function _buildSupOfCache(){ if(_supOfCache._built) return; _supOfCache._built=true; for(const s in (DATA.sup_prods||{})){ (DATA.sup_prods[s]||[]).forEach(n=>{ if(!DATA.prod_city_sup||!DATA.prod_city_sup[n]) _supOfCache[n]=s; }); } }
 function prodSupByName(name){ _buildSupOfCache(); const m=DATA.prod_city_sup&&DATA.prod_city_sup[name]; if(!m) return _supOfCache[name]||null; if(state.city!=='ALL'&&state.city!=='NONE') return m[state.city]||null; return m.SZ||m.SH||null; }
 function supName(name){ return prodSupByName(name) || prodSupByName(normName(name)) || null; }
-function prodCitySfx(n){ if(state.city==='SZ'||state.city==='SH') return ''; if(selCityCount()<=1) return '';   /* 10-27 所选门店同属一城：-SZ/-SH 无区分意义 */ const m=DATA.prod_city_sup&&DATA.prod_city_sup[n]; if(!m) return '';
-  // 09-15：按「实际销售城市」定尾巴（与供应商看板同口径）——单售城→该城；同源双城（三键一致）→无尾巴；异源双城→-SZ 锚
+function prodCitySfx(n){ if(state.city==='SZ'||state.city==='SH') return ''; if(selCityCount()<=1) return '';   /* 10-27 所选门店同属一城：-SZ/-SH 无区分意义 */
+  // 10-27 用户拍板：城市尾巴只看「实际销售城市」——单城→-SZ/-SH，双城都有售→不挂尾巴；不再依赖供应商映射，代售品同样适用
+  const cs=prodCityIdx()[n]||{}, sellSZ=!!cs.SZ, sellSH=!!cs.SH;
+  if(sellSZ&&!sellSH) return '-SZ'; if(sellSH&&!sellSZ) return '-SH';
+  return ''; }
+// 单品明细下钻的城市锁定（与展示尾巴解耦，09-15 口径不变）：双城同名异源产品仍锚 -SZ，避免把两地不同产品混算
+function cityLockSfx(n){ if(state.city!=='ALL'&&state.city!=='NONE') return '';
+  const m=DATA.prod_city_sup&&DATA.prod_city_sup[n]; if(!m) return '';
   const cs=prodCityIdx()[n]||{}, sellSZ=!!cs.SZ, sellSH=!!cs.SH;
   if(sellSZ&&!sellSH) return '-SZ'; if(sellSH&&!sellSZ) return '-SH';
   if(sellSZ&&sellSH){ const f=(DATA.prod_city_form||{})[n]||{}, sp=(DATA.prod_city_supply||{})[n]||{};
@@ -4619,7 +4625,7 @@ function openProdDetail(name){
   const dd=document.getElementById('wkSearchDropdown');
   if(dd) dd.classList.remove('open');   /* 关键词保留在输入框（09-07 用户：一个词看多个产品），下拉待关闭弹窗后重显 */
   // 全选城市下带 -SZ/-SH 尾巴的产品：整条弹窗锁定尾巴城市（同名跨城产品，数据跟尾巴城走；用户 09-04）
-  const _lockSfx=(state.city==='ALL'||state.city==='NONE')?prodCitySfx(name):'';
+  const _lockSfx=(state.city==='ALL'||state.city==='NONE')?cityLockSfx(name):'';   /* 10-27 展示尾巴与下钻锁定解耦 */
   let _lock=_lockSfx==='-SZ'?'SZ':(_lockSfx==='-SH'?'SH':null);
   // 公平口径：无尾巴产品实际只在一个城市有售（当前周期→所选门店全年→全门店全年 逐级探测）→ 整条弹窗锁该城——只在上海有售就只跟上海产品比（用户 09-04）
   if(!_lock&&(state.city==='ALL'||state.city==='NONE')){
