@@ -2339,8 +2339,6 @@ function prodModalStores(name,s,cityLock,sabcVal){
   });
   const arr=Object.values(agg).sort((a,b)=>b.amt-a.amt);
   if(!arr.length) return '<div class="pd-trend-empty">-</div>';
-  const _avgTxt=(v,dec,pre,suf)=>(v==null||!isFinite(v))?'':'<i style="display:block;font-style:italic;color:#98a2b3;font-size:10px;font-weight:400;line-height:1.25">平均 '+pre+fmt(v,dec)+suf+'</i>';
-  const _tdSum=arr.reduce((a,o)=>{const d=dag[o.store];return a+(d?d.days.size:0);},0);
 
   const _sgTot=sabcBadge(sabcVal||'-');
   const _sgMap=sabcOfStores(cityLock);
@@ -2368,11 +2366,18 @@ function prodModalStores(name,s,cityLock,sabcVal){
   const _hasRed=Object.values(dag).some(d=>d.last&&_idle(d.last)>14);
   // 10-12 卷卷：门店仍两地合并排序（全市场排名），合计上方加「深圳小计/上海小计」两行；口径与合计行同构（该城合计÷该城在售门店÷该城销售天数）
   const _szSt=arr.filter(o=>o.amt>0&&cityOf(o.store)==='SZ'), _shSt=arr.filter(o=>o.amt>0&&cityOf(o.store)==='SH');
+  const _avgRow=(label,q,am,sts)=>{ let n=0,sq=0,sa=0; (sts||[]).forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; n++; sq+=d.qty/d.days.size; sa+=d.amt/d.days.size; });
+    const sn=(sts||[]).length;
+    return '<tr style="color:#98a2b3;font-style:italic;font-size:11px"><td>'+label+'</td><td>-</td>'
+      +'<td>'+(sn?fmt(q/sn,0):'-')+'</td><td>'+(sn?'¥'+fmt(Math.round(am/sn),0):'-')+'</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>'
+      +'<td>'+(n?fmt(sq/n,1):'-')+'</td><td>'+(n?'¥'+fmt(Math.round(sa/n),0):'-')+'</td><td>-</td></tr>'; };
+
   const _bothCity=!!(_szSt.length&&_shSt.length);
   const _totLabel=_bothCity?'两地合计':'合计';   // 10-12 卷卷：两城都在时叫「两地合计」；单城筛选/单城产品仍叫「合计」
-  const totRow='<tr class="pd-tot'+(_bothCity?'':' pd-totsolo')+'"><td>'+_totLabel+'</td><td>'+(_tq?'¥'+fmt(Math.round(_ta/_tq),0):'-')+'</td><td>'+fmt(_tq,0)+_avgTxt(_ns?_tq/_ns:null,0,'','')+'</td><td>¥'+fmt(Math.round(_ta),0)+_avgTxt(_ns?_ta/_ns:null,0,'¥','')+'</td><td>'+pct(_ta/(s.amt||1),1)+'</td>'
+  const totRow='<tr class="pd-tot'+(_bothCity?'':' pd-totsolo')+'"><td>'+_totLabel+'</td><td>'+(_tq?'¥'+fmt(Math.round(_ta/_tq),0):'-')+'</td><td>'+fmt(_tq,0)+'</td><td>¥'+fmt(Math.round(_ta),0)+'</td><td>'+pct(_ta/(s.amt||1),1)+'</td>'
     +'<td>'+(_denAll?pct(_ta/_denAll,1):'-')+'</td><td>'+(_allSum?pct(_ta/_allSum,1):'-')+'</td><td>'+(_ta?pct(_o2oAll/_ta,1):'-')+'</td>'
-    +'<td>'+_sgTot+'</td><td>'+(_ud||'-')+_avgTxt(_ns?_tdSum/_ns:null,1,'',' 天')+'</td><td>'+((_ud&&_ns)?fmt(_tq/_ud/_ns,1):'-')+'</td><td>'+((_ud&&_ns)?'¥'+fmt(Math.round(_ta/_ud/_ns),0):'-')+'</td>'+(_lastAll?'<td'+(_idle(_lastAll)>14?' class="pd-warn"':'')+'>'+dtMD(_lastAll)+'</td>':'<td>-</td>')+'</tr>';
+    +'<td>'+_sgTot+'</td><td>'+(_ud||'-')+'</td><td>'+((_ud&&_ns)?fmt(_tq/_ud/_ns,1):'-')+'</td><td>'+((_ud&&_ns)?'¥'+fmt(Math.round(_ta/_ud/_ns),0):'-')+'</td>'+(_lastAll?'<td'+(_idle(_lastAll)>14?' class="pd-warn"':'')+'>'+dtMD(_lastAll)+'</td>':'<td>-</td>')+'</tr>';
+  const _totAvg=_avgRow('（平均）',_tq,_ta,arr.filter(function(o){return o.amt>0;}));
   let subRows='';
   if(_bothCity){
     // SABC 直接用既有 sabcOfCity()（与「锁城时合计行」同一函数、同一口径：该产品在该城全部产品中的帕累托分级），不再另写实现
@@ -2383,18 +2388,17 @@ function prodModalStores(name,s,cityLock,sabcVal){
       const ds=new Set(); let last='';
       sts.forEach(o=>{ const d=dag[o.store]; if(!d) return; d.days.forEach(x=>ds.add(x)); if(d.last&&d.last>last) last=d.last; });
       const n=sts.length, nd=ds.size;
-      let _cd=0; sts.forEach(o=>{ const d=dag[o.store]; if(d) _cd+=d.days.size; });
-      return '<tr class="pd-subtot'+(top?' pd-subtop':'')+'"><td>'+escHtml(label)+'</td><td>'+(q?'¥'+fmt(Math.round(am/q),0):'-')+'</td><td>'+fmt(q,0)+_avgTxt(n?q/n:null,0,'','')+'</td><td>¥'+fmt(Math.round(am),0)+_avgTxt(n?am/n:null,0,'¥','')+'</td><td>'+pct(am/(s.amt||1),1)+'</td>'
+      return '<tr class="pd-subtot'+(top?' pd-subtop':'')+'"><td>'+escHtml(label)+'</td><td>'+(q?'¥'+fmt(Math.round(am/q),0):'-')+'</td><td>'+fmt(q,0)+'</td><td>¥'+fmt(Math.round(am),0)+'</td><td>'+pct(am/(s.amt||1),1)+'</td>'
         +'<td>'+(_denAll?pct(am/_denAll,1):'-')+'</td><td>'+(_allSum?pct(am/_allSum,1):'-')+'</td><td>'+(am?pct(_ctyO2O[cty]/am,1):'-')+'</td>'
-        +'<td>'+sabcBadge(_csab[name]||'-')+'</td><td>'+(nd||'-')+_avgTxt(n?_cd/n:null,1,'',' 天')+'</td><td>'+((nd&&n)?fmt(q/n/nd,1):'-')+'</td><td>'+((nd&&n)?'¥'+fmt(Math.round(am/n/nd),0):'-')+'</td>'
-        +'<td'+(last&&_idle(last)>14?' class="pd-warn"':'')+'>'+(last?dtMD(last):'-')+'</td></tr>';
+        +'<td>'+sabcBadge(_csab[name]||'-')+'</td><td>'+(nd||'-')+'</td><td>'+((nd&&n)?fmt(q/n/nd,1):'-')+'</td><td>'+((nd&&n)?'¥'+fmt(Math.round(am/n/nd),0):'-')+'</td>'
+        +'<td'+(last&&_idle(last)>14?' class="pd-warn"':'')+'>'+(last?dtMD(last):'-')+'</td></tr>'+_avgRow('（平均）',q,am,sts);
     };
     subRows=mkSub('深圳小计',_szSt,'SZ',true)+mkSub('上海小计',_shSt,'SH',false);
   }
   return '<div style="overflow-x:auto">'
     /* 10-12 卷卷:与周看板列一致——占该产品后补 占烘焙销售/占总销售/O2O% 三列 */
     +'<table class="pd-mini-tbl"><tr><th>门店</th><th>平均单价</th><th>销量</th><th>销售额</th><th>占该产品</th><th>'+_shareLab+'</th><th>占总销售</th><th>O2O%</th><th>SABC</th><th>销售天数</th><th>日均销量</th><th>日均销售</th><th>最后销售日</th></tr>'
-    +rows+subRows+totRow+'</table></div>'
+    +rows+subRows+totRow+_totAvg+'</table></div>'
     +pdNote(['浅线左侧＝周期总量；右侧日均＝销量/销售额÷有销售天数，小计/合计再÷在售门店（平均每店每天，跨城可比）',
       _shareLab+'、占总销售＝该店该产品销售额÷该店同口径周期总额（与上方销售概况卡一致）；小计/合计行的占比分母＝全部所选门店',
       'O2O%＝O2O 销售额÷同范围销售额（行按店、小计按城、合计按全部所选门店）；明细仅含折扣/优惠单，残差约 2~6%',
