@@ -2108,7 +2108,7 @@ function inScopeDate(dt){
   if(state.mode==='range') return !!dt&&dt>=state.rangeStart&&dt<=state.rangeEnd;
   return !!dt&&String(dt).startsWith('2026-');   // 年模式：2026 全年
 }
-function openProdDetail(name, cityLockIn){
+function openProdDetail(name, cityLockIn, showBoth){
   const modal=document.getElementById('prodDetailModal');
   // 10-12:单品弹窗列数增到 13 列(与周看板对齐)→恢复宽卡(980)避免横向滚动；原 10-09「任何路径恢复默认宽度」作废
   const _pc=modal&&modal.querySelector('.prod-modal-card'); if(_pc){ _pc.classList.add('wide'); _pc.style.maxWidth=''; }   /* 10-13:清残留 maxWidth */
@@ -2126,17 +2126,23 @@ function openProdDetail(name, cityLockIn){
     if(!_pc.size)(PD.product_daily||[]).forEach(p=>{ if(p.name!==name||(p['金额']||0)<=0) return; _pc.add(cityOf(p.store)); });
     if(_pc.size===1) _lock=[..._pc][0];
   }
+  if(showBoth) _lock=null;   /* 10-27 与周看板对齐：看两地门店 */
+  window.__pdCity=_lock||window.__pdCity||'SZ';
   const s=prodDetailOf(name,_lock);
   const _csm=PD.prod_city_sup?.[name]||{};
-  const sup=(_lock&&_csm[_lock])?_csm[_lock]:supName(name);
+  const _cSup=(_lock&&_csm[_lock])||((!_lock&&_csm&&_csm.SZ&&_csm.SH&&_csm.SZ!==_csm.SH)?(_csm.SZ+' / '+_csm.SH):null);
+  const sup=_cSup||supName(name);
   const big=PD.sup_prod_big?.[name] || (PD.cat_map?.[PD.sup_prod_sub?.[name]]) || '其他';
   const sub=PD.sup_prod_sub?.[name] || '';
-  const form=(_lock?((PD.prod_city_form?.[name]||{})[_lock]||''):'') || PD.sup_prod_form?.[name] || '';
-  const supply=(_lock?((PD.prod_city_supply?.[name]||{})[_lock]||''):'') || PD.prod_city_supply?.[name]?.SZ || PD.prod_city_supply?.[name]?.SH || PD.sup_prod_form?.[name] || '-';
+  const _cForm=(PD.prod_city_form?.[name])||null;
+  const form=(_lock&&_cForm&&_cForm[_lock])||((!_lock&&_cForm&&_cForm.SZ&&_cForm.SH&&_cForm.SZ!==_cForm.SH)?(_cForm.SZ+' / '+_cForm.SH):null) || PD.sup_prod_form?.[name] || '';
+  const _cSp=(PD.prod_city_supply?.[name])||null;
+  const supply=(_lock&&_cSp&&_cSp[_lock])||((!_lock&&_cSp&&_cSp.SZ&&_cSp.SH&&_cSp.SZ!==_cSp.SH)?(_cSp.SZ+' / '+_cSp.SH):null) || _cSp?.SZ || _cSp?.SH || PD.sup_prod_form?.[name] || '-';
   const avg=s.qty?Math.round(s.amt/s.qty):0;
   const totalSel=selectedProductTotal();
   const sabc=(_lock?sabcOfCity(_lock):sabcMap())[name]||'-';
-  const supCell=sup?'<span class="sup-dot" style="background:'+(supColor(sup)||'#94a3b8')+'"></span>'+escHtml(sup):'<span class="pd-val mute">-</span>';
+  const _supParts=(_cSup&&_cSup.indexOf(' / ')>=0)?_cSup.split(' / '):null;
+  const supCell=_supParts?_supParts.map(function(s){return '<span class="sup-dot" style="background:'+(supColor(s)||'#94a3b8')+'"></span>'+escHtml(s);}).join('<span style="color:#98a2b3"> / </span>'):(sup?'<span class="sup-dot" style="background:'+(supColor(sup)||'#94a3b8')+'"></span>'+escHtml(sup):'<span class="pd-val mute">-</span>');
   const _dset=new Set();
   (PD.product_daily||[]).forEach(p=>{ if(p.name!==name||!state.stores.has(p.store)) return; if(_lock&&cityOf(p.store)!==_lock) return; if((p['金额']||0)<=0) return; const dt=p.date||''; if(!inScopeDate(dt)) return; _dset.add(dt); });
   const _dl=[..._dset].sort();
@@ -2206,10 +2212,12 @@ function openProdDetail(name, cityLockIn){
   const trendHtml='<div class="pd-section pd-trend"><h4>月度销售趋势（¥）</h4>'+renderProdTrend(name,_lock)+'</div>';
   const _cty=_lock?(_lock==='SH'?'上海':'深圳'):((state.city==='ALL'||state.city==='NONE') ? '全部城市' : (state.city==='SH' ? '上海' : '深圳'));
   const _storeN=_lock?[...state.stores].filter(st=>cityOf(st)===_lock).length:state.stores.size;
+  const _bothLink=(PD.prod_city_sup&&PD.prod_city_sup[name]&&PD.prod_city_sup[name].SZ&&PD.prod_city_sup[name].SH&&PD.prod_city_sup[name].SZ!==PD.prod_city_sup[name].SH)?('<div style="margin:-6px 0 10px"><a href="javascript:void(0)" id="pdBothLink" style="font-size:11px;font-weight:600;color:var(--blue)">'+(showBoth?'只看本城门店':'看两地全部门店')+'</a></div>'):'';
   const scopeHtml='<div style="margin:-2px 0 10px;padding-bottom:6px;border-bottom:1px solid #E2EAF2;font-size:11px;color:#667085">'+escHtml(_cty+' · '+_storeN+' 店')+'</div>';
   const _bk=window.__pdBack;
   body.innerHTML=(_bk?('<div class="pd-back" id="pdBackLink">'+esc(_bk.label)+'</div>'):'')
-    +scopeHtml+infoHtml+cardsHtml+storeHtml+structHtml+t30Html+yearHtml+trendHtml;
+    +scopeHtml+_bothLink+infoHtml+cardsHtml+storeHtml+structHtml+t30Html+yearHtml+trendHtml;
+  (function(){ var el=document.getElementById('pdBothLink'); if(el) el.addEventListener('click',function(){ openProdDetail(name, showBoth?window.__pdCity:null, !showBoth); }); })();
   (function(){ var el=document.getElementById('pdBackLink'); if(el) el.addEventListener('click',function(){ var f=window.__pdBack&&window.__pdBack.run; window.__pdBack=null; if(f) f(); }); })();
   modal.style.display='';
   (function(){ var t=document.querySelector('#prodDetailModal .pd-mini-tbl'); var c=document.querySelector('#prodDetailModal .prod-modal-card');
