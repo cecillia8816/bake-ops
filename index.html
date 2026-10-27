@@ -4666,7 +4666,10 @@ function openProdDetail(name,showBoth){
   const avg=s.qty?Math.round(s.amt/s.qty):0;
   const totalSel=selectedProductTotal();
   const sabc=(_lock?sabcOfCity(_lock):sabcMap())[name]||'-';
-  const supCell=sup?'<span class="sup-dot" style="background:'+(supColor(sup)||'#94a3b8')+'"></span>'+escHtml(sup):'<span class="pd-val mute">-</span>';
+  const _supParts=(_cSup&&_cSup.indexOf(' / ')>=0)?_cSup.split(' / '):null;
+  const supCell=_supParts
+    ? _supParts.map(function(s){return '<span class="sup-dot" style="background:'+(supColor(s)||'#94a3b8')+'"></span>'+escHtml(s);}).join('<span style="color:#98a2b3"> / </span>')
+    : (sup?'<span class="sup-dot" style="background:'+(supColor(sup)||'#94a3b8')+'"></span>'+escHtml(sup):'<span class="pd-val mute">-</span>');
   const _wd=state.mode==='week'?new Set(weekDataDays(state.seq)):null;
   const _dset=new Set();
   (DATA.product_daily||[]).forEach(p=>{ if(dBase(p.name)!==dBase(name)||!state.stores.has(p.store)) return; if(_lock&&cityOf(p.store)!==_lock) return; if((p['金额']||0)<=0) return; const dt=p.date||''; if(state.mode==='day'){ if(dt!==state.day) return; } else if(state.mode==='range'){ if(dt<state.rangeStart||dt>state.rangeEnd) return; } else if(state.mode==='month'){ if(!dt.startsWith(state.ym)) return; } else if(state.mode==='week'){ if(!_wd||!_wd.has(dt)) return; } _dset.add(dt); });
