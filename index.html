@@ -4654,11 +4654,13 @@ function openProdDetail(name,showBoth){
     if(_pc.size===1) _lock=[..._pc][0];
   }
   const s=prodDetailOf(name,_lock);
-  const sup=supName(name);
+  const _mSup=(DATA.prod_city_sup&&DATA.prod_city_sup[name])||null;
+  const _cSup=(_lock&&_mSup&&_mSup[_lock])||((!_lock&&_mSup&&_mSup.SZ&&_mSup.SH&&_mSup.SZ!==_mSup.SH)?(_mSup.SZ+' / '+_mSup.SH):null);
+  const sup=_cSup||supName(name);   /* 10-27 锁城时取该城供应商（同名不同品：SZ门店自制 / SH新迪嘉禾） */
   const big=DATA.sup_prod_big?.[name] || (DATA.cat_map?.[DATA.sup_prod_sub?.[name]]) || '其他';
   const sub=DATA.sup_prod_sub?.[name] || '';
-  const form=DATA.sup_prod_form?.[name] || '';
-  const supply=(DATA.prod_city_supply?.[name]?.SZ || DATA.prod_city_supply?.[name]?.SH || DATA.sup_prod_form?.[name] || '-');
+  const form=(_lock&&DATA.prod_city_form&&DATA.prod_city_form[name]&&DATA.prod_city_form[name][_lock]) || DATA.sup_prod_form?.[name] || '';
+  const supply=((_lock&&DATA.prod_city_supply?.[name]?.[_lock]) || DATA.prod_city_supply?.[name]?.SZ || DATA.prod_city_supply?.[name]?.SH || DATA.sup_prod_form?.[name] || '-');
   const avg=s.qty?Math.round(s.amt/s.qty):0;
   const totalSel=selectedProductTotal();
   const sabc=(_lock?sabcOfCity(_lock):sabcMap())[name]||'-';
