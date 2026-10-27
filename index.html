@@ -4599,7 +4599,7 @@ function openMultiProdView(names){
       +'<td>'+((n&&nd)?fmt(q/n/nd,1):'-')+'</td><td>'+((n&&nd)?'¥'+fmt(Math.round(a/n/nd),0):'-')+'</td>'
       +'<td>'+(f?dtMD(f):'-')+'</td><td>'+(l?dtMD(l):'-')+'</td></tr>'; };
   const rowHtml=R.map((r,i)=>{ const u=r.u;
-    const lab=_mixed?(u.name+'-'+u.city):u.name;
+    const lab=_mixed?(dBase(u.name)+'-'+u.city):dBase(u.name);   /* 10-27 拆行名已带 -SZ/-SH，勿重复拼 */
     return '<tr><td>'+(i+1)+'</td><td style="text-align:left"><span class="mp-link" data-name="'+escHtml(u.name)+'" style="cursor:pointer;border-bottom:1px dotted #A7BEE0" title="点击查看该单品详情">'+escHtml(lab)+'</span></td>'
       +'<td>'+fmt(r.qty,0)+'</td><td>'+(r.qty?'¥'+fmt(Math.round(r.amt/r.qty),0):'-')+'</td><td>¥'+fmt(Math.round(r.amt),0)+'</td>'
       +'<td>'+(_bak?pct(r.amt/_bak,1):'-')+'</td><td>'+(_all?pct(r.amt/_all,1):'-')+'</td>'
@@ -4615,7 +4615,7 @@ function openMultiProdView(names){
   const _shownNames=new Set(units.map(u=>u.name)); const _miss=names.length-_shownNames.size;
   title.innerHTML='<span style="font-size:15px;font-weight:800">已选 '+_shownNames.size+' 个产品 · '+R.length+' 行</span>'
     +'<span style="margin-left:12px;font-size:12px;font-weight:400;color:#667085">'+_cityNm+' · '+_ps+(_miss>0?('（'+_miss+' 个在当前筛选下无销售，未显示）'):'')+'</span>';
-  body.innerHTML='<div class="pd-section" style="padding:0"><h4>多品明细（'+(names.length)+' 个产品 · '+R.length+' 行）</h4>'
+  body.innerHTML='<div class="pd-section" style="padding:0"><h4>多品明细（'+(new Set(names.map(dBase)).size)+' 个产品 · '+R.length+' 行）</h4>'
     +'<div style="overflow-x:auto"><table class="pd-mini-tbl mp-tbl"><tr><th>#</th><th style="text-align:left">产品</th><th>销量</th><th>平均单价</th><th>金额</th><th>占烘焙销售</th><th>占总销售</th><th>SABC</th><th>在售门店</th><th>销售天数</th><th>单店日均销量</th><th>单店日均销售</th><th>首销日</th><th>最后销售日</th></tr>'
     +rowHtml+sub+tot+'</table></div>'
     +pdNote(['一行＝一个产品；两地都卖的拆成 -SZ/-SH 两行',
