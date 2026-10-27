@@ -2302,7 +2302,7 @@ function mergeAvgRows(root){
     [...ar.children].forEach(function(td,i){
       const t=td.innerHTML.trim(); if(!t) return;
       const p=prev.children[i]; if(!p) return;
-      p.innerHTML += '<i style="display:block;font-size:10px;font-style:italic;color:#98a2b3">'+t+'</i>';
+      p.innerHTML += '<i style="display:block;text-align:inherit;font-size:10px;font-style:italic;color:#98a2b3">'+t+'</i>';
     });
     ar.remove();
   });
