@@ -4461,10 +4461,11 @@ function renderSearchDropdown(){
       const sub=DATA.sup_prod_sub?.[dBase(name)]||'';
       const color=supColor(sup);
       const _tg=storeTag(name), _tag=(_tg===name?'':_tg.slice(name.length));
+      const _disp=dBase(name);   /* 10-27 组头已标城市，条目不再重复挂 -SZ/-SH */
       return '<div class="sd-item" data-idx="'+i+'" data-name="'+escHtml(name)+'" role="option">'+
         '<input type="checkbox" class="sd-ck" data-name="'+escHtml(name)+'"'+(MP_SEL.has(name)?' checked':'')+' title="勾选后点右下「查看所选」">'+
         '<span class="sd-dot" style="background:'+(color||'#94a3b8')+'"></span>'+
-        '<span class="sd-name" title="'+escHtml(name+_tag)+'">'+escHtml(name+_tag)+'</span>'+
+        '<span class="sd-name" title="'+escHtml(_disp+_tag)+'">'+escHtml(_disp+_tag)+'</span>'+
         '<span class="sd-sub" title="'+escHtml(sub)+'">'+escHtml(sub)+'</span>'+
         '</div>';
     }).join('')
