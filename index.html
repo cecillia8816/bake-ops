@@ -4394,11 +4394,16 @@ function matchProd(q){
   const raw=String(q).trim().toLowerCase();
   if(!raw) return [];
   const cityF=(state.city==='SZ'||state.city==='SH');
-  return allProdNames().filter(name=>{
-    if(!String(name).toLowerCase().includes(raw)) return false;
-    if(cityF){ const cs=prodCityIdx()[name]; if(cs&&!cs[state.city]) return false; }
-    return true;
-  }).slice(0,20);
+  const out=[];
+  allProdNames().forEach(name=>{
+    if(!String(name).toLowerCase().includes(raw)) return;
+    const cs=prodCityIdx()[name]||{};
+    if(cityF){ if(cs&&!cs[state.city]) return; out.push(name); return; }
+    // 10-27 同名不同品：搜索也按城拆两条（点开各自锁本城）
+    if(DUAL_DIFF[name]&&cs.SZ&&cs.SH){ out.push(name+' -SZ', name+' -SH'); return; }
+    out.push(name);
+  });
+  return out.slice(0,20);
 }
 function renderSearchDropdown(){
   function _fitDropdownInViewport(dd){   // 10-12 卷卷:下拉比输入框宽,贴右边缘会伸出视口——按可用空间自适应
@@ -4438,10 +4443,12 @@ function renderSearchDropdown(){
   // 10-12 卷卷：按城市分组（深圳/上海/沪深）——组内产品名不再挂 -SZ/-SH 小尾巴，一眼分辨
   const _g={SZ:[],SH:[],BOTH:[]};
   const _single=(state.city==='SZ'||state.city==='SH')?state.city:null;   // 10-12 卷卷:已选单城时不再分「沪深」——条目全归该城
-  list.forEach(n=>{ if(_single){ _g[_single].push(n); return; }
+  list.forEach(n=>{ const _sfxCity=(/ -SZ$/.test(n)?'SZ':(/ -SH$/.test(n)?'SH':null));
+    if(_single){ _g[_single].push(n); return; }
+    if(_sfxCity){ _g[_sfxCity].push(n); return; }
     const cs=prodCityIdx()[n]||{}; const k=(cs.SZ&&cs.SH)?'BOTH':(cs.SZ?'SZ':(cs.SH?'SH':'BOTH')); _g[k].push(n); });
   const _amtM=prodAmtIdx();   // 10-12 卷卷:组内按金额降序（金额随筛选，同一缓存口径）
-  ['SZ','SH','BOTH'].forEach(k=>_g[k].sort((a,b)=>(_amtM[b]||0)-(_amtM[a]||0)));
+  ['SZ','SH','BOTH'].forEach(k=>_g[k].sort((a,b)=>(_amtM[dBase(b)]||0)-(_amtM[dBase(a)]||0)));
   const _gt={SZ:'深圳',SH:'上海',BOTH:'沪深'};
   let _idx=0;
   const _ord=(state.city==='ALL'||state.city==='NONE')?['BOTH','SZ','SH']:['SZ','SH','BOTH'];   // 10-12 卷卷:全选城市时「沪深」排最上面（两地都卖）
@@ -4451,7 +4458,7 @@ function renderSearchDropdown(){
     + _g[k].map(name=>{
       const i=_idx++;
       const sup=supName(name);
-      const sub=DATA.sup_prod_sub?.[name]||'';
+      const sub=DATA.sup_prod_sub?.[dBase(name)]||'';
       const color=supColor(sup);
       const _tg=storeTag(name), _tag=(_tg===name?'':_tg.slice(name.length));
       return '<div class="sd-item" data-idx="'+i+'" data-name="'+escHtml(name)+'" role="option">'+
@@ -4622,6 +4629,8 @@ function openMultiProdView(names){
   modal.style.display='';
 }
 function openProdDetail(name){
+  const _sfxCity=(/ -SZ$/.test(name)?'SZ':(/ -SH$/.test(name)?'SH':null));   // 10-27 搜索按城拆两条：尾巴即锁城
+  if(_sfxCity) name=dBase(name);
   const _c0=document.querySelector('#wkProdModal .prod-modal-card'); if(_c0) _c0.classList.remove('wide');   // 10-12：单品详情回到常规宽卡
   const modal=document.getElementById('wkProdModal');
   const title=document.getElementById('wkModalTitle');
@@ -4631,7 +4640,7 @@ function openProdDetail(name){
   if(dd) dd.classList.remove('open');   /* 关键词保留在输入框（09-07 用户：一个词看多个产品），下拉待关闭弹窗后重显 */
   // 全选城市下带 -SZ/-SH 尾巴的产品：整条弹窗锁定尾巴城市（同名跨城产品，数据跟尾巴城走；用户 09-04）
   const _lockSfx=(state.city==='ALL'||state.city==='NONE')?cityLockSfx(name):'';   /* 10-27 展示尾巴与下钻锁定解耦 */
-  let _lock=_lockSfx==='-SZ'?'SZ':(_lockSfx==='-SH'?'SH':null);
+  let _lock=_sfxCity||(_lockSfx==='-SZ'?'SZ':(_lockSfx==='-SH'?'SH':null));
   // 公平口径：无尾巴产品实际只在一个城市有售（当前周期→所选门店全年→全门店全年 逐级探测）→ 整条弹窗锁该城——只在上海有售就只跟上海产品比（用户 09-04）
   if(!_lock&&(state.city==='ALL'||state.city==='NONE')){
     const _pc=new Set();
@@ -4679,7 +4688,7 @@ function openProdDetail(name){
       _srt.forEach(([n,v])=>{ _cum+=v/_tot; const _cl=_cum<=0.5?'S':(_cum<=0.75?'A':(_cum<=0.9?'B':'C')); _cnt[_cl]++; if(n===name) _ysabc=_cl+_cnt[_cl]; }); } }
   let _status='-';
   if(_dl.length){ const _ld=latestDayStr(); const _idle=_ld?Math.round((new Date(_ld)-new Date(_dl[_dl.length-1]))/86400000):0; _status=_idle>14?'<span class="warn">疑似下市（停售'+_idle+'天）</span>':'<span class="ok">在售</span>'; }
-  title.textContent=prodDisp(name);
+  title.textContent=prodDisp(name)+(_sfxCity?' -'+_sfxCity:'');
   const _noSup=(big==='OEM'||big==='饮品');
   let cityVal='-';
   if(_lock) cityVal=_lock==='SH'?'上海':'深圳';
