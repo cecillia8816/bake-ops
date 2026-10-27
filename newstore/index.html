@@ -193,7 +193,7 @@ tr:hover td{background:var(--mist-soft)}
   #peerCmp table{min-width:1180px !important}
   #promoWrap table{min-width:1080px !important}
   #lossProdWrap table{min-width:900px !important}
-  #giftWrap table{min-width:640px !important}
+  #giftWrap table{min-width:700px !important}
   #miscWrap table{min-width:620px !important}
   #catDiscWrap table{min-width:700px !important}
   /* 2026-10-26：11 列→10 列（删「券品实收」），最小宽度同比收 8% */
@@ -465,14 +465,15 @@ table.rc-dist th,table.rc-dist td{padding-left:6px;padding-right:6px}
 @media(max-width:1180px){.mkt-duo.cs{grid-template-columns:minmax(0,1fr)}}
 #zeroWrap .zero-flex{grid-template-columns:minmax(0,1fr);gap:8px}
 #zeroWrap table{table-layout:fixed;width:100%}
-#zeroWrap th:nth-child(1){width:6%}
-#zeroWrap th:nth-child(2){width:31%}
-#zeroWrap th:nth-child(3){width:12%}
-#zeroWrap th:nth-child(4){width:14%}
+#zeroWrap th:nth-child(1){width:3%}
+#zeroWrap th:nth-child(2){width:38%}
+#zeroWrap th:nth-child(3){width:9%}
+#zeroWrap th:nth-child(4){width:18%}
 #zeroWrap th:nth-child(5){width:9%}
-#zeroWrap th:nth-child(6){width:14%}
-#zeroWrap th:nth-child(7){width:14%}
-#zeroWrap td.left-b{overflow:hidden;text-overflow:ellipsis}
+#zeroWrap th:nth-child(6){width:11.5%}
+#zeroWrap th:nth-child(7){width:11.5%}
+/* 长品名折行（同其他表），不用省略号——省略号会被「无被压」闸门抓；大类/小类桌面单行（10-26 卷卷） */
+#zeroWrap td.left-b{white-space:normal !important;overflow:visible !important;text-overflow:clip !important}
 #catDiscWrap table,#promoSum table{width:100%}        /* 独立小卡内：表上说明下，贴紧 */
 /* 全站表格统一字号（卷卷 10-19）：表头 10.5px / 表体 11.5px */
 .panel table th,.chart-card table th{font-size:10.5px}
@@ -1861,8 +1862,8 @@ function renderZeroOrders(r){
   const zpOrd=zp.reduce((a,b)=>a+(b.orders||0),0);
   host.innerHTML=`<div class="zero-flex">
     <table class="fit-tbl" style="table-layout:fixed">
-    <colgroup><col style="width:5%"><col style="width:26%"><col style="width:10%"><col style="width:14%">
-      <col style="width:9%"><col style="width:18%"><col style="width:18%"></colgroup>
+    <colgroup><col style="width:3%"><col style="width:38%"><col style="width:9%"><col style="width:18%">
+      <col style="width:9%"><col style="width:11.5%"><col style="width:11.5%"></colgroup>
     <thead><tr><th class="numh">#</th><th class="left-b">商品</th><th class="left-b">大类</th><th class="left-b">小类</th><th>单数</th>
       <th title="含该品的零元单 ÷ 零元单总数（一单多品会重复计入，故多行相加可 &gt;100%）">占零元单</th>
       <th title="兑换/赠品送出的件数 ÷ 该品总件数（付费＋零元）">赠送率</th></tr></thead><tbody>
@@ -1874,12 +1875,12 @@ function renderZeroOrders(r){
         <td>${zSum?pct(x.orders/zSum,1):"—"}</td>
         <td class="${share!=null&&share>=0.5?"loss-bad":""}" title="零元 ${fmtN(zq)} 件 ÷（付费 ${fmtN(pq)} ＋ 零元 ${fmtN(zq)}）">${share==null?"—":pct(share,1)}</td></tr>`;
     }).join("")}
-    <tr class="tot"><td class="num"></td><td class="left-b">合计（全部 ${zp.length} 品）</td><td class="left-b"></td><td class="left-b"></td><td>${zpOrd}</td>
+    <tr class="tot"><td class="num"></td><td class="left-b">合计</td><td class="left-b"></td><td class="left-b"></td><td>${zpOrd}</td>
       <td>—</td>
       <td title="合计赠送率＝Σ零元件数 ÷ Σ（付费＋零元）件数">${(()=>{let zq=0,pq=0; zp.forEach(x=>{zq+=x.qty||0; pq+=paidQty[x.name]||0;}); return (zq+pq)>0?pct(zq/(zq+pq),1):"—";})()}</td></tr>
    </tbody></table>
    <div class="note">· 零元单 <b>${zSum}</b> 单（${scopeTxt}${scopeNote}）＝兑换券/赠品核销（实付 0）；券类另有实付 ${vp.orders||0} 单 ${fmtY0(vp.amt||0)}（兑换时顺手加购）。<br>
-   · 上表为全部 ${zp.length} 个零元单商品；占比＝含该品的零元单 ÷ 零元单总数，<b>一单多品会重复计入</b>（多行相加可 &gt;100%）。<br>
+   · 占比＝含该品的零元单 ÷ 零元单总数，<b>一单多品会重复计入</b>（多行相加可 &gt;100%）。<br>
    · 赠送率 ≥50% 标红＝该品主要靠赠送走。</div>
   </div>`;
 }
@@ -2900,8 +2901,8 @@ function renderPromos(r){
   if(gHost){
     gHost.innerHTML = `
    <div class="subhd">兑换券：成本与拉新</div>
-   ${_grpG.length?`<table class="gift-tbl"><colgroup><col style="width:23%"><col style="width:10%"><col style="width:10%"><col style="width:8%">
-       <col style="width:10%"><col style="width:8%"><col style="width:9%"><col style="width:13%"><col style="width:9%"></colgroup>
+   ${_grpG.length?`<table class="gift-tbl"><colgroup><col style="width:29%"><col style="width:10.5%"><col style="width:9%"><col style="width:8.5%">
+       <col style="width:8.5%"><col style="width:8%"><col style="width:8%"><col style="width:10%"><col style="width:8.5%"></colgroup>
      <thead><tr><th class="left-b">活动</th><th class="left-b">类型</th><th title="该活动让掉的金额（＝成本）">折让成本</th><th>兑换单</th><th title="本区间刚办卡会员的核销单 ÷ 该活动核销单（会员号去会员名单查开卡日）；查不到的按老客算，故为下限">新客占比</th>
        <th>单均成本</th><th title="整单口径：实收 ÷（实收＋折让）×10">活动折扣</th><th class="sj" title="＝ 该活动会员单 ÷ 本区间会员单（会员标记单数，已剔团餐、含零元单）。⚠️ 本列是渗透率；折扣类表同名列已改构成口径，不可横比">会员渗透率</th><th>出现天数</th></tr></thead><tbody>
      ${[..._grpG].sort((a,b)=>(b.disc||0)-(a.disc||0)).map(p=>{const zh=_zhe(p); const mr=mPen(p); const nc=_ncOf(p);
