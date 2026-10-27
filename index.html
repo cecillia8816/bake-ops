@@ -209,7 +209,7 @@ tbody tr:hover{background:#f6f9fd}
 #storeTbl tr.sub-ex td.st-gold{background:rgba(201,138,75,.03)}
 /* 门店明细完整呈现（不设滚动条）+ 缩短行高 */
 div.store-scroll{max-height:none;overflow:auto;-webkit-overflow-scrolling:touch}
-#storeTbl th,#storeTbl td{padding:6px 8px}   /* 09-24 横向内边距 10→8：整表 1164px 收到 ~1104px，1280 窗口（内容 1153px）起不再出横向滚动条 */
+#storeTbl th,#storeTbl td{padding:6px 6px}   /* 09-24 横向内边距 10→8：整表 1164px 收到 ~1104px，1280 窗口（内容 1153px）起不再出横向滚动条；10-27 8→6：月视图累计金额到 7 位后表内在宽 1191px＞可用 1162px（29px 横条），收紧 64px 后 ~1121px，1280+ 窗口溢出 0 */
 /* 日均TC/平均AC 双值（主值含西丽 + 斜体小字不含西丽参照） */
 #storeTbl .dual{display:inline-block;text-align:right}
 #storeTbl .dual i{display:block;font-style:italic;color:var(--sub);font-size:10px;font-weight:400;white-space:nowrap}
