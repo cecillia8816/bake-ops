@@ -4905,17 +4905,18 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   // 红色规则：最后销售日距昨日 >14 天标红（用户 09-04）
   const _ld=(state.mode==='day'?state.day:(state.mode==='range'?state.rangeEnd:latestDayStr()));   /* 10-27 红字按当前视图期末判定 */
   const _idle=d=>_ld&&d?Math.round((new Date(_ld)-new Date(d))/86400000):0;
-  const lastCell=d=>{
-    if(!d||!d.last) return '<td>-</td>';
-    return '<td'+(_idle(d.last)>14?' class="pd-warn"':'')+'>'+dtMD(d.last)+'</td>';
+  const _lastOf=st=>_lastByStore[st]||'';
+  const lastCell=st=>{ const d=_lastOf(st); if(!d) return '<td>-</td>';
+    return '<td'+(_idle(d)>14?' class="pd-warn"':'')+'>'+dtMD(d)+'</td>';
   };
+  const _lastByStore={}; (DATA.product_first_sale_store||[]).forEach(r=>{ if(dBase(r.name)===dBase(name)&&r.store&&r.last) _lastByStore[r.store]=r.last; });
   const rows=arr.map(o=>{
     const d=dag[o.store], days=d?d.days.size:0;
     return '<tr><td>'+escHtml(o.store)+'</td><td>'+(o.qty?'¥'+fmt(Math.round(o.amt/o.qty),0):'-')+'</td><td>'+fmt(o.qty,0)+'</td><td>¥'+fmt(Math.round(o.amt),0)+'</td><td>'+pct(o.amt/(s.amt||1),1)+'</td>'
       +'<td>'+(_denOf(o.store)?pct(o.amt/_denOf(o.store),1):'-')+'</td>'
       +'<td>'+(_allB[o.store]?pct(o.amt/_allB[o.store],1):'-')+'</td>'
       +'<td>'+(o.amt?pct((_o2oB[o.store]||0)/o.amt,1):'-')+'</td>'
-      +'<td>'+_sgOf(o.store)+'</td>'+(_isDay?'':'<td>'+(days||'-')+'</td><td>'+(days?fmt(d.qty/days,1):'-')+'</td><td>'+(days?'¥'+fmt(Math.round(d.amt/days),0):'-')+'</td>')+lastCell(d)+'</tr>';
+      +'<td>'+_sgOf(o.store)+'</td>'+(_isDay?'':'<td>'+(days||'-')+'</td><td>'+(days?fmt(d.qty/days,1):'-')+'</td><td>'+(days?'¥'+fmt(Math.round(d.amt/days),0):'-')+'</td>')+lastCell(o.store)+'</tr>';
   }).join('');
   // 合计行（用户 09-04）：销量/金额/占该产品=本表加总；右侧日均=加总÷产品在本周期有销售的去重天数
   const _uDays=new Set();
@@ -4926,8 +4927,8 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   const _allSum=Object.keys(_allB).reduce((a,st)=>a+(_allB[st]||0),0);
   const _o2oAll=Object.keys(_o2oB).reduce((a,st)=>a+(_o2oB[st]||0),0);
   let _an0=0,_sq0=0,_sa0=0; arr.forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; _an0++; _sq0+=d.qty/d.days.size; _sa0+=d.amt/d.days.size; });
-  const _lastAll=Object.values(dag).reduce((a,d)=>(d.last&&d.last>a?d.last:a),'');
-  const _hasRed=Object.values(dag).some(d=>d.last&&_idle(d.last)>14);   // 有红字才显示红字注释（用户 09-04）
+  let _lastAll=''; arr.forEach(o=>{ const d=_lastOf(o.store); if(d>_lastAll) _lastAll=d; });
+  const _hasRed=arr.some(o=>{ const d=_lastOf(o.store); return d&&_idle(d)>14; });   // 有红字才显示红字注释（用户 09-04）
   const _avgRow=(label,q,am,sts)=>{ let n=0,sq=0,sa=0; (sts||[]).forEach(o=>{ const d=dag[o.store]; if(!d||!d.days.size) return; n++; sq+=d.qty/d.days.size; sa+=d.amt/d.days.size; });
     const sn=(sts||[]).length;
     return '<tr class="pd-avgrow" style="color:#98a2b3;font-style:italic;font-size:10px"><td>'+label+'</td><td></td>'
@@ -4945,7 +4946,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
     let _cd=0; Object.keys(dag).forEach(st=>{ if(cityOf(st)===c) _cd+=dag[st].days.size; });
     let _an=0,_sq=0,_sa=0; arr.forEach(o=>{ if(cityOf(o.store)!==c) return; const d=dag[o.store]; if(!d||!d.days.size) return; _an++; _sq+=d.qty/d.days.size; _sa+=d.amt/d.days.size; });
     const sg=(sabcOfCity(c)[name])||'-';
-    const _last=Array.from(g.dys).sort().pop()||'';
+    let _last=''; arr.forEach(o=>{ if(cityOf(o.store)!==c) return; const d=_lastOf(o.store); if(d>_last) _last=d; });
     const _co2o=Object.keys(_o2oB).reduce((a,st)=>a+(cityOf(st)===c?(_o2oB[st]||0):0),0);
     return '<tr class="pd-subtot'+(i===0?' pd-subtop':'')+'"><td>'+(c==='SZ'?'深圳小计':'上海小计')+'</td><td>'+(q?'¥'+fmt(Math.round(am/q),0):'-')+'</td><td>'+fmt(q,0)+'</td><td>¥'+fmt(Math.round(am),0)+'</td><td>'+pct(am/(s.amt||1),1)+'</td>'
       +'<td>'+(_denAll?pct(am/_denAll,1):'-')+'</td><td>'+(_allSum?pct(am/_allSum,1):'-')+'</td><td>'+(am?pct(_co2o/am,1):'-')+'</td>'
@@ -4954,7 +4955,7 @@ function prodModalStores(name,s,cityLock,sabcVal,bigFallback){
   return '<div style="overflow-x:auto">'
     +'<table class="pd-mini-tbl'+(_isDay?' pd-daytbl':'')+'"><tr><th>门店</th><th>平均单价</th><th>销量</th><th>销售额</th><th>占该产品</th><th>'+_shareLab+'</th><th>占总销售</th><th>O2O%</th><th>SABC</th>'+(_isDay?'':'<th>销售天数</th><th>日均销量</th><th>日均销售</th>')+'<th>最后销售日</th></tr>'
     +rows+_subRows+totRow+_totAvg+'</table></div>'
-    +pdNote([(_isDay?'单日视图：左侧为当日累计（平均单价＝销售额÷销量；占比/O2O%/SABC 为比率或分级）；（平均）行＝小计/合计÷在售门店数':'浅线左侧＝周期累计（平均单价＝销售额÷销量；占比/O2O%/SABC 为比率或分级）；右侧：单店行＝该店销量(额)÷该店销售天数，小计/合计＝各店日均之和，（平均）行＝小计/合计÷在售门店数'),
+    +pdNote([(_isDay?'上表为当日累计（平均单价＝销售额÷销量；占比/O2O%/SABC 为比率或分级）；（平均）行＝小计/合计÷在售门店数':'浅线左侧＝周期累计（平均单价＝销售额÷销量；占比/O2O%/SABC 为比率或分级）；右侧：单店行＝该店销量(额)÷该店销售天数，小计/合计＝各店日均之和，（平均）行＝小计/合计÷在售门店数'),
       _shareLab+'、占总销售＝该店该产品销售额÷该店同口径周期总额（与上方销售概况卡一致）；小计/合计行的占比分母＝全部所选门店',
       'O2O%＝O2O 销售额÷同范围销售额（行按店、小计按城、合计按全部所选门店）；明细仅含折扣/优惠单，残差约 2~6%',
       'SABC＝该产品在该店全部产品中的分级；小计行按该城，合计行按全部所选门店',
