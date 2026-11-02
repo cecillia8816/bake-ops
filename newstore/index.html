@@ -1145,6 +1145,9 @@ function budgetOf(r){
   const dayOf = s => +String(s).slice(8,10);
   const inMonth = !!(openDate && String(openDate).slice(0,7) === mi.ym);
   const d0 = inMonth ? Math.min(dayOf(openDate), mi.dim) : 1;
+  // ⚠️ 2026-11-02 起：accrued / bPeriod / monthTarget 这些**按月**的字段不再被「达成」块使用
+  //（改成 budgetSpan 的区间累计）。保留是因为 budgetOf 还提供 gross/be/daily/openDate/ramp；
+  // 谁要用「本月进度」得自己再想清楚要不要跟着区间走，别再出现同一排两个口径。
   const accrued = Math.max(0, mi.passed - d0 + 1);      // 已计天数
   const monthDays = Math.max(0, mi.dim - d0 + 1);       // 本月应计总天数（整月目标用）
   const daily = gross != null ? gross / mi.dim : null;  // 日均预算＝月预算÷当月自然天
@@ -1176,6 +1179,41 @@ function cumBudgetMap(store, from, to){
     if (g[m] != null) acc += g[m] / dim;
     out[k] = acc;
   }
+  return out;
+}
+/* 区间累计预算（2026-11-02 卷卷：「达成」块**跟随所选区间**，从正式开业日累到截止日）。
+   原来这块按月算：11 月只过 1 天 → 达成率 70.7%，而顶部日期选的是「开业至今」，两个口径打架。
+   现在只有一套：区间实收 ÷ 区间累计预算；月份只影响「每天摊多少」（各月预算 ÷ 各月自然天数）。
+   ⚠️ 试营业与开业前不计（from = max(区间首日, 正式开业日)）。
+   ⚠️ 日历天数含没销售额的休整日——预算本就按自然天摊，别换成「有销售天数」。 */
+function budgetSpan(r){
+  const b = (D.budget || {})[r.store] || {};
+  const g = b.gross || {}, be = (b.be != null ? b.be : null);
+  const ds = ((r.days || []).map(x => x.date)).filter(Boolean);
+  if (!ds.length) return null;
+  const lo = ds[0], hi = ds[ds.length - 1];
+  const open = r.open_date || null;
+  const from = (open && open > lo) ? open : lo;
+  const out = { days: 0, budget: 0, beBudget: 0, sales: 0, attain: null, beAttain: null,
+                gap: 0, from: from, to: hi, open: open, per: [] };
+  if (from > hi) return out;
+  const per = {}; let n = 0;
+  for (let k = from; k <= hi && n < 400; k = dAdd(k, 1), n++){
+    const m = +k.slice(5, 7), dim = new Date(+k.slice(0, 4), m, 0).getDate();
+    out.days++;
+    if (g[m] != null){
+      const q = g[m] / dim;
+      out.budget += q;
+      const p = per[m] || (per[m] = { m: m, days: 0, daily: q, amt: 0 });
+      p.days++; p.amt += q;
+    }
+    if (be != null) out.beBudget += be / dim;
+  }
+  (r.days || []).forEach(x => { if (x.date >= from && x.date <= hi) out.sales += (x.sales || 0); });
+  out.attain = out.budget > 0 ? out.sales / out.budget : null;
+  out.beAttain = out.beBudget > 0 ? out.sales / out.beBudget : null;
+  out.gap = Math.max(0, out.budget - out.sales);
+  out.per = Object.keys(per).map(k2 => per[k2]);
   return out;
 }
 /* 门店节奏：正式开业日（含）~ 数据末日 的有销售日均。
@@ -1281,12 +1319,15 @@ function renderPeerCmp(){
     const S=memberSplitDays(ds.map(x=>({d:x.date})),
                             (_bd.seg||[]).filter(_in),
                             (_bd.member||[]).filter(_in));
-    const at=(B.bPeriod&&B.bPeriod>0)?B.afterSales/B.bPeriod:null;
+    // 2026-11-02 卷卷：这一行原来取 B.afterSales/B.bPeriod（按月）——跨月后「累计实收」那列
+    // 会变成当月实收（安荟邻显示 ¥3,457、睿印里 ¥8,458），与同表的「开业天数 18/16」自相矛盾。
+    // 改为 budgetSpan：累计实收与累计达成率都从正式开业日累到截止日，与顶部同一套口径。
+    const _SPp=budgetSpan(r0), at=(_SPp&&_SPp.budget>0)?_SPp.attain:null;
     return `<tr><td class="left-b">${esc(k)}${k===cur?'<span class="badge">当前</span>':''}</td>
       <td class="left-b">${esc(md(r0.open_date)||"—")}</td>
       <td>${n||"—"}</td>
 <td class="sep-l">${n?fmtY0(sSum/n):"—"}</td><td>${n?fmtC(tSum/n):"—"}</td><td class="sj" title="兑换券/赠品核销单数">${zeroSum||"—"}</td><td>${tSum?fmtAC(sSum/tSum):"—"}</td><td class="sj" title="实收 ÷ 付费单（剔零元单）">${(tSum-zeroSum)>0?fmtAC(sSum/(tSum-zeroSum)):"—"}</td>
-      <td>${fmtY0(B.afterSales)}</td>
+      <td>${fmtY0(_SPp?_SPp.sales:0)}</td>
       <td class="${cls(at)}">${at==null?"—":pct(at,1)}</td>
       <td>${fmtY0(rc)}</td>
       <td>${dAmt?(10*sSum/dAmt).toFixed(1)+"折":"—"}</td>
@@ -1441,11 +1482,13 @@ function isWknd(s){ const w=new Date(String(s)+"T00:00:00").getDay(); return w==
 
 /* ---------- KPI ---------- */
 function renderKPI(r){
-  const B = budgetOf(r), mi = B.mi, bPeriod = B.bPeriod, bePeriod = B.bePeriod;
+  const B = budgetOf(r), mi = B.mi;
   const mLab = mi.m + "月";
-  // 达成率＝正式开业后累计销售 ÷（日均预算 × 应计天数）；分母 0＝本月还没正式开业
-  const attain = (bPeriod && bPeriod > 0) ? B.afterSales / bPeriod : null;
-  const beAttain = (bePeriod && bePeriod > 0) ? B.afterSales / bePeriod : null;
+  // 2026-11-02 卷卷：达成率**跟随所选区间**（正式开业日 → 截止日，跨月累加），不再报「本月」。
+  // 原来 11 月只过 1 天就给出 70.7%，而顶部日期选的是「开业至今」（94.5%）——同一排两个数打架。
+  const SP = budgetSpan(r);
+  const attain = (SP && SP.budget > 0) ? SP.attain : null;
+  const beAttain = (SP && SP.beBudget > 0) ? SP.beAttain : null;
 
   // 零元单＝兑换券/赠品核销（实付 0）：银豹交易笔数里算单、销售流水里没有 → 时段/订单结构覆盖差的就是它们
   const _segOrd = (r.segs || []).reduce((a, b) => a + (b.orders || 0), 0);
@@ -1467,18 +1510,17 @@ function renderKPI(r){
     ["整店折扣" + _tTag, r.discount_rate==null?"—":(10*r.discount_rate).toFixed(1)+"折", "", "实收 ÷ 原价 ×10"],
   ];
   if (attain != null){
-    // 养成期：预算＝月保本、按**开业天数**折算（财务 10-19 定稿）
-    // 开业 <7 天：达成率加 ※（睿印里 4 天含 2 个周末 → 231%，不外推）——2026-10-21 审计 P1-5
-    const _fewK = B.accrued < 7;
-    k.push([mLab+" 累计达成率", pct(attain,1) + (_fewK ? "※" : ""), attain>=1?"up":"down",
-      fmtY0(B.afterSales) + " ÷ <span style=\"white-space:nowrap\">预算 " + fmtY0(bPeriod) + "</span>"
-      + (_fewK ? "<br>※ 开业 " + B.accrued + " 天，样本不足" : "")]);
+    // 累计口径：预算＝开业日到截止日逐日累加的各月日均；开业 <7 天仍加 ※（样本太少，别拿去外推）
+    const _fewK = SP.days < 7;
+    k.push(["累计达成率", pct(attain,1) + (_fewK ? "※" : ""), attain>=1?"up":"down",
+      fmtY0(SP.sales) + " ÷ <span style=\"white-space:nowrap\">预算 " + fmtY0(SP.budget) + "</span>"
+      + (_fewK ? "<br>※ 开业 " + SP.days + " 天，样本不足" : "")]);
   } else {
-    k.push([mLab+"达成率", "—", "", B.inMonth && B.accrued === 0 ? "本月尚未正式开业" : "预算未就位"]);
+    k.push(["累计达成率", "—", "", "本区间无正式开业日"]);
   }
   if (!B.ramp && beAttain != null){
     k.push(["累计达成率（保本）", pct(beAttain,1), beAttain>=1?"up":"down",
-      fmtY0(B.afterSales) + " ÷ 保本 " + fmtY0(bePeriod)]);
+      fmtY0(SP.sales) + " ÷ 保本 " + fmtY0(SP.beBudget)]);
   }
 
   // 一行铺满：列数 = 卡数（窄屏媒体查询会覆盖为自动换行）
@@ -1678,7 +1720,7 @@ function renderDaily(r){
   });
 }
 
-/* ---------- 累计实收 vs 累计预算（本月 MTD）---------- */
+/* ---------- 累计实收 vs 累计预算（开业日起，跨月不重置）---------- */
 // 「追得上吗」的第二张图（2026-10-19 加）：左图看单日形态，右图看累计是否跑在预算线上。
 // 预算线＝整月预算按天摊（养成期＝月保本），与本页达成率同一分母，故两处可直接对照。
 function renderCum(r){
@@ -2039,28 +2081,26 @@ function renderProducts(r){
 function renderProg(r){
   const host=document.getElementById("progWrap");
   const B=budgetOf(r), mi=B.mi, g=B.gross, ramp=B.ramp;
-  if(g==null || !mi.passed || !mi.dim){ host.style.display="none"; return; }
-  // 本月尚未正式开业（应计天数 0）：只报"何时开始计预算"，不硬凑达成率
-  if(B.inMonth && B.accrued===0){
+  if(g==null){ host.style.display="none"; return; }
+  const SP=budgetSpan(r);
+  // 所选区间在正式开业之前（或没配预算天数）：只报"何时开始计预算"，不硬凑达成率
+  if(!SP || !SP.days || SP.attain==null){
     host.style.display="block";
-    host.innerHTML=`<div class="prog-hd"><span>本月尚未正式开业</span>
-      <span class="r">正式开业 ${B.openDate||"—"} 起计预算 · 日均预算 ${fmtY0(B.daily||0)}（＝月预算÷${mi.dim} 天）</span></div>
-      <div class="prog-ft">· 预算天数<b>从正式开业日起算</b>，开业前与试营业都不计，所以开业前没有达成率。</div>`;
+    host.innerHTML=`<div class="prog-hd"><span>本区间不计预算考核</span>
+      <span class="r">${B.openDate?("正式开业 "+md(B.openDate)+" 起计预算"):"未配置正式开业日"} · 日均预算 ${fmtY0(B.daily||0)}（＝月预算÷当月自然天数）</span></div>
+      <div class="prog-ft">· 预算<b>从正式开业日起算</b>，开业前与试营业都不计；把日期拖到开业后才有达成率。</div>`;
     return;
   }
-  const bPeriod=B.bPeriod, at=(bPeriod&&bPeriod>0)?B.afterSales/bPeriod:null;
-  const left=Math.max(0, B.monthDays - B.accrued);           // 本月剩余应计天数
-  const gap=Math.max(0, (B.monthTarget||0) - B.afterSales);  // 距"本月目标"的缺口
-  const needDaily=left>0?gap/left:null;
-  const pace=paceOf();
-  // 2026-10-21 审计 P1-2：原外推用「开业后日均」，与达成率数学恒等（proj/目标 ≡ 实收/预算），信息量为零；
-  // 改为**近 7 个有销售日**的日均，并设样本门槛（开业 <7 天不外推，睿印里 4 天曾给出 231%/151,933）。
-  const r0b=(D.stores||{})[cur]||r;
-  const _open0=r0b.open_date||r0b.first_sale_date||"";
-  const _recent=((r0b.byDay&&r0b.byDay.daily)||[]).filter(x=>x.d>=_open0).slice(-7);
-  const _avg7=_recent.length?_recent.reduce((a,b)=>a+b.sales,0)/_recent.length:null;
-  const _few=B.accrued<7;
-  const proj=(!_few && _avg7!=null) ? (B.afterSales + left*_avg7) : null;
+  // 2026-11-02 卷卷：这一块整体改成「开业至今累计」——达成率、预算、缺口全部跨月累加；
+  // 本月目标 / 余期日均 / 月累计预测三格删掉（它们只反映当月，和顶部「开业至今」的日期选择打架）。
+  const at=SP.attain, gap=SP.gap;
+  const dAvgB=SP.budget/SP.days, dAvgS=SP.sales/SP.days, dBdAvg=dAvgB-dAvgS;
+  const perTxt=SP.per.map(p=>`${p.m} 月 ${p.days} 天 × ${fmtY(p.daily)}`).join(" ＋ ");
+  // 养成期月份从预算表反推（月预算＝月保本的那几个月），不再只写当月
+  const _g2=((D.budget||{})[r.store]||{}).gross||{};
+  const _be2=((D.budget||{})[r.store]||{}).be;
+  const _rm=Object.keys(_g2).map(Number).filter(m2=>_be2!=null&&Math.abs(_g2[m2]-_be2)<0.01).sort((a,c)=>a-c);
+  const rampTxt=_rm.length?('养成期 '+_rm[0]+'–'+_rm[_rm.length-1]+' 月 · 预算＝月保本'):'常规预算';
   // 试营业（正式开业前的销售）：不计入预算考核，但要看得见
   const r0=(D.stores||{})[cur]||r;
   const fsd=r0.first_sale_date||r0.first_date, od=r0.open_date;
@@ -2071,23 +2111,23 @@ function renderProg(r){
   host.style.display="block";
   host.innerHTML=`
    <div class="prog-hd">
-     <span>本月累计达成率 <b>${pct(at,1)}</b>
-       <span class="tag">${ramp?('养成期 '+mi.m+'–'+(mi.m+1)+' 月 · 预算＝月保本'):'常规预算'}</span></span>
-     <span class="r">累计预算 ${fmtY0(bPeriod)} ＝ 日均 ${fmtY0(B.daily)} × 已过 ${B.accrued} 天 · 本月目标 ${fmtY0(B.monthTarget)}（${B.monthDays} 天）</span>
+     <span>累计达成率 <b>${pct(at,1)}</b>
+       <span class="tag">${ramp?rampTxt:'常规预算'}</span></span>
+     <span class="r">累计预算 ${fmtY0(SP.budget)} ＝ ${perTxt}</span>
    </div>
    <div class="prog-bar"><i class="${at<1?"low":""}" style="width:${Math.max(0,Math.min(1,at||0))*100}%"></i></div>
    <div class="prog-kv">
-     <div class="kv"><span>日均预算</span><b>${fmtY0(B.daily)}</b>
-        <i>月${ramp?"保本":"预算"} ${fmtY0(g)} ÷ ${mi.dim} 天</i></div>
-     <div class="kv"><span>本月目标</span><b>${fmtY0(B.monthTarget)}</b>
-        <i>按开业 ${B.monthDays} 天折算</i></div>
-     <div class="kv"><span>余期日均</span><b>${needDaily==null?"—":fmtY0(needDaily)+"/天"}</b>
-        <i><span class="nb">本月还差 ${fmtY0(gap)}</span> <span class="nb">· 还剩 ${left} 天</span></i></div>
-     <div class="kv"><span>月累计预测</span><b style="${proj==null?'color:#98A3B0':''}">${proj==null?"—":fmtY0(proj)}</b>
-        <i title="取最近 7 个销售日的日均（已剔开业首日高峰），故比上方「日均实收」的 N 天少 1 天">${proj==null?('<span class="nb">开业 '+B.accrued+' 天 &lt;7</span> <span class="nb">· 样本不足不推算</span>'):('<span class="nb">按近 7 日均推算</span> <span class="nb">· 缺口 '+(B.monthTarget&&proj<B.monthTarget?fmtY0(B.monthTarget-proj):"0")+'</span>')}</i></div>
+     <div class="kv"><span>日均预算</span><b>${fmtY0(dAvgB)}</b>
+        <i>区间预算 ${fmtY0(SP.budget)} ÷ ${SP.days} 天（按月加权）</i></div>
+     <div class="kv"><span>日均实收</span><b>${fmtY0(dAvgS)}</b>
+        <i>区间实收 ${fmtY0(SP.sales)} ÷ ${SP.days} 天 · 比预算${dBdAvg>=0?"少":"多"} ${fmtY0(Math.abs(dBdAvg))}/天</i></div>
+     <div class="kv"><span>累计预算</span><b>${fmtY0(SP.budget)}</b>
+        <i>开业 ${SP.days} 天应做额（跨月累加，不按月重置）</i></div>
+     <div class="kv"><span>累计缺口</span><b style="${gap>0?'color:#9A5B52':''}">${gap>0?fmtY0(gap):"—"}</b>
+        <i>${gap>0?("追平还差这些 · 达成 "+pct(at,1)):"已超预算 "+fmtY0(SP.sales-SP.budget)}</i></div>
    </div>
    <div class="prog-ft">
-     · 日均预算＝月${ramp?"保本":"预算"}÷${mi.dim} 天，已计 ${B.accrued} 天 → 累计预算 ${fmtY0(bPeriod)}。<br>
+     · 累计预算＝正式开业日起逐日历日累加「当月预算 ÷ 当月自然天数」，<b>跨月不清零</b>；${SP.days} 天＝${md(SP.from)} ~ ${md(SP.to)}。<br>
      ${trialDays?`· 试营业 ${trialDays} 天销售 <b>${fmtY0(trialAmt)}</b>，不计入预算考核。`:""}
      ${B.nextM&&B.nextGross?`<br>· ⚠️ <b>${B.nextM} 月起预算 ${fmtY0(B.nextGross)}（+${pct(B.nextGross/g-1,1)}）</b>，与保本脱钩，勿与本季直接连读。`:""}
    </div>`;
@@ -2186,7 +2226,9 @@ function renderDays(r){
     return s;};
   const P=agg(postDays), T=agg(preD);
   const _B2=budgetOf(r);
-  const rAtt=(_B2.bPeriod&&_B2.bPeriod>0)?_B2.afterSales/_B2.bPeriod:null;
+  // 2026-11-02：逐日表合计行的达成率由 cumTxt/attTxt 显式传入（"—"），这里只留兜底；跟区间走。
+  const _SPd=budgetSpan(r);
+  const rAtt=_SPd?_SPd.attain:null;
   // 2026-10-22 审计 P0-1：原先把「开业后原价」当所有分组的分母，试营业小计算出 2.9 折（应 8.9 折）。
   // 现在按分组各自算原价：10×Σ实收 ÷ Σ(当日实收÷当日折扣率)。
   const discOf=(arr)=>arr.reduce((a,b)=>a+((b.discount_rate&&b.discount_rate>0)?(b.sales||0)/b.discount_rate:0),0);
@@ -2240,7 +2282,7 @@ function renderDays(r){
   host.style.setProperty("--h0", (_th0 && getComputedStyle(_th0).position === "sticky")
       ? _th0.getBoundingClientRect().height.toFixed(2) + "px" : "0px");
 }
-function rPostVal(r){ const B=budgetOf(r); return B.afterSales; }
+function rPostVal(r){ const SP=budgetSpan(r); return SP?SP.sales:0; }
 
 /* ---------- 逐日趋势洞察：只看「开业活动对这家店的影响」 ---------- */
 // 2026-10-21 卷卷两次校准：① 要判断不要罗列数据；② 样本只有 4~6 天，日型/周末分析不成立，
