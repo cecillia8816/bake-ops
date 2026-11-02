@@ -222,6 +222,13 @@ tr:hover td{background:var(--mist-soft)}
 .tbl-wrap.scroll-y{transform:translateZ(0)}   /* 10-21：滚动残影缓解——滚动重绘圈在自己层里 */
 .tbl-wrap.scroll-y thead th{position:sticky;top:0;z-index:2;background:#EDF2F8;
   box-shadow:0 1px 0 var(--line)}
+/* 逐日明细（2026-11-02 卷卷）：限高出竖向滚动条，两行表头一起吸顶。
+   第二行 top ＝ 第一行实测高度（--h0 由 renderDays 渲染后写入；手机端分组行不吸顶时为 0）；
+   细列名行保留原表头底色 #F4F7FA，与分组行 #EDF2F8 仍可区分；
+   z-index 要压过手机端吸左的首列（tbody td z=3），否则滚动时日期格会盖住表头。 */
+#dayWrap.scroll-y{max-height:600px}
+#dayWrap.scroll-y thead th{z-index:4}
+#dayWrap.scroll-y thead tr:not(.col2) th{background:#F4F7FA;top:var(--h0,0px)}
 th.num,td.num{width:34px;text-align:center;color:var(--mute)}
 @media(max-width:900px){.wrap{padding:0 12px 40px}.topbar{padding:10px 12px 8px;margin:0 -12px}}
 .leg-table tr.tot td{background:var(--mist-soft);font-weight:700}
@@ -626,10 +633,7 @@ svg{display:block;max-width:100%}
   .ctl .dtbar input[type=date]{flex:0 0 auto;width:auto;min-width:0;max-width:130px;height:30px;font-size:12px;padding:2px 6px}
   .ctl .dtquick{flex:1 1 100%;flex-wrap:wrap}
   .ctl .dtnote{flex:0 0 auto}
-  /* ①c 手机端去掉「近 3 天 / 近 7 天」快捷胶囊（2026-10-26 卷卷）：
-     只在手机档隐藏，桌面端保留原样；用 display:none 隐藏而非删 DOM，
-     JS 的 data-q 分支与高亮同步逻辑完全不受影响。 */
-  .ctl .dtquick button[data-q="d3"],.ctl .dtquick button[data-q="d7"]{display:none}
+  /* ①c 「近 3 天 / 近 7 天」快捷胶囊已整体删除（2026-11-02 卷卷：10-26 只藏了手机端，桌面端还在） */
   /* ② 达成区 4 张卡：一行 2 张（原来 auto-fit minmax(178) 在 390 宽下只剩 1 列） */
   #progWrap .prog-kv{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   /* ③ 趋势卡标题不许省略号截断（区间标签会把「累计实收 vs 累计预算」挤掉半截） */
@@ -872,8 +876,6 @@ svg{display:block;max-width:100%}
           <input type="date" id="dtTo" aria-label="结束日期">
           <div class="dtquick" id="dtQuick">
             <button data-q="all" class="on">全部</button>
-            <button data-q="d3">近 3 天</button>
-            <button data-q="d7">近 7 天</button>
             <button data-q="trial">试营业期</button>
             <button data-q="after">开业后</button>
           </div>
@@ -921,7 +923,7 @@ svg{display:block;max-width:100%}
   <div class="panel">
     <h2>逐日明细</h2>
     <div class="pnote" style="display:none"></div>
-    <div id="dayWrap" class="tbl-wrap"></div>
+    <div id="dayWrap" class="tbl-wrap scroll-y"></div>
     <div id="dayWrapNote" class="note"></div>
     <div id="dayInsight" class="insight" style="display:none"></div>
   </div>
@@ -1160,6 +1162,21 @@ function budgetOf(r){
            afterSales: ((r.byDay && r.byDay.daily) || []).length ? afterSales : mi.mtdSales,
            nextM: nk, nextGross: nk != null ? g[nk] : null,
            ramp: (gross != null && be != null && Math.abs(gross - be) < 0.01) };
+}
+/* 开业日起逐**日历日**累加的累计预算表 { "YYYY-MM-DD": 累计预算 }（2026-11-02 卷卷：累计从开业日起算、跨月不重置）。
+   每天加「当月日均预算」＝月预算 ÷ 当月自然天数；跨月各用各月的日均（养成期 10/11 月同额，12 月起跳档）；
+   没配预算的月份不累加。累计卡 renderCum 与逐日明细「累计达成率」列共用这一张表，两处才同源。 */
+function cumBudgetMap(store, from, to){
+  const g = ((D.budget || {})[store] || {}).gross || {};
+  const out = {};
+  if (!from || !to || from > to) return out;
+  let acc = 0, n = 0;
+  for (let k = from; k <= to && n < 400; k = dAdd(k, 1), n++){
+    const m = +k.slice(5, 7), dim = new Date(+k.slice(0, 4), m, 0).getDate();
+    if (g[m] != null) acc += g[m] / dim;
+    out[k] = acc;
+  }
+  return out;
 }
 /* 门店节奏：正式开业日（含）~ 数据末日 的有销售日均。
    ⚠️ 与所选日期区间**无关**——节奏是门店状态，不能跟着区间跳（否则"当前日均"也成了区间函数）。*/
@@ -1669,9 +1686,11 @@ function renderCum(r){
   const geo = trendGeom();
   const B=budgetOf(r), g=B.gross, dim=B.mi.dim;
   const r0=(D.stores||{})[cur]||r;
-  // 累计对照也按财务口径：**从正式开业日算起**（试营业与开业前不画进预算考核）
+  // 累计对照按财务口径：**从正式开业日算起**（试营业与开业前不画进预算考核），
+  // 且**跨自然月连续累计**（2026-11-02 卷卷：11 月一到右图只剩 11/01 一个点、累计预算只剩一天的钱，
+  // 病因是这里曾按「当月」过滤；累计就该从开业日一路加到截止日，截止日仍跟所选 To 走）。
   const _od = B.openDate || (B.mi.ym + "-01");
-  const ds=((r0.days||[])).filter(x=>String(x.date).slice(0,7)===B.mi.ym && x.date<=B.mi.cut && x.date>=_od);
+  const ds=((r0.days||[])).filter(x=>x.date<=B.mi.cut && x.date>=_od);
   if(!ds.length || g==null){
     // 2026-10-23 审计 P1-1：提前 return 时没清 #cumSum，标题右侧会留着上一屏（开业后全窗口）的
     // 「缺口 ¥6,757 / 达成 82.2%」胶囊，与「本区间没有正式开业后销售日」同屏自相矛盾。
@@ -1681,10 +1700,10 @@ function renderCum(r){
   const _narrow = window.innerWidth < 720;
   const H=_narrow?200:230, PL=_narrow?32:36, PR=10, PT=14, PB=_narrow?44:48;
   const iw=W-PL-PR, ih=H-PT-PB;
+  // 累计预算＝开业日起逐日历日累加各月日均（cumBudgetMap），与逐日明细「累计达成率」列同一张表
+  const _bAt = cumBudgetMap(r.store, _od, B.mi.cut);
   let s=0;
-  const pts=ds.map(x=>{ s+=x.sales; const dom=+String(x.date).slice(8,10);
-                        // 累计预算＝日均预算 ×（从开业日起的天数）
-                        return {d:x.date, s:s, b:(B.daily||0)*Math.max(0, dom - B.d0 + 1), dom:dom}; });
+  const pts=ds.map(x=>{ s+=x.sales; return {d:x.date, s:s, b:_bAt[x.date]||0}; });
   const last=pts[pts.length-1];
   const ax=niceAxis(Math.max(last.b, last.s)*1.08, 4);
   const maxV=ax.top;
@@ -2052,7 +2071,7 @@ function renderProg(r){
   host.style.display="block";
   host.innerHTML=`
    <div class="prog-hd">
-     <span>累计达成率 <b>${pct(at,1)}</b>
+     <span>本月累计达成率 <b>${pct(at,1)}</b>
        <span class="tag">${ramp?('养成期 '+mi.m+'–'+(mi.m+1)+' 月 · 预算＝月保本'):'常规预算'}</span></span>
      <span class="r">累计预算 ${fmtY0(bPeriod)} ＝ 日均 ${fmtY0(B.daily)} × 已过 ${B.accrued} 天 · 本月目标 ${fmtY0(B.monthTarget)}（${B.monthDays} 天）</span>
    </div>
@@ -2092,7 +2111,6 @@ function renderDays(r){
   const _ncD=(r.newcust&&r.newcust.by_day)||{};
   const host=document.getElementById("dayWrap");
   if(!r.days.length){ host.innerHTML='<div class="empty">暂无数据</div>'; return; }
-  const g=(D.budget[r.store]||{}).gross||{};
   const WK="日一二三四五六";
   // 逐日会员/团餐/O2O/充值拆分（与双店对照同一套字段）
   const _bd=r.byDay||{};
@@ -2102,16 +2120,17 @@ function renderDays(r){
   (_bd.seg||[]).forEach(x=>{(_segD[x.d]=_segD[x.d]||[]).push(x);});
   (_bd.o2o||[]).forEach(x=>{_o2oD[x.d]=x;});
   (_bd.recharge||[]).forEach(x=>{_rcD[x.d]=x;});
+  // 累计预算：开业日起逐日历日累加各月日均（与累计卡同一张表 cumBudgetMap），跨月不按月重置
+  //（2026-11-02 前分母只算当月：11/01 行变成「开业以来 18 天实收 ÷ 1 天预算」，达成率虚高数倍）
+  const _odAll = r.open_date || (r.days[0].date.slice(0,7) + "-01");
+  const _bAt = cumBudgetMap(r.store, _odAll, r.days[r.days.length-1].date);
   let cumPost=0;
   const rows=r.days.map((d,i)=>{
     const dt=new Date(d.date+"T00:00:00"), wd=dt.getDay();
-    const ym=d.date.slice(0,7), dd=+d.date.slice(8,10), mb=g[+ym.slice(5)];
-    const dim=new Date(+ym.slice(0,4), +ym.slice(5), 0).getDate();
-    const _od = (r.open_date && r.open_date.slice(0,7)===ym) ? +r.open_date.slice(8,10) : 1;
     const _post = !r.open_date || d.date >= r.open_date;
     if (_post) cumPost += d.sales;
-    const _mtd = mb ? (mb/dim)*(_post?Math.max(1,dd-_od+1):0) : null;
-    const att = (_post && mb) ? cumPost/((mb/dim)*Math.max(1, dd-_od+1)) : null;
+    const _mtd = _post ? (_bAt[d.date] || null) : null;
+    const att = (_post && _mtd) ? cumPost/_mtd : null;
     const _Sd = memberSplitDays([d], _segD[d.date]||[], [_memD[d.date]||{d:d.date}]);
     const _o2o = _o2oD[d.date] ? (_o2oD[d.date].amt||0) : 0;
     const _tk = _tkD[d.date] || {p:0,z:0};
@@ -2198,7 +2217,7 @@ function renderDays(r){
     <thead>
       <tr class="col2"><th colspan="3">日历</th><th colspan="11" class="sep-l">经营表现</th><th colspan="7" class="sep-l">客群与渠道</th></tr>
       <tr><th class="left-b">日期</th><th class="left-b">星期</th><th class="left-b">日型</th>
-        <th class="sep-l">销售实收</th><th>销售环比</th><th title="交易单数（含零元单）">单数</th><th class="sj">零元单</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th class="sj">付费客单价</th><th>累计实收</th><th>累计达成率</th><th>充值收款</th>
+        <th class="sep-l">销售实收</th><th>销售环比</th><th title="交易单数（含零元单）">单数</th><th class="sj">零元单</th><th title="实收 ÷ 单数（含零元单）">客单价</th><th class="sj">付费客单价</th><th title="正式开业日起累计实收（跨月连续）">累计实收</th><th title="累计实收 ÷ 累计预算；累计预算＝开业日起逐日累加各月日均预算，跨月不重置">累计达成率</th><th>充值收款</th>
         <th title="整店折扣＝全店实收 ÷ 全店原价 ×10（含所有让价）">整店折扣</th><th>报损率</th>
         <th class="sep-l" title="当天新办卡会员数（单位：人；银豹「会员新增统计」逐日，按开卡门店）">新会员</th><th title="会员单的实收（不含团餐）">会员实收</th><th title="分子＝会员实收；分母＝全部实收 − 团餐大单（含零元单）">会员%</th><th title="活动单的实收（单内有商品按活动价成交）">活动实收</th><th title="分子＝活动实收；分母＝当日销售实收（含零元单）">活动%</th><th title="外卖＋团购＋小程序实收">O2O 实收</th><th title="分子＝O2O 实收；分母＝当日销售实收">O2O%</th></tr>
     </thead><tbody>
@@ -2216,6 +2235,10 @@ function renderDays(r){
   if(_dn) _dn.innerHTML = _isNarrow()
     ? '· 合计 / 日均 只算<b>正式开业后</b>的天数；<b>试营业单列、不计入</b>。'
     : '';
+  // 两行表头吸顶：第二行的 top ＝ 第一行实测高度（手机端分组行不吸顶时为 0），写进 --h0 供 CSS 用
+  const _th0 = host.querySelector("thead tr.col2 th");
+  host.style.setProperty("--h0", (_th0 && getComputedStyle(_th0).position === "sticky")
+      ? _th0.getBoundingClientRect().height.toFixed(2) + "px" : "0px");
 }
 function rPostVal(r){ const B=budgetOf(r); return B.afterSales; }
 
@@ -3619,7 +3642,10 @@ function tagCards(lo, hi, allLo, allHi, openDate, dataEnd){
     const kind = hit[1];
     const sp = document.createElement("span");
     sp.className = "wtag " + kind;
-    if (kind === "range") { sp.textContent = md(lo) + " ~ " + md(hi); sp.title = "跟随顶部所选区间"; }
+    if (kind === "range" && t.startsWith("累计实收 vs 累计预算") && openDate && hi >= openDate) {
+      // 累计卡起点钉在正式开业日（不吃所选 From），只有截止日跟区间走 → 标签写实际画出的区间
+      sp.textContent = md(openDate) + " ~ " + md(hi); sp.title = "正式开业日起累计，截止日跟随顶部所选区间"; }
+    else if (kind === "range") { sp.textContent = md(lo) + " ~ " + md(hi); sp.title = "跟随顶部所选区间"; }
     else if (kind === "all") { sp.textContent = "全部 " + md(allLo) + " ~ " + md(allHi); sp.title = "不随顶部区间"; }
     else {
       // 按自然月取数：直接给日期（10/1 ~ 数据日），别写「BI 月」这种黑话
@@ -4091,18 +4117,15 @@ document.addEventListener("DOMContentLoaded", ()=>{
   // ── 日期区间控件（2026-10-16 卷卷要求）──────────────────────────────
   const df = document.getElementById("dtFrom"), dt = document.getElementById("dtTo");
   const setRange = (a, b) => { dFrom = a; dTo = b; syncDateCtl(); render(cur); };
-  // 快捷胶囊：全部 / 近N天 / 试营业期 / 正式开业后
-  // ⚠️ 「近 N 天」必须**钳在本店可选范围内**（lo ~ hi）：新店区间只有 6 天，
-  //    直接用 hi-6 会算出 10-09（早于首销日 10-10）→ 区间含无数据天，
-  //    note 按日历天数算 7、winTag 按有数据天算 6，两处对不上（卷卷 10-16 发现的 bug）。
+  // 快捷胶囊：全部 / 试营业期 / 正式开业后（「近 3 天 / 近 7 天」2026-11-02 卷卷拍板删除）
+  // ⚠️ 区间必须**钳在本店可选范围内**（lo ~ hi），否则会含无数据天、
+  //    note 按日历天数算、winTag 按有数据天算，两处对不上（卷卷 10-16 发现的 bug）。
   document.getElementById("dtQuick").addEventListener("click", e => {
     const b = e.target.closest("[data-q]"); if (!b) return;
     const q = b.dataset.q, r0 = D.stores[cur] || {};
     const lo = r0.first_sale_date || r0.first_date, hi = r0.window_end;
     const open = r0.open_date;
     if (q === "all") setRange(lo, hi);
-    else if (q === "d3") setRange(clampLo_(dAdd(hi, -2), lo), hi);
-    else if (q === "d7") setRange(clampLo_(dAdd(hi, -6), lo), hi);
     else if (q === "trial") setRange(lo, open ? clampLo_(dAdd(open, -1), lo) : hi);
     else if (q === "after") setRange(open ? clampLo_(open, lo) : lo, hi);
   });
@@ -4167,16 +4190,11 @@ function syncDateCtl(){
   const open = _r0.open_date;
   const _f = {
     all: full,
-    // ⚠️ 「近N天」的判定要用**同一条 clamp 规则**反推，否则永远不亮（实测只有「全部」会亮）
-    d3: (dFrom === clampLo_(dAdd(hi, -2), lo)) && dTo === hi && !full,
-    d7: (dFrom === clampLo_(dAdd(hi, -6), lo)) && dTo === hi && !full,
+    // ⚠️ 判定要用与点击**同一条 clamp 规则**反推，否则永远不亮（实测只有「全部」会亮）
     trial: (dFrom === lo) && (!open || dTo === clampLo_(dAdd(open,-1), lo)) && !full,
     after: !!open && dFrom === clampLo_(open, lo) && dTo === hi && !full,
   };
-  // 2026-10-22：开业后与「近 7 天」在开业 ≤7 天时区间相同 → 两个胶囊同时亮。
-  // 保留语义更明确的「开业后」，其余让位（只亮一个）。
-  if (_f.after) { _f.d7 = false; _f.d3 = false; }
-  if (_f.all) { _f.d3 = _f.d7 = _f.trial = _f.after = false; }
+  if (_f.all) { _f.trial = _f.after = false; }
   document.querySelectorAll("#dtQuick [data-q]").forEach(b=>{
     b.classList.toggle("on", !!_f[b.dataset.q]);
   });
