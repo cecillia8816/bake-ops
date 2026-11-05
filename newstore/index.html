@@ -1593,7 +1593,7 @@ function trendGeom(){
   const N1 = all.length;                                            // 爬坡：全部有销售日
   const N2 = all.filter(x => x.date >= (B.openDate || "")).length;  // 累计：正式开业起
   if (N1 < 2 || N2 < 2){ _trendGeo = null; return null; }
-  const P = 46;                       // PL 36 + PR 10（2026-10-23 卷卷：左边太空，轴线再往左拉）
+  const P = 62;                       // PL 36 + PR 26（11-05 卷卷：首尾标签改居中，右边距 10→26 防裁切）
   const gap = 16;                     // .grid2 gap
   const S = grid.clientWidth - gap - 2 * C;   // 两图可用的内宽合计
   const sp = (S - 2 * P) / ((N1 - 1) + (N2 - 1));
@@ -1632,7 +1632,7 @@ function renderDaily(r){
   const geo = trendGeom();
   const W = geo ? geo.leftW : Math.max(300, Math.min(860, Math.round(host0.clientWidth || 860)));
   const _narrow = window.innerWidth < 720;
-  const H = _narrow ? 200 : 230, PL=_narrow?32:36, PR=10, PT=14, PB=_narrow?44:48;
+  const H = _narrow ? 200 : 230, PL=_narrow?32:36, PR=_narrow?24:26, PT=14, PB=_narrow?44:48;
   const baseY = PT + (H-PT-PB);
   const d=r.days; if(!d.length){ document.getElementById("dailyWrap").innerHTML='<div class="empty">暂无数据</div>'; return; }
   const ax = niceAxis(Math.max(...d.map(x=>x.sales)) * 1.18 || 1, 4);
@@ -1656,6 +1656,16 @@ function renderDaily(r){
         stroke-dasharray="2 3" opacity=".8"/>
       <text x="${PL+2}" y="${yy-5}" text-anchor="start" font-size="10.5" font-weight="700" fill="#8C5B54">${B0.ramp?"日均预算":"保本日均"} ${fmtY0(beD)}</text>`;
   }
+  // 首点标签居中后（11-05）会撞 Y 轴刻度字/预算标签（睿印里首日 ¥2,944 恰在 5k 刻度排上，白晕盖字实测）
+  // → 上/下两个候选位取离刻度字更远的一个；只有首点够得着刻度槽，末点不用躲
+  const _tickYs = ax.ticks.map(v => y(v)+4);
+  if (refLine) _tickYs.push(y(beD)-5);
+  const _firstLabY = cy => {
+    const above = cy-11, below = cy+19;
+    const dA = Math.min(..._tickYs.map(t => Math.abs(t-above)));
+    const dB = Math.min(..._tickYs.map(t => Math.abs(t-below)));
+    return dB > dA ? below : above;
+  };
   let bars="", dots="", dlab="", runCum=0;
   const bw = Math.max(10, Math.min(38, iw/Math.max(d.length,1)*0.6));
   // 数值标签密度：约每 60px 一个（周看板 renderMini 同款自适应公式）；窄屏放宽到 80px 防重叠
@@ -1680,10 +1690,10 @@ function renderDaily(r){
       data-tip='${JSON.stringify({hd:`${shortD(p.date)} <span class="wk">${weekDay(p.date)}</span>`, rows}).replace(/'/g,"&#39;")}'/>`;
     // 周末点用玫瑰、工作日用雾霾蓝，黑描边 r3.5（周看板圆点语法）——一眼分辨「爬坡」与「周末效应」。
     dots += `<circle cx="${cx}" cy="${cy}" r="3.8" fill="${wknd?"#FFD27D":"#00A4DE"}" stroke="#000" stroke-width="1.5"/>`;
-    // 圆点上方标销售实收（取整）——隔步显示、加粗白晕（周看板数值标签语法），首尾点向内收
+    // 圆点上方标销售实收（取整）——隔步显示、加粗白晕（周看板数值标签语法）；首尾也居中（11-05 卷卷），右边距已加到 26 防裁切
     if (i % lblStep === 0 || i === d.length-1) {
-      const anc = i===0 ? "start" : (i===d.length-1 ? "end" : "middle");
-      dlab += `<text x="${cx}" y="${cy-11}" text-anchor="${anc}" font-size="11.5" font-weight="700" fill="#101828" stroke="#fff" stroke-width="3" paint-order="stroke">${fmtY0(p.sales)}</text>`;
+      const ly = i===0 ? _firstLabY(cy) : cy-11;
+      dlab += `<text x="${cx}" y="${ly}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#101828" stroke="#fff" stroke-width="3" paint-order="stroke">${fmtY0(p.sales)}</text>`;
     }
   });
   const line = d.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.sales)}`).join(" ");
@@ -1699,12 +1709,11 @@ function renderDaily(r){
   // 原写法是「第N天 / MM-DD」且字号 9.5/8.5 偏大、顺序与全站相反。
   const step = xLblStep(sp);
   _xStepShared = step;
-  // ⚠️ 首/末标签必须贴边对齐（start / end），否则居中会让「10/22」右半截溢出卡片（2026-10-23 卷卷实测）
-  const _anc = i => i === 0 ? "start" : (i === d.length - 1 ? "end" : "middle");
+  // 首末日期标签一律与圆点居中（11-05 卷卷），右边距 26 保证「11/04」不溢出 viewBox
   const _idx = lblIdx(d.length, step);
   const xl = d.map((p,i)=> _idx.has(i)
-      ? `<text x="${x(i)}" y="${H-32}" text-anchor="${_anc(i)}" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
-         <text x="${x(i)}" y="${H-15}" text-anchor="${_anc(i)}" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
+      ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
+         <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
   document.getElementById("dailyWrap").innerHTML =
     `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" id="dailySvg">
       ${g}${refLine}<line x1="${PL}" y1="${baseY}" x2="${W-PR}" y2="${baseY}" stroke="#C9D6E3" stroke-width="1"/>
@@ -1740,7 +1749,7 @@ function renderCum(r){
     host.innerHTML='<div class="empty">所选区间没有正式开业后的销售日（开业 '+(B.openDate||"—")+'）——切「开业后」或「全部」查看</div>'; return; }
   const W=geo ? geo.rightW : Math.max(300,Math.min(860,Math.round(host.clientWidth||600)));
   const _narrow = window.innerWidth < 720;
-  const H=_narrow?200:230, PL=_narrow?32:36, PR=10, PT=14, PB=_narrow?44:48;
+  const H=_narrow?200:230, PL=_narrow?32:36, PR=_narrow?24:26, PT=14, PB=_narrow?44:48;
   const iw=W-PL-PR, ih=H-PT-PB;
   // 累计预算＝开业日起逐日历日累加各月日均（cumBudgetMap），与逐日明细「累计达成率」列同一张表
   const _bAt = cumBudgetMap(r.store, _od, B.mi.cut);
@@ -1759,11 +1768,10 @@ function renderCum(r){
   const lineB=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.b)}`).join(" ");
   const dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.s)}" r="3.5" fill="${isWknd(p.d)?"#FFD27D":"#00A4DE"}" stroke="#000" stroke-width="1.5"/>`).join("");
   const step=geo?xLblStep(sp):(_xStepShared||1);
-  const _anc = i => i === 0 ? "start" : (i === pts.length - 1 ? "end" : "middle");
-  const _idx = lblIdx(pts.length, step);
+  const _idx = lblIdx(pts.length, step);   // 首末日期也居中（11-05 卷卷），右边距已加到 26
   const xl=pts.map((p,i)=> _idx.has(i)
-      ? `<text x="${x(i)}" y="${H-32}" text-anchor="${_anc(i)}" font-size="10.5" fill="#3D4753">${p.d.slice(5).replace("-","/")}</text>
-         <text x="${x(i)}" y="${H-15}" text-anchor="${_anc(i)}" font-size="10" fill="${isWknd(p.d)?"#A9843F":"#6B7684"}">${weekDay(p.d)}</text>` : "").join("");
+      ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.d.slice(5).replace("-","/")}</text>
+         <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.d)?"#A9843F":"#6B7684"}">${weekDay(p.d)}</text>` : "").join("");
   const at=last.b?last.s/last.b:null;
   // 悬浮卡（与爬坡曲线同款）：每个点一个透明热区
   const _gapOf=(p)=>p.b-p.s;
