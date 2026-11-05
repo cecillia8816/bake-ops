@@ -473,9 +473,9 @@ table.rc-dist th,table.rc-dist td{padding-left:6px;padding-right:6px}
 #zeroWrap .zero-flex{grid-template-columns:minmax(0,1fr);gap:8px}
 #zeroWrap table{table-layout:fixed;width:100%}
 #zeroWrap th:nth-child(1){width:4%}      /* 2026-11-02 DSH：3%→4%(`#` 表头差 2.8px 挤成换行) */
-#zeroWrap th:nth-child(2){width:36%}
+#zeroWrap th:nth-child(2){width:26%}     /* 11-05 卷卷：36%→26%（最长品名 9 字 131px 仍单行），宽度让给小类 */
 #zeroWrap th:nth-child(3){width:9%}
-#zeroWrap th:nth-child(4){width:15%}
+#zeroWrap th:nth-child(4){width:25%}     /* 11-05 卷卷：15%→25%（padding 14×2 后内容只剩 57px，「现制大蛋糕」58px 都折行） */
 #zeroWrap th:nth-child(5){width:9%}
 #zeroWrap th:nth-child(6){width:14%}    /* 11.5%→14%(`占零元单` 需 42px，原列宽只剩 37px) */
 #zeroWrap th:nth-child(7){width:13%}    /* 与第 6 列同宽时两列都卡边界，末列留 13% 给「赠送率」 */
@@ -1931,7 +1931,7 @@ function renderZeroOrders(r){
   const zpOrd=zp.reduce((a,b)=>a+(b.orders||0),0);
   host.innerHTML=`<div class="zero-flex">
     <table class="fit-tbl" style="table-layout:fixed">
-    <colgroup><col style="width:4%"><col style="width:36%"><col style="width:9%"><col style="width:15%">
+    <colgroup><col style="width:4%"><col style="width:26%"><col style="width:9%"><col style="width:25%">
       <col style="width:9%"><col style="width:14%"><col style="width:13%"></colgroup>
     <thead><tr><th class="numh">#</th><th class="left-b">商品</th><th class="left-b">大类</th><th class="left-b">小类</th><th>单数</th>
       <th title="含该品的零元单 ÷ 零元单总数（一单多品会重复计入，故多行相加可 &gt;100%）">占零元单</th>
