@@ -4065,27 +4065,27 @@ function renderMisc(r){
   document.getElementById("miscWrap").innerHTML = `<table><thead><tr>
       <th class="left-b">指标</th><th>数值</th><th class="left-b">口径 / 说明</th></tr></thead><tbody>
     <tr><td class="left-b">会员占比</td><td><b>${pct(_postS?_postS.mShare:S.mShare,2)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="分子＝会员实收 ${fmtY0(S.mEx)}；分母＝全部实收 − 团餐 ${fmtY0(S.mEx+S.gEx)}${_postS?`；含试营业时为 ${pct(S.mShare,2)}（试营业 ${_gapDs.length} 天会员标记缺失 ${_gapOrd} 单仅 ${_gapMem} 单带标记，不可用，故取开业后）`:""}">会员实收 ÷ 全部实收</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="分子＝会员实收 ${fmtY0(S.mEx)}；分母＝全店实收 − 团餐大单 ＝ ${fmtY0(S.mEx+S.gEx)}${_postS?`；含试营业时为 ${pct(S.mShare,2)}（试营业 ${_gapDs.length} 天会员标记缺失 ${_gapOrd} 单仅 ${_gapMem} 单带标记，不可用，故取开业后）`:""}">会员实收 ÷ 全店实收（已剔团餐大单）</td></tr>
     <tr><td class="left-b">会员单占比</td><td><b>${pct(S.mTcShare,2)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="会员 ${S.mTcEx} 单 ÷ 全部 ${S.mTcEx+S.gTcEx} 单">会员单 ÷ 全部单（不含团餐）</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="会员支付的单 ${S.mTcEx} 单 ÷ 全部单 ${S.mTcEx+S.gTcEx} 单（团餐大单不计入）">会员支付的单数 ÷ 全部单数（不含团餐）</td></tr>
     <tr><td class="left-b">团餐大单</td><td><b>${S.bigOrd} 单 · ${fmtY0(S.bigAmt)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="整单≥20 件、或同款≥10 件、或西丽店整店 → 团餐大单">整单≥20 件／同款≥10 件，<b>不计入会员 / 散客占比</b></td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="整单满 20 件、或同一商品一次买满 10 件、或西丽店整店，都算团餐大单">整单满 20 件／同款满 10 件的单，<b>不计入会员 / 散客占比</b></td></tr>
     ${Math.abs(_unasP) >= 0.005 ? `<tr><td class="left-b">未归类票据</td><td><b>${fmtY0(_unasP)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="＝全店实收 ${fmtY0(r.sum_sales)} − 会员 ${fmtY0(S.mEx)} − 散客 ${fmtY0(S.gEx)} − 团餐 ${fmtY0(S.bigAmt)}。这笔钱在日报营业额里，销售流水却没有对应商品行（订单级费用／无商品明细小票），既归不进会员/散客，也归不进团餐；单列一行让四项相加＝全店实收，不静默抹到散客">日报有、流水无商品行 → 归不进会员/散客</td></tr>` : ""}
-    <tr><td class="left-b">开卡人数</td><td><b>${_ncR!=null?fmtN0(_ncR)+" 人":"—"}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="银豹「会员新增统计」逐日按开卡门店统计；累计 ${nc?fmtN0(nc.n):"—"} 人（${nc?md(String(nc.month)+"-01"):"—"} 起）">办卡人数${nc?"（累计 "+fmtN0(nc.n)+" 人）":""}</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="＝全店实收 ${fmtY0(r.sum_sales)} − 会员 ${fmtY0(S.mEx)} − 散客 ${fmtY0(S.gEx)} − 团餐 ${fmtY0(S.bigAmt)}。这笔钱在日报营业额里，销售明细里却没有对应商品行（订单级费用／无商品明细的小票），归不进会员 / 散客也归不进团餐；单列一行让四项相加＝全店实收，不默默算进散客">日报营业额有这笔钱、销售明细对不出商品行，归不进会员 / 散客</td></tr>` : ""}
+    <tr><td class="left-b">办卡人数</td><td><b>${_ncR!=null?fmtN0(_ncR)+" 人":"—"}</b></td>
+        <td class="left-b" style="color:#5F6B7A" title="数值＝统计期间（${r.first_date?md(r.first_date):"—"} ~ ${md(r.last_date||r.window_end||"")}）内新办卡人数；本月累计＝${nc?md(String(nc.month)+"-01"):"—"} 起到数据截止。数据源：银豹 POS「会员新增统计」，逐日按办卡门店归属（在哪家店办的卡就算哪家店）">${nc?(nc.month.slice(5)*1)+"月累计办卡 "+fmtN0(nc.n)+" 人（"+md(String(nc.month)+"-01")+" 起）":"银豹数据未就位"}</td></tr>
     ${_ncG.o?`<tr><td class="left-b">新会员用券</td><td><b>${fmtN0(_ncG.n)} 单 · ${pct(_ncG.n/_ncG.o,1)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="分子＝本区间开卡会员核销的兑换/赠品券单；分母＝同期该券核销单。只统计有让价的单，故为下限">开卡会员领的 ÷ 券核销</td></tr>`:""}
+        <td class="left-b" style="color:#5F6B7A" title="分子＝统计期间新办卡会员核销的兑换 / 赠品 / 充值礼券单 ${fmtN0(_ncG.n)} 单；分母＝同期该类券核销单 ${fmtN0(_ncG.o)} 单。只统计有让价的券单，故为下限">兑换 / 赠品 / 充值礼券的核销单里，统计期间新办卡会员领用的占比</td></tr>`:""}
     <tr><td class="left-b">件单 UPT</td><td><b>${bk?fmtN(bk.upt):"—"}</b></td>
-        <td class="left-b" style="color:#5F6B7A">${bk?fmtN(bk.qty)+" 件 ÷ "+bk.orders+" 单":"—"}${pu?" · 老店基准 "+fmtN(pu):""}</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="UPT＝每单平均件数＝总件数 ÷ 总单数，不含赠品；老店平均＝老店在同一统计期间的均值">${bk?fmtN(bk.qty)+" 件 ÷ "+fmtN(bk.orders)+" 单":"—"}${pu?"；老店平均 "+fmtN(pu):""}</td></tr>
     <tr><td class="left-b">单件单占比</td><td><b>${bk?pct(bk.single_rate,1):"—"}</b></td>
-        <td class="left-b" style="color:#5F6B7A">${bk?bk.singles+" 单只买 1 件":"—"}</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="只买 1 件的单数与占比（件数不含赠品）">${bk?fmtN0(bk.singles)+" 单只买 1 件":"—"}</td></tr>
     <tr><td class="left-b">O2O 线上</td><td><b>${o.amt?fmtY0(o.amt):"¥0"}</b></td>
-        <td class="left-b" style="color:#5F6B7A">${o.amt?("外卖＋团购＋小程序 · "+o.days+" 天有单 · 占实收 "+pct(r.sum_sales?o.amt/r.sum_sales:0,1)):"本区间无外卖/团购/小程序单"}</td></tr>
+        <td class="left-b" style="color:#5F6B7A">${o.amt?("外卖＋团购＋小程序实收 · 统计期间 "+o.days+" 天有单 · 占全店实收 "+pct(r.sum_sales?o.amt/r.sum_sales:0,1)):"统计期间无外卖 / 团购 / 小程序订单"}</td></tr>
     <tr><td class="left-b">卡券支付</td><td><b>${fmtY0(chAmt("卡券"))}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="银豹支付渠道：卡券＝储值卡/提货卡/券核销合计；与「充值收款」是两套口径，不可相加">渠道：${(r.channels||[]).map(c=>esc(c.channel)).join(" / ")||"—"}</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="银豹支付渠道「卡券」＝储值卡 / 提货卡 / 券核销的合计支付金额，是支付方式口径；与「充值收款」（充值行为）是两套口径，不可相加。全店支付渠道：${(r.channels||[]).map(c=>esc(c.channel)).join(" / ")||"—"}">用储值卡 / 提货卡 / 优惠券支付的金额（与「充值收款」不可相加）</td></tr>
     <tr><td class="left-b">充值收款</td><td><b>${r.recharge!=null?fmtY0(r.recharge):(r.recharge_est>0?fmtY0(r.recharge_est):"—")}</b></td>
-        <td class="left-b" style="color:#5F6B7A">${r.recharge!=null?"区间充值本金（不含赠送）":"开业充值礼（估）"}</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="统计期间客户实充的充值本金，赠送金不计入">${r.recharge!=null?"统计期间充值本金（不含赠送金）":"开业充值礼（估）"}</td></tr>
    </tbody></table>`;
   // 充值概况（2026-10-21 卷卷：不要逐个会员明细，要"总额/人数/最高最低/区间/赠金占比"）
   // 卡名写「开业至今」→ 一律取**门店级**（全窗口）字段，别混用区间视图的 recharge，否则总额与档位表对不上
