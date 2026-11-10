@@ -4069,11 +4069,11 @@ function renderMisc(r){
     <tr><td class="left-b">会员单占比</td><td><b>${pct(S.mTcShare,2)}</b></td>
         <td class="left-b" style="color:#5F6B7A" title="会员支付的单 ${S.mTcEx} 单 ÷ 全部单 ${S.mTcEx+S.gTcEx} 单（团餐大单不计入）">会员支付的单数 ÷ 全部单数（不含团餐）</td></tr>
     <tr><td class="left-b">团餐大单</td><td><b>${S.bigOrd} 单 · ${fmtY0(S.bigAmt)}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="整单满 20 件、或同一商品一次买满 10 件、或西丽店整店，都算团餐大单">整单满 20 件／同款满 10 件的单，<b>不计入会员 / 散客占比</b></td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="整单≥20 件、或同款≥10 件、或西丽店整店 → 团餐大单">整单≥20 件／同款≥10 件，<b>不计入会员 / 散客占比</b></td></tr>
     ${Math.abs(_unasP) >= 0.005 ? `<tr><td class="left-b">未归类票据</td><td><b>${fmtY0(_unasP)}</b></td>
         <td class="left-b" style="color:#5F6B7A" title="＝全店实收 ${fmtY0(r.sum_sales)} − 会员 ${fmtY0(S.mEx)} − 散客 ${fmtY0(S.gEx)} − 团餐 ${fmtY0(S.bigAmt)}。这笔钱在日报营业额里，销售明细里却没有对应商品行（订单级费用／无商品明细的小票），归不进会员 / 散客也归不进团餐；单列一行让四项相加＝全店实收，不默默算进散客">日报营业额有这笔钱、销售明细对不出商品行，归不进会员 / 散客</td></tr>` : ""}
     <tr><td class="left-b">办卡人数</td><td><b>${_ncR!=null?fmtN0(_ncR)+" 人":"—"}</b></td>
-        <td class="left-b" style="color:#5F6B7A" title="数值＝统计期间（${r.first_date?md(r.first_date):"—"} ~ ${md(r.last_date||r.window_end||"")}）内新办卡人数；本月累计＝${nc?md(String(nc.month)+"-01"):"—"} 起到数据截止。数据源：银豹 POS「会员新增统计」，逐日按办卡门店归属（在哪家店办的卡就算哪家店）">${nc?(nc.month.slice(5)*1)+"月累计办卡 "+fmtN0(nc.n)+" 人（"+md(String(nc.month)+"-01")+" 起）":"银豹数据未就位"}</td></tr>
+        <td class="left-b" style="color:#5F6B7A" title="数值＝统计期间（${r.first_date?md(r.first_date):"—"} ~ ${md(r.last_date||r.window_end||"")}）内新办卡人数；本月累计算到数据截止日。数据源：银豹 POS「会员新增统计」，逐日按办卡门店归属（在哪家店办的卡就算哪家店）">${nc?(nc.month.slice(5)*1)+"月累计办卡 "+fmtN0(nc.n)+" 人":"银豹数据未就位"}</td></tr>
     ${_ncG.o?`<tr><td class="left-b">新会员用券</td><td><b>${fmtN0(_ncG.n)} 单 · ${pct(_ncG.n/_ncG.o,1)}</b></td>
         <td class="left-b" style="color:#5F6B7A" title="分子＝统计期间新办卡会员核销的兑换 / 赠品 / 充值礼券单 ${fmtN0(_ncG.n)} 单；分母＝同期该类券核销单 ${fmtN0(_ncG.o)} 单。只统计有让价的券单，故为下限">兑换 / 赠品 / 充值礼券的核销单里，统计期间新办卡会员领用的占比</td></tr>`:""}
     <tr><td class="left-b">件单 UPT</td><td><b>${bk?fmtN(bk.upt):"—"}</b></td>
