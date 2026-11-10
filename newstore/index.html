@@ -444,10 +444,12 @@ table.gift-tbl{table-layout:fixed;width:100%}
 table.gift-tbl th,table.gift-tbl td{overflow:hidden;text-overflow:ellipsis}
 table.gift-tbl th:first-child,table.gift-tbl td:first-child{white-space:normal;overflow:visible;text-overflow:clip;
   overflow-wrap:anywhere;word-break:break-word;line-height:1.35}
-#miscWrap table{width:100%;table-layout:fixed}
+/* 11-10 卷卷：数值列不许折行——前两列按内容撑开（「2,124 单 · 78.8%」单行要 102px>15% 列宽），说明列放得下即单行 */
+#miscWrap table{width:100%;table-layout:auto}
 #miscWrap th:nth-child(1){width:15%}
 #miscWrap th:nth-child(2){width:15%}
 #miscWrap td{white-space:normal !important;word-break:break-word}
+#miscWrap td:nth-child(-n+2){white-space:nowrap !important}
 table.gift-tbl th,table.gift-tbl td{padding-left:6px;padding-right:6px}
 table.gift-tbl td.left-b{overflow:hidden;text-overflow:ellipsis}
 /* 充值概况（2026-10-21 卷卷：不要明细，要总额/人数/最高最低/区间/赠金占比） */
