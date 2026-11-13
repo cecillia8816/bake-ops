@@ -118,20 +118,18 @@ box-shadow:var(--shadow);min-width:0}
 .cum-sum .cs-sub{color:#6E7F94;font-variant-numeric:tabular-nums}
 .cum-sum .cs-warn{color:#B5564E}
 .cum-sum .cs-good{color:#5D7F5F}
-/* 逐日卡右上角：照搬周看板 KPI 卡样式（11-12 卷卷：照搬 + 字小一档），数字 tabular-nums 右对齐。
-   ⚠️ trend2 .chart-hd 是 height:28px+overflow:hidden（10-22 两卡同高保 X 轴对齐）
-   → dailySum 放 header 外、绝对定位浮在卡右上（header 高度不动、两图对齐不破坏）；窄屏回落文档流。 */
+/* 逐日表 KPI 卡（11-13 卷卷：5 张＝天数/日均实收/日均单数/客单价/O2O 占比；预算卡不要——右侧已有预算图）。
+   11-13 14:11 终版定位（卷卷红框示意）：**绝对定位浮回右上角**（top 与标题行齐平偏下一点），
+   趋势图去掉占位行、紧跟标题上移；卡宽 72、meta 7.5px nowrap 不换行、卡高 ~54px 不再动。
+   （历程：上午 absolute top4 → 下午改文档流行 → 卷卷红框示意要回右上浮层位 + 图上移 → 本版。） */
 .grid2.trend2>.chart-card{position:relative}
-#dailySum{position:absolute;top:2px;right:14px;z-index:2;display:flex;flex-direction:column;align-items:flex-end;
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:12px;box-shadow:var(--shadow);padding:6px 11px 5px;text-align:right;min-width:104px}
-#dailySum::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:#dfe3ea;
-  border-radius:12px 12px 0 0}
-#dailySum .ds-lb{font-size:10px;color:var(--sub);font-weight:600;letter-spacing:.04em;margin-bottom:2px}
-#dailySum .ds-big{font-size:16px;font-weight:800;letter-spacing:-.01em;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.15}
-#dailySum .ds-row{font-size:9.5px;color:var(--sub);font-weight:600;line-height:1.55}
-#dailySum .ds-row b{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);display:inline-block;min-width:50px;text-align:right}
-@media(max-width:720px){#dailySum{position:static;margin:0 2px 4px 0}}
+#dailyKpis{position:absolute;top:14px;right:14px;z-index:2;display:grid;grid-template-columns:repeat(5,72px);gap:4px;align-items:stretch}
+#dailyKpis .kpi{padding:3px 5px;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow);text-align:left}
+#dailyKpis .kpi .k-name{font-size:8px;line-height:1.15;white-space:nowrap}
+#dailyKpis .kpi .k-val{font-size:12.5px;line-height:1.25;margin:0}
+#dailyKpis .kpi .k-meta{display:block;font-size:7.5px;line-height:1.3;white-space:nowrap}
+#dailyKpis .kpi .k-meta b{font-weight:600;font-variant-numeric:tabular-nums}
 .pnote{font-size:11px;color:#5F6B7A;margin:0 0 12px;line-height:1.4}
 /* KPI 一行铺满：列数由 JS 按卡数内联给（一张不换行）；窄屏由下方媒体查询接管换行 */
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -929,7 +927,7 @@ svg{display:block;max-width:100%}
   <div class="grid2 trend2">
     <div class="chart-card">
       <div class="chart-hd"><h3>逐日销售实收</h3></div>
-      <div id="dailySum" class="daily-sum"></div>
+      <div id="dailyKpis"></div>
       <div id="dailyWrap"></div>
     </div>
     <div class="chart-card">
@@ -1578,12 +1576,20 @@ function niceAxis(target, n){
   const raw = target / n;
   const mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
   let s = raw / mag;
-  s = s <= 1 ? 1 : s <= 2 ? 2 : s <= 2.5 ? 2.5 : s <= 5 ? 5 : 10;
+  // 11-13 卷卷：阶梯加 4 档——否则 max 12.9k 被顶到 20k（+55% 余量）、累计 143.7k 被顶到 200k，趋势压扁
+  s = s <= 1 ? 1 : s <= 2 ? 2 : s <= 2.5 ? 2.5 : s <= 3 ? 3 : s <= 4 ? 4 : s <= 5 ? 5 : 10;
   const step = s * mag;
-  const top = Math.ceil(target / step) * step;
+  let top = Math.ceil(target / step) * step;
+  // 11-13 卷卷：顶格余量 >30% 就把步长减半重算一次（睿印里累计 21 万曾被顶到 30 万=+43%）
+  if (top > target * 1.3){
+    const s2 = step / 2;
+    top = Math.ceil(target / s2) * s2;
+    var _step = s2;                       // 刻度跟着新步长走
+  }
+  const _st = _step || step;
   const ticks = [];
-  for (let v = 0; v <= top + step / 1000; v += step) ticks.push(v);
-  return {top: top, step: step, ticks: ticks};
+  for (let v = 0; v <= top + _st / 1000; v += _st) ticks.push(v);
+  return {top: top, step: _st, ticks: ticks};
 }
 function fmtAxis(v){
   if (v >= 1000){ const k = Math.round(v / 100) / 10; return k + "k"; }
@@ -1612,7 +1618,7 @@ function trendGeom(){
   const N1 = _op ? all.filter(x => x.date >= _op).length : all.length;   // 爬坡：正式开业起有销售日
   const N2 = _op ? N1 : all.length;                                      // 累计：正式开业起（openDate 缺失时两图都取全部）
   if (N1 < 2 || N2 < 2){ _trendGeo = null; return null; }
-  const P = 62;                       // PL 36 + PR 26（11-05 卷卷：首尾标签改居中，右边距 10→26 防裁切）
+  const P = 56;                       // PL 30 + PR 26（11-13 卷卷：Y 轴收窄 36→30；11-05 卷卷：首尾标签改居中，右边距 10→26 防裁切）
   const gap = 16;                     // .grid2 gap
   const S = grid.clientWidth - gap - 2 * C;   // 两图可用的内宽合计
   const sp = (S - 2 * P) / ((N1 - 1) + (N2 - 1));
@@ -1654,13 +1660,15 @@ function renderDaily(r){
   const geo = trendGeom();
   const W = geo ? geo.leftW : Math.max(300, Math.min(860, Math.round(host0.clientWidth || 860)));
   const _narrow = window.innerWidth < 720;
-  const H = _narrow ? 200 : 230, PL=_narrow?32:36, PR=_narrow?24:26, PT=14, PB=_narrow?44:48;
+  // 11-13 卷卷：两图 X 轴（基线/日期/星期）必须同水平线 → H/PB 与 renderCum 逐字一致
+  // （旧值 desktop H=222/PB=40 与右图 230/48 不等，被 CSS height:230px 强拉 → 基线差 ~6.5px）
+  const H = _narrow ? 200 : 230, PL=_narrow?32:30, PR=_narrow?24:26, PT=14, PB=_narrow?48:48;
   const baseY = PT + (H-PT-PB);
   // 11-11 卷卷：爬坡曲线从正式营业日起（试营业期不上图），与右侧累计图 X 轴一致
   const _allDays = r.days || [];
   const d = r.open_date ? _allDays.filter(p => p.date >= r.open_date) : _allDays;
   if(!d.length){ document.getElementById("dailyWrap").innerHTML='<div class="empty">暂无数据</div>'; return; }
-  const ax = niceAxis(Math.max(...d.map(x=>x.sales)) * 1.18 || 1, 4);
+  const ax = niceAxis(Math.max(...d.map(x=>x.sales)) * 1.06 || 1, 4);
   const maxV = ax.top;
   const iw = W-PL-PR, ih = H-PT-PB;
   const sp = geo ? geo.sp : (d.length===1 ? iw : iw/(d.length-1));
@@ -1669,7 +1677,7 @@ function renderDaily(r){
   let g = "";
   // 周看板趋势图语法（10-20 卷卷「参照其他看板」）：无横网格线（只留 X 基线）、Y 轴灰字、
   // 线=黑 1.5、圆点=彩底黑描边 r3.5、数值标签加粗白晕。字号按本卡尺寸取周看板的紧凑档。
-  const FS_TICK=11;
+  const FS_TICK=10.5;   // 11-13 卷卷：Y 轴过宽压趋势 → PL 36→30 + 刻度字号 11→10.5，刻度列整体收窄
   ax.ticks.forEach(val=>{ const yy=y(val);
     g += `<text x="${PL-5}" y="${yy+4}" text-anchor="end" font-size="${FS_TICK}" fill="#667085">${fmtAxis(val)}</text>`; });
   // 保本日均参考线（2026-10-19 加）：养成期"够不够保本"一眼可见，不用心算 146,739÷31。
@@ -1677,8 +1685,9 @@ function renderDaily(r){
   let refLine = "";
   if (beD && beD < maxV){
     const yy = y(beD);
-    refLine = `<line x1="${PL}" y1="${yy}" x2="${W-PR}" y2="${yy}" stroke="#8C5B54" stroke-width="1"
-        stroke-dasharray="2 3" opacity=".8"/>
+    // 11-13 卷卷：与右图累计预算线完全同款（#8C5B54 / 1.4px / 虚线 4 3，无透明度）
+    refLine = `<line x1="${PL}" y1="${yy}" x2="${W-PR}" y2="${yy}" stroke="#8C5B54" stroke-width="1.4"
+        stroke-dasharray="4 3"/>
       <text x="${PL+2}" y="${yy-5}" text-anchor="start" font-size="10.5" font-weight="700" fill="#8C5B54">${B0.ramp?"日均预算":"保本日均"} ${fmtY0(beD)}</text>`;
   }
   // 首点标签居中后（11-05）会撞 Y 轴刻度字/预算标签（睿印里首日 ¥2,944 恰在 5k 刻度排上，白晕盖字实测）
@@ -1735,20 +1744,35 @@ function renderDaily(r){
       ? `<text x="${x(i)}" y="${H-32}" text-anchor="middle" font-size="10.5" fill="#3D4753">${p.date.slice(5).replace("-","/")}</text>
          <text x="${x(i)}" y="${H-15}" text-anchor="middle" font-size="10" fill="${isWknd(p.date)?"#A9843F":"#6B7684"}">${weekDay(p.date)}</text>` : "").join("");
   // 右上角日均小卡（11-12 卷卷，样式参照周看板 KPI 卡）：日均实收大数 + 工作日/节假日两行（数字右对齐）
-  const _wd = d.filter(p=>!isWknd(p.date)), _we = d.filter(p=>isWknd(p.date));
-  const _avg = a => a.length ? fmtY0(a.reduce((s,p)=>s+p.sales,0)/a.length) : "—";
-  const _dsEl = document.getElementById("dailySum");
-  if (_dsEl) _dsEl.innerHTML =
-    `<span class="ds-lb">日均实收</span><span class="ds-big">${_avg(d)}</span>`
-    + `<span class="ds-row">工作日 <b>${_avg(_wd)}</b></span>`
-    + `<span class="ds-row">节假日 <b>${_avg(_we)}</b></span>`;
+  // 逐日表 KPI 卡（11-13 卷卷：天数/日均实收/日均单数/客单价/O2O 占比；预算卡不要——右侧已有预算达成率图）。
+  // 工作日/节假日按 daytype 拆；O2O 按日取全局 _bd.o2o（不依赖逐日明细节是否先渲染）。
+  const _o2oMap = {};
+  ((r.byDay && r.byDay.o2o) || []).forEach(x => { _o2oMap[x.d] = x.amt || 0; });
+  const _isHol = p => p.daytype === "节假日";
+  const _dw = d.filter(p => !_isHol(p)), _dh = d.filter(_isHol);
+  const _S = a => a.reduce((s, p) => s + (p.sales || 0), 0);
+  const _T = a => a.reduce((s, p) => s + (p.tc || 0), 0);
+  const _O = a => a.reduce((s, p) => s + (_o2oMap[p.date] || 0), 0);
+  const _n = d.length || 1, _holN = _dh.length, _wkN = _n - _holN;
+  const _totS = _S(d), _totT = _T(d), _totO = _O(d);
+  const krow = [
+    ["天数", String(d.length), "", `工作日 ${_wkN}<br>节假日 ${_holN}`],
+    ["日均实收", fmtY0(_totS / _n), "", `工作日 ${fmtY0(_S(_dw) / Math.max(_dw.length, 1))}<br>节假日 ${fmtY0(_S(_dh) / Math.max(_dh.length, 1))}`],
+    ["日均单数", fmtC(_totT / _n), "", `工作日 ${fmtC(_T(_dw) / Math.max(_dw.length, 1))}<br>节假日 ${fmtC(_T(_dh) / Math.max(_dh.length, 1))}`],
+    ["客单价", fmtAC(_totT ? _totS / _totT : 0), "", `工作日 ${fmtY1(_T(_dw) ? _S(_dw) / _T(_dw) : 0)}<br>节假日 ${fmtY1(_T(_dh) ? _S(_dh) / _T(_dh) : 0)}`],
+    ["O2O 占比", _totS ? pct(_totO / _totS, 1) : "—", "", `工作日 ${_S(_dw) ? pct(_O(_dw) / _S(_dw), 1) : "—"}<br>节假日 ${_S(_dh) ? pct(_O(_dh) / _S(_dh), 1) : "—"}`],
+  ];
+  const _kEl = document.getElementById("dailyKpis");
+  if (_kEl) _kEl.innerHTML = krow.map(([n, v, cls, meta]) =>
+    `<div class="kpi"><div class="k-name">${n}</div><div class="k-val ${cls}">${v}</div><div class="k-meta">${meta}</div></div>`).join("");
   document.getElementById("dailyWrap").innerHTML =
     `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" id="dailySvg">
       ${g}${refLine}<line x1="${PL}" y1="${baseY}" x2="${W-PR}" y2="${baseY}" stroke="#C9D6E3" stroke-width="1"/>
     <path d="${line}" fill="none" stroke="#101828" stroke-width="1.5"/>${dots}${dlab}${openMark}${bars}${xl}
      </svg>
      <div class="legend-inline"><span><i style="background:#00A4DE;border:1.5px solid #000"></i>工作日实收</span>
-       <span><i style="background:#FFD27D;border:1.5px solid #000"></i>节假日实收</span></div>`;
+       <span><i style="background:#FFD27D;border:1.5px solid #000"></i>节假日实收</span>
+       <span><i style="width:18px;height:0;border-top:2px dashed #8C5B54;border-radius:0;background:none;vertical-align:3px"></i>日均预算</span></div>`;
   document.querySelectorAll("#dailySvg .hit").forEach(el=>{
     const t = JSON.parse(el.dataset.tip||"{}");
     el.addEventListener("mousemove", e=>showTip(e, tipHTML(t.hd, t.rows, t.ft)));
@@ -1776,21 +1800,22 @@ function renderCum(r){
     host.innerHTML='<div class="empty">所选区间没有正式开业后的销售日（开业 '+(B.openDate||"—")+'）——切「开业后」或「全部」查看</div>'; return; }
   const W=geo ? geo.rightW : Math.max(300,Math.min(860,Math.round(host.clientWidth||600)));
   const _narrow = window.innerWidth < 720;
-  const H=_narrow?200:230, PL=_narrow?32:36, PR=_narrow?24:26, PT=14, PB=_narrow?44:48;
+  const H=_narrow?200:230, PL=_narrow?32:30, PR=_narrow?24:26, PT=14, PB=_narrow?44:48;
+  // ⚠️ 上面 H/PL/PR/PT/PB 必须与 renderDaily 完全一致（11-13 卷卷：两图 X 轴基线/日期/星期同一水平线）
   const iw=W-PL-PR, ih=H-PT-PB;
   // 累计预算＝开业日起逐日历日累加各月日均（cumBudgetMap），与逐日明细「累计达成率」列同一张表
   const _bAt = cumBudgetMap(r.store, _od, B.mi.cut);
   let s=0;
   const pts=ds.map(x=>{ s+=x.sales; return {d:x.date, s:s, b:_bAt[x.date]||0}; });
   const last=pts[pts.length-1];
-  const ax=niceAxis(Math.max(last.b, last.s)*1.08, 4);
+  const ax=niceAxis(Math.max(last.b, last.s)*1.06, 4);
   const maxV=ax.top;
   // X 轴：与爬坡图共用同一个 px/天（trendGeom 已按此反解两卡列宽），不再自己推 _spDay → 不会被缩放裁掉
   const sp = geo ? geo.sp : (pts.length===1 ? iw : iw/(pts.length-1));
   const x = i => PL + (pts.length===1 ? iw/2 : i*sp);
   const y=v=>PT+ih-v/maxV*ih;
   let gph="";
-  ax.ticks.forEach(v=>{ gph+=`<text x="${PL-5}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#667085">${fmtAxis(v)}</text>`; });
+  ax.ticks.forEach(v=>{ gph+=`<text x="${PL-5}" y="${y(v)+4}" text-anchor="end" font-size="10.5" fill="#667085">${fmtAxis(v)}</text>`; });
   const lineS=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.s)}`).join(" ");
   const lineB=pts.map((p,i)=>`${i?"L":"M"}${x(i)},${y(p.b)}`).join(" ");
   const dots=pts.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.s)}" r="3.5" fill="${isWknd(p.d)?"#FFD27D":"#00A4DE"}" stroke="#000" stroke-width="1.5"/>`).join("");
